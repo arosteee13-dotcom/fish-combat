@@ -1834,7 +1834,7 @@ function renderInventory() {
       if (!equippedOn) {
         openEquipModal(item.id);
       } else {
-        alert(`${item.name} está equipado en ${fishName}.`);
+        openUnequipModal(item.id, equippedOn[0]);
       }
     });
     grid.appendChild(card);
@@ -1892,6 +1892,44 @@ function openEquipModal(itemId) {
 function closeEquipModal() {
   dom.equipModal.classList.remove('open');
   document.body.classList.remove('modal-open');
+}
+
+/* ===== UNEQUIP MODAL ===== */
+function openUnequipModal(itemId, fishId) {
+  const item = ITEMS.find(it => it.id === itemId);
+  const fish = getFishById(fishId);
+  if (!item || !fish) return;
+  const r = item.rarity;
+
+  dom.equipModalBody.innerHTML = `
+    <div class="equip-modal-header">
+      <span class="equip-modal-title"><img class="item-img item-img-inline" src="${item.imgPath}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" style="width:1.3rem;height:1.3rem;vertical-align:middle;display:inline-block"><span class="item-img-fallback" style="display:none">${item.emoji}</span> ${item.name}</span>
+      <button class="equip-modal-close" id="unequip-modal-close-btn">✕</button>
+    </div>
+    <div class="item-preview" style="gap:0.5rem;padding:0.75rem 0;">
+      <div class="item-preview-img ${r}" style="width:4.5rem;height:4.5rem;"><img class="item-img" src="${item.imgPath}" alt="${item.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="item-img-fallback">${item.emoji}</span></div>
+      <div class="item-preview-name" style="font-size:1rem;">${item.name}</div>
+      <div style="background:rgba(79,172,254,0.1);border:1px solid rgba(79,172,254,0.2);border-radius:10px;padding:0.5rem 1rem;display:flex;align-items:center;gap:0.5rem;">
+        ${imgTagSmall(fish.imgPath, fish.name, fish.emoji)}
+        <span style="font-size:0.85rem;font-weight:600;color:#64b5f6;">Equipado en: ${fish.name}</span>
+      </div>
+    </div>
+    <div class="item-preview-actions" style="margin-top:0.25rem;">
+      <button class="btn-primary item-buy-btn" id="unequip-confirm-btn" style="background:linear-gradient(135deg,#f44336,#e57373);">DESEQUIPAR</button>
+    </div>`;
+
+  document.getElementById('unequip-confirm-btn').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    delete state.equippedItems[fishId];
+    closeEquipModal();
+    renderInventory();
+  });
+
+  const closeBtn = document.getElementById('unequip-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeEquipModal(); });
+
+  dom.equipModal.classList.add('open');
+  document.body.classList.add('modal-open');
 }
 
 /* ===== ITEM CONFIRM MODAL ===== */
