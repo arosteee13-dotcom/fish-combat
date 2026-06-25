@@ -297,6 +297,23 @@ const FISH_TYPES = [
       name: 'Destello de Advertencia',
       description: 'Al bajar del 50% de PS, reduce el Ataque Físico del rival en un 20% el resto del combate.'
     }
+  },
+  {
+    id: 'pez_loro',
+    name: 'Pez Loro',
+    rarity: 'rare',
+    imgPath: 'img/pez_loro.png',
+    emoji: '🦜',
+    maxHp: 12, atk: 7, def: 5, spa: 2, spd: 3, spe: 4,
+    growth: { maxHp: 1.2, atk: 0.7, def: 0.5, spa: 0.2, spd: 0.3, spe: 0.4 },
+    attacks: [
+      { name: 'Mordisco de Pico', power: 55, emoji: '🦷', categoria: 'Fisico' },
+      { name: 'Saco de Moco Protector', power: 0, emoji: '🛡️', categoria: 'Efecto', efecto: { estado: 'def_boost', turns: 3, amount: 2 } }
+    ],
+    passive: {
+      name: 'Excreción de Arena',
+      description: 'Al acertar Mordisco de Pico, aumenta su DEF +10% (máx. 3 veces por combate).'
+    }
   }
 ];
 
@@ -727,6 +744,19 @@ function checkDestelloAdvertencia(defender, attacker) {
   }
 }
 
+function triggerOnHitPassive(attacker, atk) {
+  const base = getFishById(attacker.type.id);
+  if (!base || !base.passive) return;
+  if (base.passive.name === 'Excreción de Arena' && atk.name === 'Mordisco de Pico') {
+    if (!attacker.arenaCount) attacker.arenaCount = 0;
+    if (attacker.arenaCount < 3) {
+      attacker.arenaCount++;
+      attacker.type.def = Math.round(attacker.type.def * 1.1);
+      setLogMessage(`¡Excreción de Arena! DEF +10% (${attacker.arenaCount}/3)`, true);
+    }
+  }
+}
+
 function updateStatusDisplay() {
   const pStatus = state.player.status;
   const eStatus = state.enemy.status;
@@ -975,7 +1005,8 @@ const ARENA_FISH = {
     { fishId: 'anguila' }
   ],
   2: [
-    { fishId: 'pulpo_anillos_azules' }
+    { fishId: 'pulpo_anillos_azules' },
+    { fishId: 'pez_loro' }
   ]
 };
 
@@ -2394,6 +2425,7 @@ function playerAttack(index) {
 
   if (atk.categoria === 'Efecto') {
     applyBuff(atk, state.player);
+    applySecondaryEffect(atk, state.enemy);
     applyPassiveHealing(state.player);
     decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
     if (state.turnPhase === 'player_first') setTimeout(() => doEnemyAttack(), 1200);
@@ -2427,6 +2459,7 @@ function playerAttack(index) {
     setLogMessage(`¡${state.player.type.name} absorbió +${heal} PS!`, true);
   }
   animateHit(dom.enemyArea); updateHpBars();
+  triggerOnHitPassive(state.player, atk);
   triggerPassive(state.enemy.type, state.player, atk.categoria);
   applySecondaryEffect(atk, state.enemy);
   applySelfBuff(atk, state.player);
@@ -2483,6 +2516,7 @@ function doEnemyAttack() {
 
   if (atk.categoria === 'Efecto') {
     applyBuff(atk, state.enemy);
+    applySecondaryEffect(atk, state.player);
     applyPassiveHealing(state.enemy);
     decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
     if (state.turnPhase === 'enemy_first') {
@@ -2520,6 +2554,7 @@ function doEnemyAttack() {
     setLogMessage(`¡${state.enemy.type.name} absorbió +${heal} PS!`, true);
   }
   animateHit(dom.playerArea); updateHpBars();
+  triggerOnHitPassive(state.enemy, atk);
   triggerPassive(state.player.type, state.enemy, atk.categoria);
   applySecondaryEffect(atk, state.player);
   applySelfBuff(atk, state.enemy);
