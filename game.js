@@ -333,7 +333,7 @@ const DAILY_MISSIONS = [
 const MAX_LEVEL = 12;
 
 const ARENA_CUP_CHANGES = {
-  1: { win: 30, lose: -1 },
+  1: { win: 30, lose: -5 },
   2: { win: 30, lose: -10 },
   3: { win: 30, lose: -20 },
   4: { win: 30, lose: -25 }
@@ -1305,21 +1305,21 @@ const CHEST_TYPES = {
     id: 'wood', name: 'Madera', imgPath: 'img/cofre_madera.png',
     costType: 'coins', cost: 150,
     goldRange: [20, 50],
-    diamondChance: 0, diamondRange: [1, 1],
-    fishChance: 0.6
+    diamondChance: 0, diamondRange: [5, 5],
+    fishChance: 0.8
   },
   silver: {
     id: 'silver', name: 'Plata', imgPath: 'img/cofre_plata.png',
     costType: 'coins', cost: 400,
-    goldRange: [100, 200],
-    diamondChance: 0.1, diamondRange: [2, 5],
-    fishChance: 0.8
+    goldRange: [50, 100],
+    diamondChance: 0.15, diamondRange: [5, 5],
+    fishChance: 0.9
   },
   gold: {
     id: 'gold', name: 'Oro', imgPath: 'img/cofre_oro.png',
     costType: 'diamonds', cost: 60,
-    goldRange: [400, 600],
-    diamondChance: 1, diamondRange: [5, 10],
+    goldRange: [150, 300],
+    diamondChance: 0.3, diamondRange: [10, 10],
     fishChance: 1
   }
 };
@@ -1328,25 +1328,30 @@ function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+const CHEST_RARITY_TABLE = {
+  wood:   { common: 0.85, rare: 0.13, epic: 0.02, legendary: 0 },
+  silver: { common: 0.70, rare: 0.24, epic: 0.058, legendary: 0.002 },
+  gold:   { common: 0.50, rare: 0.35, epic: 0.13, legendary: 0.02 }
+};
+
+function rollChestRarity(chestId) {
+  const table = CHEST_RARITY_TABLE[chestId] || CHEST_RARITY_TABLE.wood;
+  const roll = Math.random();
+  let cumulative = 0;
+  for (const [rarity, chance] of Object.entries(table)) {
+    cumulative += chance;
+    if (roll < cumulative) return rarity;
+  }
+  return 'common';
+}
+
 function pickChestFish(chestId) {
   const pool = getArenaFishPool(state.currentArena)
     .map(e => getFishById(e.fishId))
     .filter(Boolean);
   if (pool.length === 0) return null;
 
-  let targetRarity;
-  const roll = Math.random();
-
-  if (chestId === 'gold') {
-    if (roll < 0.5) targetRarity = 'epic';
-    else if (roll < 0.75) targetRarity = 'legendary';
-    else targetRarity = 'rare';
-  } else if (chestId === 'silver') {
-    if (roll < 0.05) targetRarity = 'epic';
-    else targetRarity = roll < 0.5 ? 'common' : 'rare';
-  } else {
-    targetRarity = roll < 0.5 ? 'common' : 'rare';
-  }
+  const targetRarity = rollChestRarity(chestId);
 
   let candidates = pool.filter(f => f.rarity === targetRarity);
   if (candidates.length === 0) candidates = pool;
