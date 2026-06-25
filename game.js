@@ -436,17 +436,17 @@ function sortByRarity(a, b) { return RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rar
 function getFishLevel(fishId) { return state.fishLevels[fishId] || 1; }
 
 function getLeveledFishType(base, level) {
-  const g = base.growth;
   const steps = level - 1;
+  const mult = (v) => Math.round(v * Math.pow(1.20, steps));
   return {
     ...base,
     level,
-    maxHp: base.maxHp + g.maxHp * steps,
-    atk: base.atk + g.atk * steps,
-    def: base.def + g.def * steps,
-    spa: base.spa + g.spa * steps,
-    spd: base.spd + g.spd * steps,
-    spe: base.spe + g.spe * steps
+    maxHp: mult(base.maxHp),
+    atk: mult(base.atk),
+    def: mult(base.def),
+    spa: mult(base.spa),
+    spd: mult(base.spd),
+    spe: mult(base.spe)
   };
 }
 
@@ -1188,19 +1188,29 @@ function showFishDetail(fishId) {
   const r = getRarityConfig(base);
 
   const rStats = roundFishStats(fish);
-  const statsHtml = [
-    { label: 'HP', value: rStats.maxHp, cls: 'hp', max: 300 },
-    { label: 'ATK', value: rStats.atk, cls: 'atk', max: 100 },
-    { label: 'DEF', value: rStats.def, cls: 'def', max: 100 },
-    { label: 'SPA', value: rStats.spa, cls: 'spa', max: 80 },
-    { label: 'SPD', value: rStats.spd, cls: 'spd', max: 80 },
-    { label: 'SPE', value: rStats.spe, cls: 'spe', max: 100 }
-  ].map(s => `
-    <div class="stat-row">
-      <span class="stat-label">${s.label}</span>
-      <div class="stat-bar-bg"><div class="stat-bar-fill ${s.cls}" style="width:${clamp((s.value / s.max) * 100, 0, 100)}%"></div></div>
-      <span class="stat-value">${s.value}</span>
-    </div>`).join('');
+  const isMaxLevel = level >= MAX_LEVEL;
+  let rNextStats = null;
+  if (!isMaxLevel) {
+    const nextFish = getLeveledFishType(base, level + 1);
+    rNextStats = roundFishStats(nextFish);
+  }
+  const statDefs = [
+    { label: 'HP', value: rStats.maxHp, prop: 'maxHp', cls: 'hp', max: 300 },
+    { label: 'ATK', value: rStats.atk, prop: 'atk', cls: 'atk', max: 100 },
+    { label: 'DEF', value: rStats.def, prop: 'def', cls: 'def', max: 100 },
+    { label: 'SPA', value: rStats.spa, prop: 'spa', cls: 'spa', max: 80 },
+    { label: 'SPD', value: rStats.spd, prop: 'spd', cls: 'spd', max: 80 },
+    { label: 'SPE', value: rStats.spe, prop: 'spe', cls: 'spe', max: 100 }
+  ];
+  const statsHtml = statDefs.map(s => {
+    const nextVal = rNextStats ? rNextStats[s.prop] : null;
+    return `
+      <div class="stat-row">
+        <span class="stat-label">${s.label}</span>
+        <div class="stat-bar-bg"><div class="stat-bar-fill ${s.cls}" style="width:${clamp((s.value / s.max) * 100, 0, 100)}%"></div></div>
+        <span class="stat-value">${s.value}${nextVal !== null ? ` <span class="stat-arrow">➡️</span> <span class="stat-next">${nextVal}</span>` : ''}</span>
+      </div>`;
+  }).join('');
 
   const attacksHtml = base.attacks.map(a => {
     const catEmoji = a.categoria === 'Fisico' ? '💪' : a.categoria === 'Efecto' ? '🔵' : '✨';
@@ -1220,7 +1230,7 @@ function showFishDetail(fishId) {
 
   let upgradeHtml;
   if (upgradeCost === null) {
-    upgradeHtml = '<p style="text-align:center;color:#ffd700;font-size:0.85rem;font-weight:700;">⭐ NIVEL MÁXIMO</p>';
+    upgradeHtml = '<p style="text-align:center;color:#ffd700;font-size:0.85rem;font-weight:700;">⭐ MÁXIMO LEVEL</p>';
   } else {
     upgradeHtml = `
       <button class="btn-upgrade" data-fish-id="${fishId}" ${canAfford ? '' : 'disabled'}>

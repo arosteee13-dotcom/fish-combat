@@ -270,7 +270,9 @@ body.modal-open .section.active { overflow: hidden; }
 .stat-bar-fill.spa { background: linear-gradient(90deg, #9c27b0, #ce93d8); }
 .stat-bar-fill.spd { background: linear-gradient(90deg, #26c6da, #80deea); }
 .stat-bar-fill.spe { background: linear-gradient(90deg, #ff9800, #ffb74d); }
-.stat-value { font-size: 0.8rem; font-weight: 700; width: 2rem; text-align: right; flex-shrink: 0; }
+.stat-value { font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; white-space: nowrap; }
+.stat-arrow { font-size: 0.65rem; opacity: 0.5; }
+.stat-next { color: #2ecc71; font-weight: 900; }
 
 /* Attacks detail */
 .attacks-section { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 0.75rem 1rem; }
@@ -779,7 +781,7 @@ body.modal-open .section.active { overflow: hidden; }
 .fish-modal .stat-bar-bg { height: 0.5rem; }
 .fish-modal .stat-row { gap: 0.4rem; }
 .fish-modal .stat-label { font-size: 0.7rem; width: 2rem; }
-.fish-modal .stat-value { font-size: 0.75rem; width: 1.6rem; }
+.fish-modal .stat-value { font-size: 0.75rem; }
 .fish-modal .passive-section { background: rgba(255,255,255,0.05); padding: 0.7rem 1rem; }
 .fish-modal .passive-section h4 { font-size: 0.75rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.4rem; }
 .fish-modal .passive-entry { display: flex; flex-direction: column; gap: 0.2rem; }
