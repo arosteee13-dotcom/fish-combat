@@ -1309,30 +1309,20 @@ function renderBank() {
     const level = getFishLevel(fish.id);
     const card = document.createElement('div');
     const r = getRarityConfig(fish);
-    card.className = `fish-card rarity-${r.css}`;
+    card.className = `fish-card-grid rarity-${r.css}`;
     if (!isUnlocked) card.classList.add('locked');
     card.dataset.fishId = fish.id;
 
-    const attacksHtml = fish.attacks.map(a =>
-      `<span class="fish-card-attack">${a.emoji} ${a.name}</span>`
-    ).join('');
-
-    const lockDisplay = !isUnlocked ? '<span class="lock-icon">🔒</span>' : '';
+    const levelHtml = isUnlocked ? `<span class="card-grid-level">Nv.${level}</span>` : '';
+    const lockHtml = !isUnlocked ? '<span class="card-grid-lock">🔒</span>' : '';
 
     card.innerHTML = `
-      <div class="img-wrap">
+      ${levelHtml}
+      <div class="card-grid-img">
         <img src="${fish.imgPath}" alt="${fish.name}" class="fish-img" onerror="this.classList.add('img-broken')">
-        ${lockDisplay}
+        <span class="img-fallback">${fish.emoji}</span>
       </div>
-      <div class="fish-card-info">
-        <div class="fish-card-name">
-          ${fish.name}
-          <span class="card-level">Lv.${level}</span>
-          ${rarityBadgeHtml(fish)}
-        </div>
-        <div class="fish-card-attacks">${attacksHtml}</div>
-      </div>
-      <span class="card-arrow">›</span>`;
+      ${lockHtml}`;
 
     let touchStartX, touchStartY, touchMoved = false;
     card.addEventListener('pointerdown', e => {
