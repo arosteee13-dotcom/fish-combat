@@ -1203,6 +1203,71 @@ function renderBank() {
   }
 }
 
+/* ===== ATTACK CARD RENDERER ===== */
+function getAttackEffectDescriptions(atk) {
+  const parts = [];
+
+  if (atk.drain) {
+    const pct = Math.round(atk.drain * 100);
+    parts.push({ text: `Absorbe ${pct}% del daño infligido como PS`, type: 'buff' });
+  }
+
+  if (atk.selfBuff) {
+    const labels = { spe: 'Velocidad' };
+    const stat = labels[atk.selfBuff.stat] || atk.selfBuff.stat;
+    parts.push({ text: `Aumenta tu ${stat} +${atk.selfBuff.amount} durante ${atk.selfBuff.turns} turnos`, type: 'buff' });
+  }
+
+  if (atk.efecto) {
+    const e = atk.efecto;
+    const prob = e.probabilidad && e.probabilidad < 1 ? `${Math.round(e.probabilidad * 100)}% ` : '';
+
+    switch (e.estado) {
+      case 'precision_reducida':
+        parts.push({ text: `${prob}Reduce la precisión del rival un 20% (${e.turns || 2} turnos)`, type: 'debuff' });
+        break;
+      case 'spe_reduction':
+        parts.push({ text: `${prob}Reduce la Velocidad del rival -${e.amount || 1} (${e.turns || 2} turnos)`, type: 'debuff' });
+        break;
+      case 'paralizado':
+        parts.push({ text: `${prob}Probabilidad de paralizar al rival`, type: 'debuff' });
+        break;
+      case 'veneno_grave':
+        parts.push({ text: `${prob}Envenena gravemente al rival (-2 PS por turno)`, type: 'debuff' });
+        break;
+      case 'def_boost':
+        parts.push({ text: `Aumenta tu Defensa Física +${e.amount || 2} (${e.turns || 2} turnos)`, type: 'buff' });
+        break;
+      case 'dodge_boost':
+        parts.push({ text: `Aumenta tu Evasión ${Math.round((e.amount || 0.3) * 100)}% (${e.turns || 2} turnos)`, type: 'buff' });
+        break;
+    }
+  }
+
+  return parts;
+}
+
+function renderAttackCard(a) {
+  const catEmoji = a.categoria === 'Fisico' ? '💪' : a.categoria === 'Efecto' ? '🔵' : '✨';
+  const powerLabel = a.categoria === 'Efecto' ? '—' : `⚡ ${a.power}`;
+  const effects = getAttackEffectDescriptions(a);
+  const effectsHtml = effects.map(e =>
+    `<div class="atk-effect atk-effect-${e.type}">✨ ${e.text}</div>`
+  ).join('');
+
+  return `
+    <div class="attack-row">
+      <div class="attack-row-top">
+        <span class="attack-name">${a.emoji} ${a.name}</span>
+        <span class="attack-power">${powerLabel}</span>
+      </div>
+      <div class="attack-row-mid">
+        <span class="attack-category ${a.categoria.toLowerCase()}">${catEmoji} ${a.categoria}</span>
+      </div>
+      ${effectsHtml ? `<div class="attack-row-effects">${effectsHtml}</div>` : ''}
+    </div>`;
+}
+
 function showFishDetail(fishId) {
   const base = getFishById(fishId);
   if (!base) return;
@@ -1238,16 +1303,7 @@ function showFishDetail(fishId) {
       </div>`;
   }).join('');
 
-  const attacksHtml = base.attacks.map(a => {
-    const catEmoji = a.categoria === 'Fisico' ? '💪' : a.categoria === 'Efecto' ? '🔵' : '✨';
-    const powerLabel = a.categoria === 'Efecto' ? '✨ Efecto' : `⚡ ${a.power}`;
-    return `
-    <div class="attack-row">
-      <span class="attack-name">${a.emoji} ${a.name}</span>
-      <span class="attack-category ${a.categoria.toLowerCase()}">${catEmoji} ${a.categoria}</span>
-      <span class="attack-power">${powerLabel}</span>
-    </div>`;
-  }).join('');
+  const attacksHtml = base.attacks.map(a => renderAttackCard(a)).join('');
 
   const badge = isSelected ? '<span class="fish-card-badge">ACTIVO</span>' : '';
 
