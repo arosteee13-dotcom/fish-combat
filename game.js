@@ -382,6 +382,23 @@ const FISH_TYPES = [
       name: 'Frenesí Protector',
       description: 'Si el rival falla por falta de precisión, aumenta tu Ataque Físico un +15% en tu próximo ataque.'
     }
+  },
+  {
+    id: 'pez_ballesta',
+    name: 'Pez Ballesta Picassiano',
+    rarity: 'common',
+    imgPath: 'img/pez_ballesta_picassiano.png',
+    emoji: '🎨',
+    maxHp: 8, atk: 5, def: 5, spa: 2, spd: 3, spe: 4,
+    growth: { maxHp: 0.8, atk: 0.5, def: 0.5, spa: 0.2, spd: 0.3, spe: 0.4 },
+    attacks: [
+      { name: 'Dentellada de Coral', power: 45, emoji: '🦷', categoria: 'Fisico' },
+      { name: 'Bloqueo de Gatillo', power: 0, emoji: '🔒', categoria: 'Efecto', efecto: { estado: 'def_boost', turns: 2, amount: 2 }, debuffImmune: true, debuffImmuneTurns: 2 }
+    ],
+    passive: {
+      name: 'Piel de Cuero',
+      description: 'Reduce a la mitad el daño recibido por sangrado o veneno (mínimo 1 PS).'
+    }
   }
 ];
 
@@ -607,6 +624,10 @@ function getEffectiveSpeed(fighter) {
 
 function checkStatusImmunity(fighter) {
   if (!fighter || fighter.currentHp <= 0) return false;
+  if (fighter.buffs?.debuffImmuneTurns > 0) {
+    setLogMessage(`¡${fighter.type?.name || fighter.name} es inmune a reducción de stats!`, true);
+    return true;
+  }
   const fishId = fighter.type?.id || fighter.id;
   const base = getFishById(fishId);
   if (!base || !base.passive) return false;
@@ -743,6 +764,10 @@ function applyBuff(atk, user) {
     user.buffs = { ...(user.buffs || {}), dodgeBoost: atk.efecto.amount || 0.3, dodgeTurns: atk.efecto.turns || 2 };
     setLogMessage(`¡${user.type.name} usó ${atk.name}! Evasión +${Math.round((atk.efecto.amount || 0.3) * 100)}%`, true);
   }
+  if (atk.debuffImmune) {
+    user.buffs = { ...(user.buffs || {}), debuffImmuneTurns: atk.debuffImmuneTurns || 2 };
+    setLogMessage(`¡${user.type.name} usó ${atk.name}! Inmune a reducción de stats`, true);
+  }
 }
 
 function applySelfBuff(atk, user) {
@@ -759,6 +784,7 @@ function decrementBuffs(fighter) {
   if (fighter.buffs.defTurns !== undefined) fighter.buffs.defTurns--;
   if (fighter.buffs.speTurns !== undefined) fighter.buffs.speTurns--;
   if (fighter.buffs.dodgeTurns !== undefined) fighter.buffs.dodgeTurns--;
+  if (fighter.buffs.debuffImmuneTurns !== undefined) fighter.buffs.debuffImmuneTurns--;
   if (fighter.buffs.defTurns !== undefined && fighter.buffs.defTurns <= 0) {
     delete fighter.buffs.defBoost;
     delete fighter.buffs.defTurns;
@@ -774,7 +800,11 @@ function decrementBuffs(fighter) {
     delete fighter.buffs.dodgeTurns;
     setLogMessage(`${fighter.type.name} perdió el bono de evasión.`, true);
   }
-  if (!fighter.buffs.defBoost && !fighter.buffs.speBoost && !fighter.buffs.dodgeBoost) fighter.buffs = null;
+  if (fighter.buffs.debuffImmuneTurns !== undefined && fighter.buffs.debuffImmuneTurns <= 0) {
+    delete fighter.buffs.debuffImmuneTurns;
+    setLogMessage(`${fighter.type.name} perdió la inmunidad a reducción de stats.`, true);
+  }
+  if (!fighter.buffs.defBoost && !fighter.buffs.speBoost && !fighter.buffs.dodgeBoost && !fighter.buffs.debuffImmuneTurns) fighter.buffs = null;
 }
 
 function applyDefensivePassives(dmg, defender, categoria) {
@@ -792,19 +822,27 @@ function applyDefensivePassives(dmg, defender, categoria) {
 
 function applyStatusDamage(fighter) {
   if (fighter.currentHp <= 0) return;
+  const base = getFishById(fighter.type.id);
+  const pielCuero = base && base.passive && base.passive.name === 'Piel de Cuero';
   if (fighter.status === 'envenenado' || fighter.status === 'quemado') {
-    fighter.currentHp = Math.max(0, fighter.currentHp - 1);
+    let dmg = 1;
+    if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     const labels = { envenenado: 'ENV', quemado: 'QUE' };
-    setLogMessage(`${fighter.type.name} sufre daño por ${labels[fighter.status]} (-1 PS)`, true);
+    setLogMessage(`${fighter.type.name} sufre daño por ${labels[fighter.status]} (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
   }
   if (fighter.status === 'veneno_grave') {
-    fighter.currentHp = Math.max(0, fighter.currentHp - 2);
-    setLogMessage(`${fighter.type.name} sufre daño por Veneno Grave (-2 PS)`, true);
+    let dmg = 2;
+    if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
+    setLogMessage(`${fighter.type.name} sufre daño por Veneno Grave (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
   }
   if (fighter.sangradoTurns > 0) {
-    fighter.currentHp = Math.max(0, fighter.currentHp - 1);
+    let dmg = 1;
+    if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     fighter.sangradoTurns--;
-    setLogMessage(`${fighter.type.name} sufre daño por Sangrado (-1 PS, ${fighter.sangradoTurns} turnos restantes)`, true);
+    setLogMessage(`${fighter.type.name} sufre daño por Sangrado (-${dmg} PS, ${fighter.sangradoTurns} turnos restantes)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
   }
 }
 
@@ -873,6 +911,7 @@ function updateStatusDisplay() {
   }
   if (state.player.buffs?.defBoost) pText += (pText ? ' ' : '') + '🛡️';
   if (state.player.buffs?.speBoost) pText += (pText ? ' ' : '') + '⚡';
+  if (state.player.buffs?.debuffImmuneTurns > 0) pText += (pText ? ' ' : '') + '🔒';
   dom.playerStatus.textContent = pText;
   dom.playerStatus.className = pCls;
 
@@ -886,6 +925,7 @@ function updateStatusDisplay() {
   }
   if (state.enemy.buffs?.defBoost) eText += (eText ? ' ' : '') + '🛡️';
   if (state.enemy.buffs?.speBoost) eText += (eText ? ' ' : '') + '⚡';
+  if (state.enemy.buffs?.debuffImmuneTurns > 0) eText += (eText ? ' ' : '') + '🔒';
   dom.enemyStatus.textContent = eText;
   dom.enemyStatus.className = eCls;
 }
@@ -1111,7 +1151,8 @@ const ARENA_FISH = {
     { fishId: 'morena' },
     { fishId: 'camaron_pistola' },
     { fishId: 'pez_cirujano' },
-    { fishId: 'pez_damisela' }
+    { fishId: 'pez_damisela' },
+    { fishId: 'pez_ballesta' }
   ]
 };
 
@@ -1387,6 +1428,10 @@ function getAttackEffectDescriptions(atk) {
         parts.push({ text: `Aumenta tu Evasión ${Math.round((e.amount || 0.3) * 100)}% (${e.turns || 2} turnos)`, type: 'buff' });
         break;
     }
+  }
+
+  if (atk.debuffImmune) {
+    parts.push({ text: `Inmune a reducción de stats (${atk.debuffImmuneTurns || 2} turnos)`, type: 'buff' });
   }
 
   return parts;
