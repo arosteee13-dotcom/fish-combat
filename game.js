@@ -348,6 +348,40 @@ const FISH_TYPES = [
       name: 'Onda Expansiva',
       description: 'Al usar un ataque Especial, 50% de probabilidad de reducir la Velocidad del rival un -15% el siguiente turno.'
     }
+  },
+  {
+    id: 'pez_cirujano',
+    name: 'Pez Cirujano Azul',
+    rarity: 'common',
+    imgPath: 'img/pez_cirujano_azul.png',
+    emoji: '🐟',
+    maxHp: 10, atk: 5, def: 3, spa: 3, spd: 4, spe: 6,
+    growth: { maxHp: 1.0, atk: 0.5, def: 0.3, spa: 0.3, spd: 0.4, spe: 0.6 },
+    attacks: [
+      { name: 'Corte de Bisturí', power: 35, emoji: '🔪', categoria: 'Fisico', efecto: { probabilidad: 1, estado: 'sangrado', turns: 3 } },
+      { name: 'Ataque Ala-Delta', power: 30, emoji: '💨', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Reflejo Mucoso',
+      description: 'Al recibir un ataque Especial, aumenta su Velocidad un 15% durante 2 turnos.'
+    }
+  },
+  {
+    id: 'pez_damisela',
+    name: 'Pez Damisela Azul',
+    rarity: 'common',
+    imgPath: 'img/pez_damisela_azul.png',
+    emoji: '🐟',
+    maxHp: 7, atk: 4, def: 3, spa: 4, spd: 4, spe: 6,
+    growth: { maxHp: 0.7, atk: 0.4, def: 0.3, spa: 0.4, spd: 0.4, spe: 0.6 },
+    attacks: [
+      { name: 'Mordisco Territorial', power: 40, emoji: '🦷', categoria: 'Fisico' },
+      { name: 'Destello Azul', power: 0, emoji: '💡', categoria: 'Efecto', efecto: { estado: 'precision_reducida', turns: 2 } }
+    ],
+    passive: {
+      name: 'Frenesí Protector',
+      description: 'Si el rival falla por falta de precisión, aumenta tu Ataque Físico un +15% en tu próximo ataque.'
+    }
   }
 ];
 
@@ -602,6 +636,13 @@ function applySecondaryEffect(atk, defender) {
     setLogMessage(`¡${defender.type.name} está intimidado! ATF -${Math.round((atk.efecto.amount || 0.15) * 100)}%`, true);
     return;
   }
+  if (atk.efecto.estado === 'sangrado') {
+    if (checkStatusImmunity(defender)) return;
+    if (defender.sangradoTurns > 0) return;
+    defender.sangradoTurns = atk.efecto.turns || 3;
+    setLogMessage(`¡${defender.type.name} está sangrando! -1 PS/turno`, true);
+    return;
+  }
   if (checkStatusImmunity(defender)) return;
   if (defender.status !== null) return;
   if (Math.random() < atk.efecto.probabilidad) {
@@ -612,30 +653,35 @@ function applySecondaryEffect(atk, defender) {
   }
 }
 
-function triggerPassive(defender, attacker, categoria) {
-  const base = getFishById(defender.id);
+function triggerPassive(defFighter, atkFighter, categoria) {
+  const base = getFishById(defFighter.type.id);
   if (!base || !base.passive) return;
   if (base.passive.name === 'Púas Tóxicas' && categoria === 'Fisico') {
-    if (attacker.status !== null) return;
-    if (checkStatusImmunity(attacker)) return;
+    if (atkFighter.status !== null) return;
+    if (checkStatusImmunity(atkFighter)) return;
     if (Math.random() < 0.3) {
-      attacker.status = 'envenenado';
-      setLogMessage(`¡Púas Tóxicas de ${defender.name} ha envenenado al rival!`, true);
+      atkFighter.status = 'envenenado';
+      setLogMessage(`¡Púas Tóxicas de ${defFighter.type.name} ha envenenado al rival!`, true);
     }
   }
   if (base.passive.name === 'Tentáculos Pegajosos' && categoria === 'Fisico') {
     if (Math.random() < 0.15) {
-      attacker.atrapado = true;
-      setLogMessage(`¡${defender.name} atrapó a ${attacker.name} con sus Tentáculos Pegajosos!`, true);
+      atkFighter.atrapado = true;
+      setLogMessage(`¡${defFighter.type.name} atrapó a ${atkFighter.type.name} con sus Tentáculos Pegajosos!`, true);
     }
   }
   if (base.passive.name === 'Filamentos Urticantes' && categoria === 'Fisico') {
-    if (attacker.status !== null) return;
-    if (checkStatusImmunity(attacker)) return;
+    if (atkFighter.status !== null) return;
+    if (checkStatusImmunity(atkFighter)) return;
     if (Math.random() < 0.15) {
-      attacker.status = 'paralizado';
-      setLogMessage(`¡Filamentos Urticantes de ${defender.name} ha paralizado al rival!`, true);
+      atkFighter.status = 'paralizado';
+      setLogMessage(`¡Filamentos Urticantes de ${defFighter.type.name} ha paralizado al rival!`, true);
     }
+  }
+  if (base.passive.name === 'Reflejo Mucoso' && categoria === 'Especial') {
+    const existing = defFighter.buffs?.speBoost || 0;
+    defFighter.buffs = { ...(defFighter.buffs || {}), speBoost: existing + Math.round(defFighter.type.spe * 0.15), speTurns: 2 };
+    setLogMessage(`¡Reflejo Mucoso de ${defFighter.type.name}! SPE +15%`, true);
   }
 }
 
@@ -745,7 +791,7 @@ function applyDefensivePassives(dmg, defender, categoria) {
 }
 
 function applyStatusDamage(fighter) {
-  if (!fighter.status || fighter.currentHp <= 0) return;
+  if (fighter.currentHp <= 0) return;
   if (fighter.status === 'envenenado' || fighter.status === 'quemado') {
     fighter.currentHp = Math.max(0, fighter.currentHp - 1);
     const labels = { envenenado: 'ENV', quemado: 'QUE' };
@@ -754,6 +800,11 @@ function applyStatusDamage(fighter) {
   if (fighter.status === 'veneno_grave') {
     fighter.currentHp = Math.max(0, fighter.currentHp - 2);
     setLogMessage(`${fighter.type.name} sufre daño por Veneno Grave (-2 PS)`, true);
+  }
+  if (fighter.sangradoTurns > 0) {
+    fighter.currentHp = Math.max(0, fighter.currentHp - 1);
+    fighter.sangradoTurns--;
+    setLogMessage(`${fighter.type.name} sufre daño por Sangrado (-1 PS, ${fighter.sangradoTurns} turnos restantes)`, true);
   }
 }
 
@@ -814,6 +865,7 @@ function updateStatusDisplay() {
 
   let pText = '', pCls = 'status-tag';
   if (pStatus && statusLabels[pStatus]) { pText = `[${statusLabels[pStatus]}]`; pCls += ' ' + pStatus; }
+  if (state.player.sangradoTurns > 0) pText += (pText ? ' ' : '') + '[SAN]';
   if (state.player.debuff) {
     if (!pCls.includes('status-tag ')) pCls += ' cegado';
     const icon = state.player.debuff.type === 'spe_reduction' ? '🐢' : '👁️‍🗨️';
@@ -826,6 +878,7 @@ function updateStatusDisplay() {
 
   let eText = '', eCls = 'status-tag';
   if (eStatus && statusLabels[eStatus]) { eText = `[${statusLabels[eStatus]}]`; eCls += ' ' + eStatus; }
+  if (state.enemy.sangradoTurns > 0) eText += (eText ? ' ' : '') + '[SAN]';
   if (state.enemy.debuff) {
     if (!eCls.includes('status-tag ')) eCls += ' cegado';
     const icon = state.enemy.debuff.type === 'spe_reduction' ? '🐢' : '👁️‍🗨️';
@@ -1056,7 +1109,9 @@ const ARENA_FISH = {
     { fishId: 'pulpo_anillos_azules' },
     { fishId: 'pez_loro' },
     { fishId: 'morena' },
-    { fishId: 'camaron_pistola' }
+    { fishId: 'camaron_pistola' },
+    { fishId: 'pez_cirujano' },
+    { fishId: 'pez_damisela' }
   ]
 };
 
@@ -1321,6 +1376,9 @@ function getAttackEffectDescriptions(atk) {
         break;
       case 'atk_reduction':
         parts.push({ text: `Reduce el ATF del rival -${Math.round((e.amount || 0.15) * 100)}% (${e.turns || 3} turnos)`, type: 'debuff' });
+        break;
+      case 'sangrado':
+        parts.push({ text: `${prob}Produce sangrado al rival (-1 PS por turno, ${e.turns || 3} turnos)`, type: 'debuff' });
         break;
       case 'def_boost':
         parts.push({ text: `Aumenta tu Defensa Física +${e.amount || 2} (${e.turns || 2} turnos)`, type: 'buff' });
@@ -2338,8 +2396,8 @@ function initCombat() {
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
   if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
-  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, debuff: null, buffs: null };
-  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, debuff: null, buffs: null };
+  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false };
+  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false };
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.isAnimating = false;
@@ -2538,6 +2596,11 @@ function playerAttack(index) {
     return;
   }
   let dmg = calculateDamage(atk.power, state.player.type, state.enemy.type, atk.categoria, state.player.status, state.enemy.buffs, state.player.atkReduction);
+  if (state.player.frenesiActivo && atk.categoria === 'Fisico') {
+    dmg = Math.round(dmg * 1.15);
+    state.player.frenesiActivo = false;
+    setLogMessage(`¡Frenesí Protector de ${state.player.type.name}! Daño +15%`, true);
+  }
   dmg = applyDefensivePassives(dmg, state.enemy, atk.categoria);
   state.enemy.currentHp = Math.max(0, state.enemy.currentHp - dmg);
   if (atk.categoria === 'Fisico') trackMission('fisico_attacks');
@@ -2550,7 +2613,7 @@ function playerAttack(index) {
   }
   animateHit(dom.enemyArea); updateHpBars();
   triggerOnHitPassive(state.player, state.enemy, atk);
-  triggerPassive(state.enemy.type, state.player, atk.categoria);
+  triggerPassive(state.enemy, state.player, atk.categoria);
   applySecondaryEffect(atk, state.enemy);
   applySelfBuff(atk, state.player);
   checkDestelloAdvertencia(state.enemy, state.player);
@@ -2617,6 +2680,11 @@ function doEnemyAttack() {
   }
 
   if (checkPrecision(state.enemy)) {
+    const defBase = getFishById(state.player.type.id);
+    if (defBase && defBase.passive && defBase.passive.name === 'Frenesí Protector') {
+      state.player.frenesiActivo = true;
+      setLogMessage(`¡Frenesí Protector de ${state.player.type.name}! ATF +15% en el próximo ataque`, true);
+    }
     applyPassiveHealing(state.enemy);
     decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
     if (state.turnPhase === 'enemy_first') {
@@ -2645,7 +2713,7 @@ function doEnemyAttack() {
   }
   animateHit(dom.playerArea); updateHpBars();
   triggerOnHitPassive(state.enemy, state.player, atk);
-  triggerPassive(state.player.type, state.enemy, atk.categoria);
+  triggerPassive(state.player, state.enemy, atk.categoria);
   applySecondaryEffect(atk, state.player);
   applySelfBuff(atk, state.enemy);
   checkDestelloAdvertencia(state.player, state.enemy);
