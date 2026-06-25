@@ -17,6 +17,22 @@ html, body {
   display: flex; flex-direction: column;
 }
 
+/* ===== NOTIFICATION DOT ===== */
+.notification-dot {
+  display: none;
+  position: absolute; top: -2px; right: -4px;
+  width: 8px; height: 8px;
+  background: #ff0000;
+  border-radius: 50%;
+  animation: dot-pulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+.notification-dot.visible { display: block; }
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+}
+
 /* ===== SCREENS ===== */
 .screen { display: none; flex-direction: column; height: 100%; width: 100%; position: absolute; top: 0; left: 0; }
 .screen.active { display: flex; }
@@ -611,6 +627,77 @@ body.modal-open .section.active { overflow: hidden; }
 .item-buy-btn { width: 100%; margin: 0 !important; }
 .item-buy-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
 
+/* ===== RESET MODAL ===== */
+.reset-modal {
+  position: fixed; inset: 0; z-index: 300;
+  display: none; align-items: center; justify-content: center;
+}
+.reset-modal.open { display: flex; }
+.reset-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+}
+.reset-modal-content {
+  position: relative; z-index: 1;
+  width: 88%; max-width: 360px;
+  background: linear-gradient(180deg, #1a0a0a, #0d0d0d);
+  border: 1px solid rgba(244,67,54,0.3);
+  border-radius: 20px; padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  -webkit-overflow-scrolling: touch;
+}
+.reset-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(244,67,54,0.15);
+}
+.reset-modal-title { font-size: 1.05rem; font-weight: 800; color: #f44336; }
+.reset-modal-close {
+  font-size: 1.3rem; background: none; border: none; color: rgba(255,255,255,0.4);
+  cursor: pointer; touch-action: manipulation; padding: 0.25rem; line-height: 1;
+}
+.reset-modal-close:active { color: #fff; }
+.reset-modal-body {
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+  text-align: center;
+}
+.reset-warning-icon { font-size: 3rem; line-height: 1; }
+.reset-warning-text {
+  font-size: 0.85rem; color: rgba(255,255,255,0.75);
+  line-height: 1.6; max-width: 300px; margin: 0;
+}
+.reset-input-label {
+  font-size: 0.8rem; color: rgba(255,255,255,0.55); width: 100%; text-align: left;
+}
+.reset-input-label strong { color: #f44336; }
+.reset-confirm-input {
+  width: 100%; padding: 0.85rem 1rem; border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.4); color: #fff;
+  font-size: 1.1rem; font-weight: 800; letter-spacing: 2px;
+  text-align: center; text-transform: uppercase;
+  outline: none; transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.reset-confirm-input:focus { border-color: #f44336; }
+.btn-reset {
+  display: block; width: calc(100% - 2rem); margin: 0.75rem auto 0;
+  padding: 1rem; border: none; border-radius: 14px;
+  font-size: 1.15rem; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #f44336, #e57373);
+  cursor: pointer; touch-action: manipulation;
+  transition: opacity 0.25s, transform 0.15s; text-align: center; flex-shrink: 0;
+}
+.btn-reset:active { transform: scale(0.97); }
+.btn-reset-confirm {
+  width: 100%; padding: 1rem; border: none; border-radius: 14px;
+  font-size: 1.05rem; font-weight: 800; color: #fff;
+  background: linear-gradient(135deg, #d32f2f, #f44336);
+  cursor: pointer; touch-action: manipulation;
+  transition: opacity 0.25s, transform 0.15s;
+}
+.btn-reset-confirm:active:not(:disabled) { transform: scale(0.97); }
+.btn-reset-confirm:disabled { opacity: 0.3; cursor: default; transform: none; }
+
 /* ===== COIN REWARD ANIMATION ===== */
 .coin-reward {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
@@ -648,7 +735,7 @@ body.modal-open .section.active { overflow: hidden; }
   flex-shrink: 0;
 }
 .missions-btn:active { background: rgba(79,172,254,0.15); border-color: rgba(79,172,254,0.3); }
-.missions-btn-icon { font-size: 1.3rem; }
+.missions-btn-icon { font-size: 1.3rem; position: relative; }
 .missions-btn-label { font-size: 0.85rem; font-weight: 700; color: #4facfe; flex: 1; }
 .missions-btn-progress { font-size: 0.7rem; color: rgba(255,255,255,0.5); font-weight: 600; }
 
@@ -800,7 +887,7 @@ body.modal-open .section.active { overflow: hidden; }
   cursor: pointer; touch-action: manipulation;
   transition: color 0.2s, background 0.2s; position: relative;
 }
-.nav-tab .nav-icon { font-size: 1.25rem; line-height: 1; }
+.nav-tab .nav-icon { font-size: 1.25rem; line-height: 1; position: relative; }
 .nav-tab .nav-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
 .nav-tab.active { color: #4facfe; }
 .nav-tab.active::after { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 3px; background: #4facfe; border-radius: 0 0 3px 3px; }

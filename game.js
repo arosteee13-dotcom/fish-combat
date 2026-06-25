@@ -767,6 +767,32 @@ function imgTag(path, alt, fallbackEmoji) {
   </div>`;
 }
 
+/* ===== NOTIFICATIONS ===== */
+function checkPendingNotifications() {
+  const now = Date.now();
+  const canClaimGift = !state.lastFreeClaim || (now - state.lastFreeClaim) > 86400000;
+
+  const completed = DAILY_MISSIONS.filter(m => state.missions[m.id] >= m.target);
+  const hasUnclaimed = completed.some(m => !state.missionsClaimed.includes(m.id));
+
+  const allClaimed = DAILY_MISSIONS.every(m => state.missionsClaimed.includes(m.id));
+  const bonusAvailable = allClaimed && !state.missionsBonusClaimed;
+
+  return { dailyGift: canClaimGift, missions: hasUnclaimed || bonusAvailable };
+}
+
+function updateNotificationDots() {
+  const { dailyGift, missions } = checkPendingNotifications();
+  const dotGift = document.getElementById('dot-daily-gift');
+  const dotMissions = document.getElementById('dot-missions');
+  if (dotGift) dotGift.classList.toggle('visible', dailyGift);
+  if (dotMissions) {
+    const unclaimedCount = DAILY_MISSIONS.filter(m => state.missions[m.id] >= m.target && !state.missionsClaimed.includes(m.id)).length;
+    dotMissions.classList.toggle('visible', missions);
+    dotMissions.textContent = missions && unclaimedCount > 1 ? unclaimedCount : '';
+  }
+}
+
 /* ===== PERSISTENCIA ===== */
 const SAVE_KEY = 'fba_manual_save';
 
@@ -1416,6 +1442,8 @@ function renderShop() {
   }
   dom.shopContent.appendChild(giftCard);
 
+  updateNotificationDots();
+
   /* ===== 2. OFERTAS DEL DÍA ===== */
   const offers = generateDailyOffers();
   if (offers.length > 0) {
@@ -1563,6 +1591,7 @@ function claimFreeGift(amount) {
   state.lastFreeClaim = Date.now();
   updateCoinDisplay();
   renderShop();
+  updateNotificationDots();
 }
 
 function formatTimeLeft(ms) {
@@ -1580,6 +1609,7 @@ function checkDailyReset() {
     state.missionsBonusClaimed = false;
     state.missionsDate = today;
   }
+  updateNotificationDots();
 }
 
 function getCompletedMissions() {
@@ -1605,6 +1635,7 @@ function claimMission(id) {
   updateCoinDisplay();
   renderMissionsModal();
   updateMissionsButton();
+  updateNotificationDots();
 }
 
 function updateMissionsButton() {
@@ -1684,11 +1715,13 @@ function renderMissionsModal() {
       updateCoinDisplay();
       renderMissionsModal();
       updateMissionsButton();
+      updateNotificationDots();
     });
   }
 
   const closeBtn = document.getElementById('missions-modal-close-btn');
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeMissionsModal(); });
+  updateNotificationDots();
 }
 
 function openMissionsModal() {
@@ -2425,6 +2458,65 @@ function resetGame() {
   showSection('fight'); showScreen('main');
 }
 
+/* ===== REINICIO DE PARTIDA ===== */
+function openResetModal() {
+  const modal = document.getElementById('reset-modal');
+  const input = document.getElementById('reset-confirm-input');
+  const confirmBtn = document.getElementById('btn-reset-confirm');
+  if (!modal || !input || !confirmBtn) return;
+
+  input.value = '';
+  confirmBtn.disabled = true;
+
+  const handler = () => {
+    confirmBtn.disabled = input.value !== 'REINICIAR';
+  };
+  input.addEventListener('input', handler);
+  modal._inputHandler = handler;
+
+  modal.classList.add('open');
+  document.body.classList.add('modal-open');
+  setTimeout(() => input.focus(), 100);
+}
+
+function closeResetModal() {
+  const modal = document.getElementById('reset-modal');
+  if (!modal) return;
+  modal.classList.remove('open');
+  document.body.classList.remove('modal-open');
+  if (modal._inputHandler) {
+    const input = document.getElementById('reset-confirm-input');
+    if (input) input.removeEventListener('input', modal._inputHandler);
+    delete modal._inputHandler;
+  }
+}
+
+function resetAccount() {
+  localStorage.removeItem('fba_manual_save');
+
+  state.coins = 100;
+  state.diamonds = 0;
+  state.cups = 0;
+  state.currentArena = 1;
+  state.arenaMaxReached = 1;
+  state.unlockedFish = ['salmonete'];
+  state.fishLevels = {};
+  state.items = [];
+  state.equippedItems = {};
+  state.lastFreeClaim = null;
+  state.missions = { win_battles: 0, fisico_attacks: 0, especial_attacks: 0 };
+  state.missionsClaimed = [];
+  state.missionsBonusClaimed = false;
+  state.missionsDate = null;
+  state.selectedFishId = 'salmonete';
+  state.player = null;
+  state.enemy = null;
+  state.isPlayerTurn = true;
+  state.gameOver = false;
+
+  location.reload();
+}
+
 /* ===== EVENTOS ===== */
 function setupEvents() {
   dom.btnBattle.addEventListener('pointerdown', e => {
@@ -2446,6 +2538,24 @@ function setupEvents() {
   });
   dom.btnRestart.addEventListener('pointerdown', e => { e.preventDefault(); resetGame(); });
   dom.btnSave.addEventListener('pointerdown', e => { e.preventDefault(); saveGame(); });
+  const resetBtn = document.getElementById('btn-reset');
+  if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
+  const resetModal = document.getElementById('reset-modal');
+  if (resetModal) {
+    resetModal.addEventListener('pointerdown', e => {
+      if (e.target === resetModal || e.target.classList.contains('reset-modal-backdrop')) {
+        e.preventDefault(); closeResetModal();
+      }
+    });
+    const resetConfirmBtn = document.getElementById('btn-reset-confirm');
+    if (resetConfirmBtn) resetConfirmBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (resetConfirmBtn.disabled) return;
+      resetAccount();
+    });
+    const resetCloseBtn = document.getElementById('reset-modal-close-btn');
+    if (resetCloseBtn) resetCloseBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeResetModal(); });
+  }
   const missionsBtn = document.getElementById('missions-btn');
   if (missionsBtn) missionsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openMissionsModal(); });
   dom.missionsModal.addEventListener('pointerdown', e => {
@@ -2482,6 +2592,7 @@ function init() {
   updateArenaBackground();
   updateSaveTimestampDisplay();
   updateMissionsButton();
+  updateNotificationDots();
   showSection('fight');
   showScreen('main');
 }

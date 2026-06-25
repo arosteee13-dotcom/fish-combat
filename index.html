@@ -26,7 +26,7 @@
           <div id="cups-display" class="cups-display">🏆 0 / 300</div>
           <div id="fight-content" class="fight-content"></div>
           <div id="missions-btn" class="missions-btn">
-            <span class="missions-btn-icon">📋</span>
+            <span class="missions-btn-icon">📋<span class="notification-dot" id="dot-missions"></span></span>
             <span class="missions-btn-label">Misiones Diarias</span>
             <span class="missions-btn-progress"></span>
           </div>
@@ -91,7 +91,26 @@
           <div class="settings-content">
             <p class="settings-desc">Tu progreso se guarda manualmente.</p>
             <button id="btn-save" class="btn-primary save-btn">💾 Guardar Partida</button>
+            <button id="btn-reset" class="btn-reset">🗑️ Nueva Partida</button>
             <p id="save-time" class="save-time">Nunca guardado</p>
+          </div>
+          <div id="reset-modal" class="reset-modal">
+            <div class="reset-modal-backdrop"></div>
+            <div class="reset-modal-content">
+              <div class="reset-modal-header">
+                <span class="reset-modal-title">🗑️ Nueva Partida</span>
+                <button class="reset-modal-close" id="reset-modal-close-btn">✕</button>
+              </div>
+              <div class="reset-modal-body">
+                <div class="reset-warning-icon">⚠️</div>
+                <p class="reset-warning-text">
+                  ¡Atención! Si inicias una nueva partida perderás todos tus peces, trofeos, oro y gemas de forma permanente. Esta acción es irreversible.
+                </p>
+                <label class="reset-input-label">Escribe <strong>REINICIAR</strong> para confirmar:</label>
+                <input type="text" id="reset-confirm-input" class="reset-confirm-input" placeholder="REINICIAR" autocomplete="off">
+                <button class="btn-reset-confirm" id="btn-reset-confirm" disabled>Confirmar Borrado</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -99,7 +118,7 @@
 
       <nav id="bottom-nav">
         <button class="nav-tab" data-tab="shop">
-          <span class="nav-icon">🛒</span>
+          <span class="nav-icon">🛒<span class="notification-dot" id="dot-daily-gift"></span></span>
           <span class="nav-label">Tienda</span>
         </button>
         <button class="nav-tab" data-tab="inventory">
