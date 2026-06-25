@@ -1403,13 +1403,72 @@ function pickChestFish(chestId) {
   };
 }
 
+/* ===== SEEDED RNG ===== */
+function getDateSeed() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const dateStr = `${y}-${m}-${day}`;
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    const char = dateStr.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function createSeededRandom(seed) {
+  let s = seed;
+  return function() {
+    s |= 0;
+    s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
 function generateDailyOffers() {
   const pool = getArenaFishPool(state.currentArena)
     .map(e => getFishById(e.fishId))
     .filter(Boolean)
     .filter(f => !state.unlockedFish.includes(f.id));
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  if (pool.length === 0) return [];
+  const rng = createSeededRandom(getDateSeed());
+  const shuffled = [...pool].sort(() => rng() - 0.5);
   return shuffled.slice(0, 2);
+}
+
+function getTimeToMidnight() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setDate(midnight.getDate() + 1);
+  midnight.setHours(0, 0, 0, 0);
+  return midnight.getTime() - now.getTime();
+}
+
+function formatCountdown(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+let offersCountdownInterval = null;
+
+function updateOffersCountdown() {
+  const el = document.getElementById('offers-countdown');
+  if (!el) return;
+  const ms = getTimeToMidnight();
+  el.textContent = `⏳ ${formatCountdown(ms)}`;
+}
+
+function startOffersCountdown() {
+  if (offersCountdownInterval) clearInterval(offersCountdownInterval);
+  updateOffersCountdown();
+  offersCountdownInterval = setInterval(updateOffersCountdown, 1000);
 }
 
 function renderShop() {
@@ -1446,12 +1505,12 @@ function renderShop() {
 
   /* ===== 2. OFERTAS DEL DÍA ===== */
   const offers = generateDailyOffers();
-  if (offers.length > 0) {
-    const offersTitle = document.createElement('h3');
-    offersTitle.className = 'shop-section-title';
-    offersTitle.textContent = '⭐ Ofertas del Día';
-    dom.shopContent.appendChild(offersTitle);
+  const offersTitle = document.createElement('h3');
+  offersTitle.className = 'shop-section-title';
+  offersTitle.innerHTML = '⭐ Ofertas del Día <span class="offers-countdown" id="offers-countdown"></span>';
+  dom.shopContent.appendChild(offersTitle);
 
+  if (offers.length > 0) {
     offers.forEach(fish => {
       const price = fish.rarity === 'common' ? 300 : 800;
       const canAfford = state.coins >= price;
@@ -1474,7 +1533,14 @@ function renderShop() {
       }
       dom.shopContent.appendChild(card);
     });
+  } else {
+    const emptyMsg = document.createElement('p');
+    emptyMsg.className = 'offers-empty';
+    emptyMsg.textContent = '🎉 ¡Ya tienes todos los peces disponibles!';
+    dom.shopContent.appendChild(emptyMsg);
   }
+
+  startOffersCountdown();
 
   /* ===== 3. OBJETOS EQUIPABLES ===== */
   const itemsTitle = document.createElement('h3');
