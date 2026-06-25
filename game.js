@@ -332,6 +332,13 @@ const DAILY_MISSIONS = [
 /* ===== CONSTANTS ===== */
 const MAX_LEVEL = 12;
 
+const ARENA_CUP_CHANGES = {
+  1: { win: 30, lose: -1 },
+  2: { win: 30, lose: -10 },
+  3: { win: 30, lose: -20 },
+  4: { win: 30, lose: -25 }
+};
+
 const ARENA_CONFIG = {
   1: { name: 'La Orilla', icon: '🏖️', minCups: 0, maxCups: 300, cssClass: 'arena-beach', winGold: 50, loseGold: 10, minLevel: 1, maxLevel: 3 },
   2: { name: 'Arrecife de Coral', icon: '🪸', minCups: 301, maxCups: 600, cssClass: 'arena-coral', winGold: 80, loseGold: 15, minLevel: 3, maxLevel: 6 },
@@ -395,8 +402,18 @@ const dom = {
 /* ===== UTILITY ===== */
 function getFishById(id) { return FISH_TYPES.find(f => f.id === id); }
 function randomFish() { return FISH_TYPES[Math.floor(Math.random() * FISH_TYPES.length)]; }
+
+function getArenaFishPool(arenaId) {
+  let pool = [...(ARENA_FISH[arenaId] || [])];
+  if (arenaId === 2) {
+    const prev = ARENA_FISH[1] || [];
+    pool = [...prev, ...pool];
+  }
+  return pool;
+}
+
 function randomArenaFish(arenaId) {
-  const pool = ARENA_FISH[arenaId] || [];
+  const pool = getArenaFishPool(arenaId);
   if (pool.length === 0) return randomFish();
   const entry = pool[Math.floor(Math.random() * pool.length)];
   return getFishById(entry.fishId) || randomFish();
@@ -454,14 +471,19 @@ function hasEquippedItem(fishId, itemId) {
 }
 
 /* ===== UPGRADE ===== */
-function getUpgradeCost(level) {
+const UPGRADE_BASE = { common: 50, rare: 100, epic: 250, legendary: 500 };
+
+function getUpgradeCost(level, rarity) {
   if (level >= MAX_LEVEL) return null;
-  return 100 * Math.pow(2, level - 1);
+  const base = UPGRADE_BASE[rarity] || 100;
+  return base * Math.pow(2, level - 1);
 }
 
 function upgradeFish(fishId) {
+  const fish = getFishById(fishId);
+  if (!fish) return;
   const level = getFishLevel(fishId);
-  const cost = getUpgradeCost(level);
+  const cost = getUpgradeCost(level, fish.rarity);
   if (cost === null) { alert('¡Este pez ya está en el nivel máximo!'); return; }
   if (state.coins < cost) { alert('Monedas insuficientes'); return; }
   state.coins -= cost;
@@ -1193,7 +1215,7 @@ function showFishDetail(fishId) {
 
   const badge = isSelected ? '<span class="fish-card-badge">ACTIVO</span>' : '';
 
-  const upgradeCost = getUpgradeCost(level);
+  const upgradeCost = getUpgradeCost(level, base.rarity);
   const canAfford = upgradeCost !== null && state.coins >= upgradeCost;
 
   let upgradeHtml;
@@ -1307,7 +1329,7 @@ function randInt(min, max) {
 }
 
 function pickChestFish(chestId) {
-  const pool = (ARENA_FISH[state.currentArena] || [])
+  const pool = getArenaFishPool(state.currentArena)
     .map(e => getFishById(e.fishId))
     .filter(Boolean);
   if (pool.length === 0) return null;
@@ -1341,7 +1363,7 @@ function pickChestFish(chestId) {
 }
 
 function generateDailyOffers() {
-  const pool = (ARENA_FISH[state.currentArena] || [])
+  const pool = getArenaFishPool(state.currentArena)
     .map(e => getFishById(e.fishId))
     .filter(Boolean)
     .filter(f => !state.unlockedFish.includes(f.id));
@@ -2360,7 +2382,8 @@ function checkGameOver() {
 function showResult(victory) {
   const arena = getArenaConfig(state.currentArena);
   const reward = victory ? arena.winGold : arena.loseGold;
-  const cupChange = victory ? 30 : -1;
+  const arenaCups = ARENA_CUP_CHANGES[state.currentArena] || ARENA_CUP_CHANGES[1];
+  const cupChange = victory ? arenaCups.win : arenaCups.lose;
   state.coins += reward;
   state.cups = Math.max(0, state.cups + cupChange);
   updateCoinDisplay(); updateCupsDisplay();
@@ -2369,7 +2392,7 @@ function showResult(victory) {
   dom.resultTitle.textContent = victory ? '¡VICTORIA!' : 'DERROTA';
   dom.resultTitle.className = 'result-title ' + (victory ? 'victory' : 'defeat');
   dom.resultEmoji.textContent = victory ? '🏆' : '💀';
-  dom.resultCups.textContent = victory ? '+30 🏆' : '-1 🏆';
+  dom.resultCups.textContent = `${victory ? '+' + arenaCups.win : arenaCups.lose} 🏆`;
   dom.resultCups.style.color = victory ? '#4facfe' : '#f44336';
   if (victory) trackMission('win_battles');
   dom.resultSub.textContent = victory
