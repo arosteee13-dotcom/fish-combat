@@ -314,6 +314,40 @@ const FISH_TYPES = [
       name: 'Excreción de Arena',
       description: 'Al acertar Mordisco de Pico, aumenta su DEF +10% (máx. 3 veces por combate).'
     }
+  },
+  {
+    id: 'morena',
+    name: 'Morena de Arrecife',
+    rarity: 'epic',
+    imgPath: 'img/morena_arrecife.png',
+    emoji: '🐍',
+    maxHp: 11, atk: 7, def: 3, spa: 2, spd: 5, spe: 7,
+    growth: { maxHp: 1.1, atk: 0.7, def: 0.3, spa: 0.2, spd: 0.5, spe: 0.7 },
+    attacks: [
+      { name: 'Mandíbula Oculta', power: 60, emoji: '👄', categoria: 'Fisico', efecto: { probabilidad: 0.2, estado: 'aturdido' } },
+      { name: 'Intimidación Visual', power: 0, emoji: '😰', categoria: 'Efecto', efecto: { estado: 'atk_reduction', turns: 3, amount: 0.15 } }
+    ],
+    passive: {
+      name: 'Cazadora Nocturna',
+      description: 'Aumenta su Velocidad +20% durante los 2 primeros turnos del combate.'
+    }
+  },
+  {
+    id: 'camaron_pistola',
+    name: 'Camarón Pistola',
+    rarity: 'rare',
+    imgPath: 'img/camaron_pistola.png',
+    emoji: '🦐',
+    maxHp: 9, atk: 3, def: 5, spa: 7, spd: 3, spe: 5,
+    growth: { maxHp: 0.9, atk: 0.3, def: 0.5, spa: 0.7, spd: 0.3, spe: 0.5 },
+    attacks: [
+      { name: 'Disparo de Burbuja Sónica', power: 65, emoji: '💥', categoria: 'Especial', efecto: { probabilidad: 0.25, estado: 'aturdido' } },
+      { name: 'Chispa Lumínica', power: 30, emoji: '💡', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'precision_reducida', turns: 2 } }
+    ],
+    passive: {
+      name: 'Onda Expansiva',
+      description: 'Al usar un ataque Especial, 50% de probabilidad de reducir la Velocidad del rival un -15% el siguiente turno.'
+    }
   }
 ];
 
@@ -562,12 +596,19 @@ function applySecondaryEffect(atk, defender) {
     }
     return;
   }
+  if (atk.efecto.estado === 'atk_reduction') {
+    if (checkStatusImmunity(defender)) return;
+    defender.atkReduction = atk.efecto.amount || 0.15;
+    setLogMessage(`¡${defender.type.name} está intimidado! ATF -${Math.round((atk.efecto.amount || 0.15) * 100)}%`, true);
+    return;
+  }
   if (checkStatusImmunity(defender)) return;
   if (defender.status !== null) return;
   if (Math.random() < atk.efecto.probabilidad) {
     defender.status = atk.efecto.estado;
     const labels = { paralizado: 'PAR', envenenado: 'ENV', quemado: 'QUE' };
-    setLogMessage(`¡${defender.type.name} queda ${atk.efecto.estado}!`, true);
+    const label = labels[atk.efecto.estado] || atk.efecto.estado;
+    setLogMessage(`¡${defender.type.name} queda ${label}!`, true);
   }
 }
 
@@ -744,7 +785,7 @@ function checkDestelloAdvertencia(defender, attacker) {
   }
 }
 
-function triggerOnHitPassive(attacker, atk) {
+function triggerOnHitPassive(attacker, defender, atk) {
   const base = getFishById(attacker.type.id);
   if (!base || !base.passive) return;
   if (base.passive.name === 'Excreción de Arena' && atk.name === 'Mordisco de Pico') {
@@ -755,6 +796,13 @@ function triggerOnHitPassive(attacker, atk) {
       setLogMessage(`¡Excreción de Arena! DEF +10% (${attacker.arenaCount}/3)`, true);
     }
   }
+  if (base.passive.name === 'Onda Expansiva' && atk.categoria === 'Especial') {
+    if (Math.random() < 0.5) {
+      const amount = Math.max(1, Math.round(defender.type.spe * 0.15));
+      defender.debuff = { type: 'spe_reduction', turns: 1, amount };
+      setLogMessage(`¡Onda Expansiva! Velocidad del rival -${amount}`, true);
+    }
+  }
 }
 
 function updateStatusDisplay() {
@@ -762,7 +810,7 @@ function updateStatusDisplay() {
   const eStatus = state.enemy.status;
   dom.playerStatus = dom.playerStatus || document.getElementById('player-status');
   dom.enemyStatus = dom.enemyStatus || document.getElementById('enemy-status');
-  const statusLabels = { paralizado: 'PAR', envenenado: 'ENV', quemado: 'QUE', veneno_grave: 'GRA' };
+  const statusLabels = { paralizado: 'PAR', envenenado: 'ENV', quemado: 'QUE', veneno_grave: 'GRA', aturdido: 'STN' };
 
   let pText = '', pCls = 'status-tag';
   if (pStatus && statusLabels[pStatus]) { pText = `[${statusLabels[pStatus]}]`; pCls += ' ' + pStatus; }
@@ -1006,7 +1054,9 @@ const ARENA_FISH = {
   ],
   2: [
     { fishId: 'pulpo_anillos_azules' },
-    { fishId: 'pez_loro' }
+    { fishId: 'pez_loro' },
+    { fishId: 'morena' },
+    { fishId: 'camaron_pistola' }
   ]
 };
 
@@ -1263,8 +1313,14 @@ function getAttackEffectDescriptions(atk) {
       case 'paralizado':
         parts.push({ text: `${prob}Probabilidad de paralizar al rival`, type: 'debuff' });
         break;
+      case 'aturdido':
+        parts.push({ text: `${prob}Probabilidad de aturdir al rival (pierde el turno)`, type: 'debuff' });
+        break;
       case 'veneno_grave':
         parts.push({ text: `${prob}Envenena gravemente al rival (-2 PS por turno)`, type: 'debuff' });
+        break;
+      case 'atk_reduction':
+        parts.push({ text: `Reduce el ATF del rival -${Math.round((e.amount || 0.15) * 100)}% (${e.turns || 3} turnos)`, type: 'debuff' });
         break;
       case 'def_boost':
         parts.push({ text: `Aumenta tu Defensa Física +${e.amount || 2} (${e.turns || 2} turnos)`, type: 'buff' });
@@ -2303,6 +2359,17 @@ function initCombat() {
     setLogMessage(`¡Tinta Concentrada reduce la precisión del rival!`, true);
   }
 
+  if (enemyBase?.passive?.name === 'Cazadora Nocturna') {
+    const bonus = Math.max(1, Math.round(enemyType.spe * 0.2));
+    state.enemy.buffs = { speBoost: bonus, speTurns: 2 };
+    setLogMessage(`¡Morena activa Cazadora Nocturna! SPE +${bonus}`, true);
+  }
+  if (playerBaseFish?.passive?.name === 'Cazadora Nocturna') {
+    const bonus = Math.max(1, Math.round(playerType.spe * 0.2));
+    state.player.buffs = { speBoost: bonus, speTurns: 2 };
+    setLogMessage(`¡Morena activa Cazadora Nocturna! SPE +${bonus}`, true);
+  }
+
   renderCombat();
   showScreen('combat');
   dom.enemySpd.textContent = `SPE: ${state.enemy.type.spe}`;
@@ -2373,6 +2440,15 @@ function checkParalysis(fighter, name) {
   return false;
 }
 
+function checkStun(fighter, name) {
+  if (fighter.status === 'aturdido') {
+    fighter.status = null;
+    setLogMessage(`¡${name} está aturdido y pierde el turno!`, true);
+    return true;
+  }
+  return false;
+}
+
 function startTurn() {
   if (state.gameOver) return;
   state.isAnimating = false;
@@ -2392,7 +2468,15 @@ function startTurn() {
     state.turnPhase = 'player_first'; state.isPlayerTurn = true;
     setLogMessage(`¡Tu turno!${turnMsg}`);
     updateAttackButtons();
-    if (checkParalysis(state.player, state.player.type.name)) {
+    if (checkStun(state.player, state.player.type.name)) {
+      state.isPlayerTurn = false; state.isAnimating = true;
+      updateAttackButtons();
+      applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
+      if (checkGameOver()) return;
+      applyPassiveHealing(state.player);
+      decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      setTimeout(() => doEnemyAttack(), 1200);
+    } else if (checkParalysis(state.player, state.player.type.name)) {
       state.isPlayerTurn = false; state.isAnimating = true;
       updateAttackButtons();
       applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
@@ -2405,7 +2489,13 @@ function startTurn() {
     state.turnPhase = 'enemy_first'; state.isPlayerTurn = false; state.isAnimating = true;
     updateAttackButtons();
     setLogMessage(`¡${state.enemy.type.name} ataca primero!${turnMsg}`, true);
-    if (checkParalysis(state.enemy, state.enemy.type.name)) {
+    if (checkStun(state.enemy, state.enemy.type.name)) {
+      applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
+      if (checkGameOver()) return;
+      applyPassiveHealing(state.enemy);
+      decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+      setTimeout(() => startTurn(), 1200);
+    } else if (checkParalysis(state.enemy, state.enemy.type.name)) {
       applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
       if (checkGameOver()) return;
       applyPassiveHealing(state.enemy);
@@ -2459,7 +2549,7 @@ function playerAttack(index) {
     setLogMessage(`¡${state.player.type.name} absorbió +${heal} PS!`, true);
   }
   animateHit(dom.enemyArea); updateHpBars();
-  triggerOnHitPassive(state.player, atk);
+  triggerOnHitPassive(state.player, state.enemy, atk);
   triggerPassive(state.enemy.type, state.player, atk.categoria);
   applySecondaryEffect(atk, state.enemy);
   applySelfBuff(atk, state.player);
@@ -2554,7 +2644,7 @@ function doEnemyAttack() {
     setLogMessage(`¡${state.enemy.type.name} absorbió +${heal} PS!`, true);
   }
   animateHit(dom.playerArea); updateHpBars();
-  triggerOnHitPassive(state.enemy, atk);
+  triggerOnHitPassive(state.enemy, state.player, atk);
   triggerPassive(state.player.type, state.enemy, atk.categoria);
   applySecondaryEffect(atk, state.player);
   applySelfBuff(atk, state.enemy);
