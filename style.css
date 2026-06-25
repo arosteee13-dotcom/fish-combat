@@ -183,10 +183,10 @@ body.modal-open .section.active { overflow: hidden; }
 .arena-rewards { font-size: 0.7rem; color: rgba(255,255,255,0.5); margin: 0.25rem 0 0.5rem 0; padding-left: 0.25rem; }
 
 /* ===== ARENA BACKGROUNDS ===== */
-#app.arena-beach { background: linear-gradient(180deg, #0a1628 0%, #0d1f3c 40%, #132a4a 100%); }
-#app.arena-coral { background: linear-gradient(180deg, #1a0a28 0%, #2d1045 40%, #3d1a5a 100%); }
-#app.arena-temple { background: linear-gradient(180deg, #1a2a0a 0%, #2d4510 40%, #3d5a1a 100%); }
-#app.arena-depths { background: linear-gradient(180deg, #0a0a1a 0%, #10102d 40%, #1a1a3d 100%); }
+#app.arena-beach { background: linear-gradient(180deg, #0a1628 0%, #0d1f3c 40%, #1a3a5c 100%); }
+#app.arena-coral { background: linear-gradient(180deg, #1a0628 0%, #2d1045 40%, #4a2068 100%); }
+#app.arena-temple { background: linear-gradient(180deg, #0a1a0a 0%, #0d2d10 40%, #1a4a2a 100%); }
+#app.arena-depths { background: linear-gradient(180deg, #050510 0%, #0a0a1a 40%, #0f0a2a 100%); }
 
 /* ===== CUPS DISPLAY ===== */
 .cups-display {

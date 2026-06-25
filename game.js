@@ -399,6 +399,91 @@ const FISH_TYPES = [
       name: 'Piel de Cuero',
       description: 'Reduce a la mitad el daño recibido por sangrado o veneno (mínimo 1 PS).'
     }
+  },
+  {
+    id: 'pez_mariposa',
+    name: 'Pez Mariposa',
+    rarity: 'common',
+    imgPath: 'img/pez_mariposa.png',
+    emoji: '🦋',
+    maxHp: 8, atk: 2, def: 3, spa: 4, spd: 5, spe: 6,
+    growth: { maxHp: 0.8, atk: 0.2, def: 0.3, spa: 0.4, spd: 0.5, spe: 0.6 },
+    attacks: [
+      { name: 'Picoteo Rápido', power: 35, emoji: '👄', categoria: 'Fisico' },
+      { name: 'Falso Ojo', power: 0, emoji: '👁️', categoria: 'Efecto', efecto: { estado: 'def_boost', turns: 3, amount: 2 } }
+    ],
+    passive: {
+      name: 'Quiebro Elegante',
+      description: 'Reduce el daño del primer ataque Físico recibido en un 20%.'
+    }
+  },
+  {
+    id: 'pez_cofre',
+    name: 'Pez Cofre Amarillo',
+    rarity: 'common',
+    imgPath: 'img/pez_cofre_amarillo.png',
+    emoji: '🟨',
+    maxHp: 9, atk: 3, def: 6, spa: 3, spd: 4, spe: 1,
+    growth: { maxHp: 0.9, atk: 0.3, def: 0.6, spa: 0.3, spd: 0.4, spe: 0.1 },
+    attacks: [
+      { name: 'Embestida Cúbica', power: 40, emoji: '💥', categoria: 'Fisico' },
+      { name: 'Burbujas de Presión', power: 35, emoji: '🫧', categoria: 'Especial' }
+    ],
+    passive: {
+      name: 'Piel Toxínica',
+      description: '30% de probabilidad de reducir el ATF del rival un 10% al recibir un ataque Físico.'
+    }
+  },
+  {
+    id: 'pez_leon',
+    name: 'Pez León',
+    rarity: 'rare',
+    imgPath: 'img/pez_leon.png',
+    emoji: '🦁',
+    maxHp: 10, atk: 4, def: 4, spa: 7, spd: 4, spe: 3,
+    growth: { maxHp: 1.0, atk: 0.4, def: 0.4, spa: 0.7, spd: 0.4, spe: 0.3 },
+    attacks: [
+      { name: 'Abanico de Espinas', power: 55, emoji: '🌊', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'envenenado' } },
+      { name: 'Onda Venenosa', power: 45, emoji: '☠️', categoria: 'Especial', efecto: { estado: 'spe_reduction', turns: 2, amount: 1 } }
+    ],
+    passive: {
+      name: 'Barrera de Agujas',
+      description: 'Al recibir un ataque Físico, inflige 1 PS de daño fijo al atacante.'
+    }
+  },
+  {
+    id: 'pez_angel_emperador',
+    name: 'Pez Ángel Emperador',
+    rarity: 'rare',
+    imgPath: 'img/pez_angel_emperador.png',
+    emoji: '👑',
+    maxHp: 10, atk: 5, def: 5, spa: 5, spd: 6, spe: 4,
+    growth: { maxHp: 1.0, atk: 0.5, def: 0.5, spa: 0.5, spd: 0.6, spe: 0.4 },
+    attacks: [
+      { name: 'Embestida Real', power: 55, emoji: '👑', categoria: 'Fisico' },
+      { name: 'Canto de Arrecife', power: 45, emoji: '🎵', categoria: 'Especial', efecto: { estado: 'spd_reduction', amount: 0.15 } }
+    ],
+    passive: {
+      name: 'Escamas Majestuosas',
+      description: 'Es inmune al estado alterado Sangrado.'
+    }
+  },
+  {
+    id: 'pez_piedra',
+    name: 'Pez Piedra',
+    rarity: 'rare',
+    imgPath: 'img/pez_piedra.png',
+    emoji: '🪨',
+    maxHp: 12, atk: 7, def: 7, spa: 2, spd: 3, spe: 1,
+    growth: { maxHp: 1.2, atk: 0.7, def: 0.7, spa: 0.2, spd: 0.3, spe: 0.1 },
+    attacks: [
+      { name: 'Fagocitar Sorpresa', power: 65, emoji: '🫧', categoria: 'Fisico' },
+      { name: 'Espina Dorsal Neurotóxica', power: 40, emoji: '💉', categoria: 'Fisico', efecto: { probabilidad: 1, estado: 'envenenado' } }
+    ],
+    passive: {
+      name: 'Mimetismo Absoluto',
+      description: 'En el primer turno, es inmune a todo el daño.'
+    }
   }
 ];
 
@@ -595,11 +680,12 @@ function upgradeFish(fishId) {
 }
 
 /* ===== DAMAGE FORMULA ===== */
-function calculateDamage(power, attacker, defender, categoria, attackerStatus, defenderBuffs, attackerAtkReduction) {
+function calculateDamage(power, attacker, defender, categoria, attackerStatus, defenderBuffs, attackerAtkReduction, defenderSpdReduction) {
   const atkDef = attackerStatus === 'quemado' && categoria === 'Fisico' ? Math.round(attacker.atk / 2) : attacker.atk;
   let A = categoria === 'Fisico' ? atkDef : attacker.spa;
   if (categoria === 'Fisico' && attackerAtkReduction) A = Math.round(A * (1 - attackerAtkReduction));
   let D = categoria === 'Fisico' ? defender.def : defender.spd;
+  if (categoria === 'Especial' && defenderSpdReduction) D = Math.round(D * (1 - defenderSpdReduction));
   if (categoria === 'Fisico' && defenderBuffs?.defBoost) D += defenderBuffs.defBoost;
   if (categoria === 'Fisico') {
     const base = getFishById(attacker.id);
@@ -657,8 +743,19 @@ function applySecondaryEffect(atk, defender) {
     setLogMessage(`¡${defender.type.name} está intimidado! ATF -${Math.round((atk.efecto.amount || 0.15) * 100)}%`, true);
     return;
   }
+  if (atk.efecto.estado === 'spd_reduction') {
+    if (checkStatusImmunity(defender)) return;
+    defender.spdReduction = atk.efecto.amount || 0.15;
+    setLogMessage(`¡${defender.type.name} perdió defensa especial! DFE -${Math.round((atk.efecto.amount || 0.15) * 100)}%`, true);
+    return;
+  }
   if (atk.efecto.estado === 'sangrado') {
     if (checkStatusImmunity(defender)) return;
+    const baseFish = getFishById(defender.type?.id || defender.id);
+    if (baseFish?.passive?.name === 'Escamas Majestuosas') {
+      setLogMessage(`¡${defender.type.name} es inmune al sangrado por sus Escamas Majestuosas!`, true);
+      return;
+    }
     if (defender.sangradoTurns > 0) return;
     defender.sangradoTurns = atk.efecto.turns || 3;
     setLogMessage(`¡${defender.type.name} está sangrando! -1 PS/turno`, true);
@@ -703,6 +800,16 @@ function triggerPassive(defFighter, atkFighter, categoria) {
     const existing = defFighter.buffs?.speBoost || 0;
     defFighter.buffs = { ...(defFighter.buffs || {}), speBoost: existing + Math.round(defFighter.type.spe * 0.15), speTurns: 2 };
     setLogMessage(`¡Reflejo Mucoso de ${defFighter.type.name}! SPE +15%`, true);
+  }
+  if (base.passive.name === 'Piel Toxínica' && categoria === 'Fisico') {
+    if (Math.random() < 0.3) {
+      atkFighter.atkReduction = 0.10;
+      setLogMessage(`¡Piel Toxínica de ${defFighter.type.name}! ATF del rival -10%`, true);
+    }
+  }
+  if (base.passive.name === 'Barrera de Agujas' && categoria === 'Fisico') {
+    atkFighter.currentHp = Math.max(0, atkFighter.currentHp - 1);
+    setLogMessage(`¡Barrera de Agujas de ${defFighter.type.name}! Inflige 1 PS de daño a ${atkFighter.type.name}.`, true);
   }
 }
 
@@ -808,13 +915,24 @@ function decrementBuffs(fighter) {
 }
 
 function applyDefensivePassives(dmg, defender, categoria) {
-  if (categoria !== 'Fisico') return dmg;
   const base = getFishById(defender.type.id);
+  if (base?.passive?.name === 'Mimetismo Absoluto' && defender.mimetismoAbsolutoActivo) {
+    defender.mimetismoAbsolutoActivo = false;
+    setLogMessage(`¡${defender.type.name} se esconde! Es inmune al daño en el primer turno.`, true);
+    return 0;
+  }
+  if (categoria !== 'Fisico') return dmg;
   if (base && base.passive) {
     if ((base.passive.name === 'Mimetismo Rocoso' || base.passive.name === 'Coraza Prestada') && !defender.mimetismoUsado) {
       defender.mimetismoUsado = true;
       setLogMessage(`¡${defender.type.name} activó ${base.passive.name} y redujo el daño a la mitad!`, true);
       return Math.max(1, Math.round(dmg / 2));
+    }
+    if (base.passive.name === 'Quiebro Elegante' && !defender.quiebroUsado) {
+      defender.quiebroUsado = true;
+      dmg = Math.max(1, Math.round(dmg * 0.8));
+      setLogMessage(`¡${defender.type.name} activó Quiebro Elegante! Daño físico -20%`, true);
+      return dmg;
     }
   }
   return dmg;
@@ -1152,7 +1270,12 @@ const ARENA_FISH = {
     { fishId: 'camaron_pistola' },
     { fishId: 'pez_cirujano' },
     { fishId: 'pez_damisela' },
-    { fishId: 'pez_ballesta' }
+    { fishId: 'pez_ballesta' },
+    { fishId: 'pez_mariposa' },
+    { fishId: 'pez_cofre' },
+    { fishId: 'pez_leon' },
+    { fishId: 'pez_angel_emperador' },
+    { fishId: 'pez_piedra' }
   ]
 };
 
@@ -1298,12 +1421,31 @@ function renderFightContent() {
   dom.btnBattle.disabled = false;
 }
 
+/* ===== ARENA MAP ===== */
+function buildArenaMap() {
+  const map = {};
+  Object.keys(ARENA_FISH).forEach(arenaId => {
+    (ARENA_FISH[arenaId] || []).forEach(entry => {
+      map[entry.fishId] = Number(arenaId);
+    });
+  });
+  return map;
+}
+const ARENA_FISH_MAP = buildArenaMap();
+
 /* ===== SECCIÓN: BANCO ===== */
 function renderBank() {
   dom.bankCards.innerHTML = '';
 
-  const owned = FISH_TYPES.filter(f => state.unlockedFish.includes(f.id)).sort(sortByRarity);
-  const unowned = FISH_TYPES.filter(f => !state.unlockedFish.includes(f.id)).sort(sortByRarity);
+  const rarityOrder = { common: 0, rare: 1, epic: 2, legendary: 3 };
+  const arenaIds = Object.keys(ARENA_CONFIG).map(Number).sort((a, b) => a - b);
+
+  const byArena = {};
+  FISH_TYPES.forEach(f => {
+    const arena = ARENA_FISH_MAP[f.id] || 1;
+    if (!byArena[arena]) byArena[arena] = [];
+    byArena[arena].push(f);
+  });
 
   function createFishCard(fish, isUnlocked) {
     const level = getFishLevel(fish.id);
@@ -1347,27 +1489,20 @@ function renderBank() {
     return card;
   }
 
-  if (owned.length > 0) {
-    const section = document.createElement('div');
-    section.className = 'bank-section';
-    section.innerHTML = '<h3 class="bank-section-title">Mis Peces Desbloqueados</h3>';
-    const list = document.createElement('div');
-    list.className = 'bank-section-list';
-    owned.forEach(f => list.appendChild(createFishCard(f, true)));
-    section.appendChild(list);
-    dom.bankCards.appendChild(section);
-  }
+  arenaIds.forEach(id => {
+    const fishList = (byArena[id] || []).sort((a, b) => rarityOrder[a.rarity] - rarityOrder[b.rarity]);
+    if (fishList.length === 0) return;
 
-  if (unowned.length > 0) {
+    const cfg = ARENA_CONFIG[id];
     const section = document.createElement('div');
     section.className = 'bank-section';
-    section.innerHTML = '<h3 class="bank-section-title">Peces por Desbloquear</h3>';
+    section.innerHTML = `<h3 class="bank-section-title">Arena ${id}: ${cfg.icon} ${cfg.name}</h3>`;
     const list = document.createElement('div');
     list.className = 'bank-section-list';
-    unowned.forEach(f => list.appendChild(createFishCard(f, false)));
+    fishList.forEach(f => list.appendChild(createFishCard(f, state.unlockedFish.includes(f.id))));
     section.appendChild(list);
     dom.bankCards.appendChild(section);
-  }
+  });
 }
 
 /* ===== ATTACK CARD RENDERER ===== */
@@ -2431,13 +2566,16 @@ function initCombat() {
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
   if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
-  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false };
-  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false };
+  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false };
+  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false };
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.isAnimating = false;
   state.turnPhase = 'player_first';
   state.isFirstEnemyTurn = true;
+
+  if (playerBaseFish?.passive?.name === 'Mimetismo Absoluto') state.player.mimetismoAbsolutoActivo = true;
+  if (enemyBase?.passive?.name === 'Mimetismo Absoluto') state.enemy.mimetismoAbsolutoActivo = true;
 
   if (hasEquippedItem(state.selectedFishId, 'aleta_voladora')) {
     state.player.type.spe = Math.round(state.player.type.spe * 1.1);
@@ -2630,7 +2768,7 @@ function playerAttack(index) {
     else setTimeout(() => startTurn(), 1000);
     return;
   }
-  let dmg = calculateDamage(atk.power, state.player.type, state.enemy.type, atk.categoria, state.player.status, state.enemy.buffs, state.player.atkReduction);
+  let dmg = calculateDamage(atk.power, state.player.type, state.enemy.type, atk.categoria, state.player.status, state.enemy.buffs, state.player.atkReduction, state.enemy.spdReduction);
   if (state.player.frenesiActivo && atk.categoria === 'Fisico') {
     dmg = Math.round(dmg * 1.15);
     state.player.frenesiActivo = false;
@@ -2671,7 +2809,7 @@ function chooseEnemyAttack() {
   const sortedByPower = [...attacks].sort((a, b) => b.power - a.power);
 
   for (const atk of sortedByPower) {
-    const dmg = calculateDamage(atk.power, enemy.type, player.type, atk.categoria, enemy.status, player.buffs, enemy.atkReduction);
+    const dmg = calculateDamage(atk.power, enemy.type, player.type, atk.categoria, enemy.status, player.buffs, enemy.atkReduction, player.spdReduction);
     if (dmg >= player.currentHp) return atk;
   }
 
@@ -2737,7 +2875,7 @@ function doEnemyAttack() {
     } else setTimeout(() => startTurn(), 1000);
     return;
   }
-  let dmg = calculateDamage(atk.power, state.enemy.type, state.player.type, atk.categoria, state.enemy.status, state.player.buffs, state.enemy.atkReduction);
+  let dmg = calculateDamage(atk.power, state.enemy.type, state.player.type, atk.categoria, state.enemy.status, state.player.buffs, state.enemy.atkReduction, state.player.spdReduction);
   dmg = applyDefensivePassives(dmg, state.player, atk.categoria);
   state.player.currentHp = Math.max(0, state.player.currentHp - dmg);
   setLogMessage(`¡${state.enemy.type.name} usa ${atk.name}! -${dmg} HP`, true);
