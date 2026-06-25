@@ -323,6 +323,32 @@ body.modal-open .section.active { overflow: hidden; }
 
 /* ===== TIENDA ===== */
 .shop-content { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.75rem; flex: 1; overflow-y: auto; }
+
+/* Daily gift card */
+.daily-gift-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: linear-gradient(135deg, rgba(255,200,0,0.08), rgba(255,152,0,0.05));
+  border: 1px solid rgba(255,200,0,0.25);
+  border-radius: 14px; padding: 0.85rem 1rem;
+  transition: opacity 0.2s;
+}
+.daily-gift-card.claimed { opacity: 0.6; border-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); }
+.daily-gift-icon { font-size: 2.2rem; flex-shrink: 0; }
+.daily-gift-info { flex: 1; min-width: 0; }
+.daily-gift-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.15rem; }
+.daily-gift-reward { font-size: 0.8rem; color: #ffd700; font-weight: 600; }
+.daily-gift-cooldown { font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.15rem; }
+.daily-gift-btn {
+  padding: 0.65rem 1rem; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #f9d423, #ff9800);
+  color: #fff; font-weight: 700; font-size: 0.8rem;
+  cursor: pointer; touch-action: manipulation;
+  transition: opacity 0.2s, transform 0.15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.daily-gift-btn:active { transform: scale(0.95); }
+.daily-gift-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+
 .shop-section-title {
   font-size: 0.85rem; font-weight: 800; color: rgba(255,255,255,0.5);
   text-transform: uppercase; letter-spacing: 0.5px;
@@ -377,6 +403,110 @@ body.modal-open .section.active { overflow: hidden; }
 .daily-buy-btn:active { transform: scale(0.95); }
 .daily-buy-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
 
+/* ===== INVENTARIO ===== */
+.inventory-content { padding: 0.75rem 1rem; flex: 1; overflow-y: auto; }
+.inv-empty { text-align: center; padding: 3rem 1rem; color: rgba(255,255,255,0.4); }
+.inv-empty p { font-size: 1rem; }
+.inv-empty-sub { font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.7; }
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Item card */
+.inv-card {
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 1rem 0.75rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+  cursor: pointer; touch-action: manipulation;
+  transition: border-color 0.25s, background 0.25s, transform 0.15s;
+  text-align: center;
+  position: relative;
+}
+.inv-card:active { transform: scale(0.96); }
+.inv-card.rarity-common    { border-color: #808080; }
+.inv-card.rarity-rare      { border-color: #ff7f50; }
+.inv-card.rarity-epic      { border-color: #8b5cf6; }
+.inv-card.rarity-legendary { border-color: #ffd700; box-shadow: 0 0 16px rgba(255,215,0,0.12); }
+.inv-card-img { width: 3.2rem; height: 3.2rem; display: flex; align-items: center; justify-content: center; }
+.shop-item-img { width: 3.2rem; height: 3.2rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.item-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.item-img-fallback { display: none; font-size: 2rem; line-height: 1; }
+.item-img[style*="display:none"] ~ .item-img-fallback { display: block; }
+.item-img-inline { width: 1.3rem; height: 1.3rem; vertical-align: middle; }
+.inv-card-name { font-size: 0.85rem; font-weight: 700; line-height: 1.2; }
+.inv-card-rarity {
+  font-size: 0.55rem; font-weight: 800; text-transform: uppercase;
+  padding: 0.1rem 0.5rem; border-radius: 6px; letter-spacing: 0.5px;
+}
+.inv-card-rarity.common    { background: rgba(128,128,128,0.2); color: #808080; }
+.inv-card-rarity.rare      { background: rgba(255,127,80,0.2);  color: #ff7f50; }
+.inv-card-rarity.epic      { background: rgba(139,92,246,0.2);  color: #8b5cf6; }
+.inv-card-rarity.legendary { background: rgba(255,215,0,0.2);   color: #ffd700; }
+.inv-card-status {
+  font-size: 0.65rem; font-weight: 600; margin-top: 0.2rem;
+  padding: 0.15rem 0.5rem; border-radius: 6px; width: 100%;
+}
+.inv-card-status.free  { background: rgba(76,175,80,0.12); color: #81c784; }
+.inv-card-status.equipped { background: rgba(79,172,254,0.12); color: #64b5f6; }
+.inv-equipped-info {
+  display: flex; align-items: center; justify-content: center; gap: 0.3rem;
+}
+
+/* ===== EQUIP MODAL ===== */
+.equip-modal {
+  position: fixed; inset: 0; z-index: 200;
+  display: none; align-items: center; justify-content: center;
+}
+.equip-modal.open { display: flex; }
+.equip-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+}
+.equip-modal-content {
+  position: relative; z-index: 1;
+  width: 92%; max-width: 400px;
+  max-height: 78vh; overflow-y: auto;
+  background: linear-gradient(180deg, #0d1f3c, #0a1628);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  -webkit-overflow-scrolling: touch;
+}
+.equip-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.equip-modal-title { font-size: 1rem; font-weight: 800; }
+.equip-modal-close {
+  font-size: 1.3rem; background: none; border: none; color: rgba(255,255,255,0.4);
+  cursor: pointer; touch-action: manipulation; padding: 0.25rem; line-height: 1;
+}
+.equip-modal-close:active { color: #fff; }
+.equip-modal-desc { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 0.75rem; }
+.equip-fish-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.equip-fish-item {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.6rem 0.75rem; border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer; touch-action: manipulation;
+  transition: background 0.15s, border-color 0.15s;
+}
+.equip-fish-item:active { background: rgba(255,255,255,0.1); border-color: #4facfe; }
+.equip-fish-img { width: 2.5rem; height: 2.5rem; flex-shrink: 0; }
+.equip-fish-info { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
+.equip-fish-name { font-size: 0.85rem; font-weight: 700; }
+.equip-fish-current { font-size: 0.7rem; color: rgba(255,255,255,0.45); text-align: right; flex-shrink: 0; }
+.equip-img-wrap { width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; position: relative; }
+.equip-fish-thumb { width: 100%; height: 100%; object-fit: contain; display: block; }
+.equip-img-fallback { display: none; font-size: 2rem; line-height: 1; }
+.equip-fish-thumb[style*="display:none"] ~ .equip-img-fallback { display: block; }
+
 /* ===== CHEST MODAL ===== */
 .chest-modal {
   position: fixed; inset: 0; z-index: 200;
@@ -416,6 +546,81 @@ body.modal-open .section.active { overflow: hidden; }
 .epic-text { color: #8b5cf6; }
 .legendary-text { color: #ffd700; }
 
+/* ===== ITEM MODAL ===== */
+.item-modal {
+  position: fixed; inset: 0; z-index: 210;
+  display: none; align-items: center; justify-content: center;
+}
+.item-modal.open { display: flex; }
+.item-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+}
+.item-modal-content {
+  position: relative; z-index: 1;
+  width: 88%; max-width: 360px;
+  background: linear-gradient(180deg, #0d1f3c, #0a1628);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 2rem 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  text-align: center;
+  -webkit-overflow-scrolling: touch;
+}
+.item-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.item-modal-title { font-size: 1.1rem; font-weight: 800; }
+.item-modal-close {
+  font-size: 1.3rem; background: none; border: none; color: rgba(255,255,255,0.4);
+  cursor: pointer; touch-action: manipulation; padding: 0.25rem; line-height: 1;
+}
+.item-modal-close:active { color: #fff; }
+.item-preview {
+  display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+.item-preview-img {
+  width: 5.5rem; height: 5.5rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 16px; padding: 0.5rem;
+  background: rgba(255,255,255,0.05);
+  transition: border-color 0.2s, background 0.2s;
+}
+.item-preview-img .item-img { width: 100%; height: 100%; object-fit: contain; }
+.item-preview-img .item-img-fallback { font-size: 3rem; }
+.item-preview-img.common { border: 2px solid #808080; background: rgba(128,128,128,0.1); }
+.item-preview-img.rare { border: 2px solid #ff7f50; background: rgba(255,127,80,0.1); }
+.item-preview-img.epic { border: 2px solid #8b5cf6; background: rgba(139,92,246,0.1); }
+.item-preview-img.legendary { border: 2px solid #ffd700; background: rgba(255,215,0,0.1); }
+.item-preview-name { font-size: 1.2rem; font-weight: 800; }
+.item-preview-desc {
+  font-size: 0.85rem; color: rgba(255,255,255,0.65);
+  line-height: 1.5; max-width: 280px;
+}
+.item-preview-cost {
+  font-size: 1.3rem; font-weight: 800; color: #ffd700;
+}
+.item-preview-actions {
+  display: flex; flex-direction: column; gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.item-buy-btn { width: 100%; margin: 0 !important; }
+.item-buy-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+
+/* ===== COIN REWARD ANIMATION ===== */
+.coin-reward {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
+  font-size: 2.5rem; font-weight: 900; color: #ffd700;
+  text-shadow: 0 0 20px rgba(255,200,0,0.5), 0 2px 8px rgba(0,0,0,0.5);
+  z-index: 999; pointer-events: none;
+  opacity: 0; transition: none;
+}
+.coin-reward-active {
+  opacity: 1; transform: translate(-50%, -80%) scale(1.2);
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* Chest vibration */
 @keyframes vibrate {
   0%, 100% { transform: translateX(0); }
@@ -428,6 +633,114 @@ body.modal-open .section.active { overflow: hidden; }
   animation: vibrate 0.6s ease infinite;
 }
 .chest-close-btn { margin: 1.5rem auto 0; width: 100%; position: relative; z-index: 10; }
+
+/* ===== MISIONES DIARIAS ===== */
+.missions-btn {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0.5rem 1rem; padding: 0.65rem 1rem;
+  background: rgba(79,172,254,0.08);
+  border: 1px solid rgba(79,172,254,0.15);
+  border-radius: 12px; cursor: pointer; touch-action: manipulation;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.missions-btn:active { background: rgba(79,172,254,0.15); border-color: rgba(79,172,254,0.3); }
+.missions-btn-icon { font-size: 1.3rem; }
+.missions-btn-label { font-size: 0.85rem; font-weight: 700; color: #4facfe; flex: 1; }
+.missions-btn-progress { font-size: 0.7rem; color: rgba(255,255,255,0.5); font-weight: 600; }
+
+/* Missions modal */
+.missions-modal {
+  position: fixed; inset: 0; z-index: 100;
+  display: none; align-items: center; justify-content: center;
+}
+.missions-modal.open { display: flex; }
+.missions-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+}
+.missions-modal-content {
+  position: relative; z-index: 1;
+  width: 92%; max-width: 400px;
+  max-height: 82vh; overflow-y: auto;
+  background: linear-gradient(180deg, #0d1f3c, #0a1628);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  -webkit-overflow-scrolling: touch;
+}
+.missions-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.missions-modal-title { font-size: 1.1rem; font-weight: 800; }
+.missions-modal-close {
+  font-size: 1.3rem; background: none; border: none; color: rgba(255,255,255,0.4);
+  cursor: pointer; touch-action: manipulation; padding: 0.25rem; line-height: 1;
+}
+.missions-modal-close:active { color: #fff; }
+.missions-progress-section { margin-bottom: 1rem; text-align: center; }
+.missions-progress-label { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; }
+.missions-progress-bar {
+  width: 100%; height: 0.7rem; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-bottom: 0.75rem;
+}
+.missions-progress-fill {
+  height: 100%; border-radius: 10px;
+  background: linear-gradient(90deg, #4facfe, #00f2fe);
+  transition: width 0.4s ease;
+}
+.missions-bonus-chest {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 0.75rem; border-radius: 12px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+}
+.missions-bonus-chest.ready {
+  background: rgba(255,200,0,0.1); border-color: rgba(255,200,0,0.3);
+  animation: chest-pulse 1.5s ease infinite;
+}
+@keyframes chest-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,200,0,0.2); }
+  50% { transform: scale(1.03); box-shadow: 0 0 16px rgba(255,200,0,0.15); }
+}
+.missions-chest-icon { font-size: 1.8rem; }
+.missions-chest-label { font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); }
+.missions-bonus-chest.ready .missions-chest-label { color: #ffd700; }
+.missions-chest-btn {
+  padding: 0.5rem 1rem; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #f9d423, #ff9800);
+  color: #fff; font-weight: 700; font-size: 0.75rem;
+  cursor: pointer; touch-action: manipulation;
+}
+.missions-chest-btn:active { transform: scale(0.95); }
+.missions-chest-done { font-size: 0.75rem; color: #81c784; font-weight: 600; }
+.missions-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.mission-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.85rem 1rem; border-radius: 14px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  transition: border-color 0.25s, background 0.25s;
+}
+.mission-card.complete { border-color: rgba(76,175,80,0.3); background: rgba(76,175,80,0.06); }
+.mission-card.claimed { opacity: 0.6; }
+.mission-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.mission-name { font-size: 0.85rem; font-weight: 700; }
+.mission-desc { font-size: 0.7rem; color: rgba(255,255,255,0.45); }
+.mission-progress { display: flex; align-items: center; gap: 0.5rem; }
+.mission-progress-bar { flex: 1; height: 0.4rem; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; }
+.mission-progress-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #4facfe, #00f2fe); transition: width 0.3s ease; }
+.mission-progress-text { font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.5); white-space: nowrap; min-width: 3.2rem; text-align: right; }
+.mission-reward-section { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+.mission-reward { font-size: 0.85rem; font-weight: 700; color: #ffd700; }
+.mission-claim-btn {
+  padding: 0.5rem 0.85rem; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  color: #fff; font-weight: 800; font-size: 0.7rem;
+  cursor: pointer; touch-action: manipulation; white-space: nowrap;
+  transition: transform 0.15s;
+}
+.mission-claim-btn:active { transform: scale(0.95); }
+.mission-claim-btn.disabled { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.3); cursor: default; }
+.mission-check { font-size: 1.2rem; }
 
 /* ===== AJUSTES ===== */
 .settings-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; gap: 1.5rem; }
@@ -478,16 +791,30 @@ body.modal-open .section.active { overflow: hidden; }
 #bottom-nav { display: flex; flex-shrink: 0; background: rgba(0,0,0,0.45); border-top: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 .nav-tab {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 0.15rem; padding: 0.5rem 0.2rem; min-height: 60px;
+  gap: 0.15rem; padding: 0.5rem 0.1rem; min-height: 60px;
   border: none; background: none;
-  color: rgba(255,255,255,0.35); font-size: 0.65rem; font-weight: 600;
+  color: rgba(255,255,255,0.35); font-size: 0.6rem; font-weight: 600;
   cursor: pointer; touch-action: manipulation;
   transition: color 0.2s, background 0.2s; position: relative;
 }
-.nav-tab .nav-icon { font-size: 1.35rem; line-height: 1; }
-.nav-tab .nav-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.nav-tab .nav-icon { font-size: 1.25rem; line-height: 1; }
+.nav-tab .nav-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
 .nav-tab.active { color: #4facfe; }
-.nav-tab.active::after { content: ''; position: absolute; top: 0; left: 25%; right: 25%; height: 3px; background: #4facfe; border-radius: 0 0 3px 3px; }
+.nav-tab.active::after { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 3px; background: #4facfe; border-radius: 0 0 3px 3px; }
+
+/* Central Luchar button stands out */
+.nav-tab[data-tab="fight"] {
+  background: rgba(79,172,254,0.12);
+  border: 1px solid rgba(79,172,254,0.2);
+  border-radius: 12px;
+  margin: 0.35rem 0.1rem;
+  min-height: 52px;
+  color: #4facfe;
+}
+.nav-tab[data-tab="fight"] .nav-icon { font-size: 1.4rem; }
+.nav-tab[data-tab="fight"] .nav-label { font-weight: 800; }
+.nav-tab[data-tab="fight"].active { background: rgba(79,172,254,0.2); border-color: #4facfe; }
+.nav-tab[data-tab="fight"].active::after { display: none; }
 
 /* ===== STATUS TAGS ===== */
 .status-tag { font-size: 0.6rem; font-weight: 700; padding: 0.05rem 0.35rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; display: inline-block; line-height: 1.3; }
@@ -570,8 +897,22 @@ body.modal-open .section.active { overflow: hidden; }
   .btn-upgrade { padding: 0.75rem; font-size: 0.9rem; }
   .chest-card { padding: 0.7rem 0.75rem; }
   .chest-card .chest-icon { font-size: 1.8rem; }
+  .daily-gift-card { padding: 0.7rem 0.75rem; }
+  .daily-gift-icon { font-size: 1.8rem; }
+  .missions-btn { padding: 0.5rem 0.75rem; margin: 0.4rem 0.75rem; }
+  .missions-btn-icon { font-size: 1.1rem; }
+  .missions-btn-label { font-size: 0.75rem; }
+  .mission-card { padding: 0.65rem 0.75rem; }
+  .mission-claim-btn { padding: 0.4rem 0.7rem; font-size: 0.65rem; }
   .daily-offer { padding: 0.6rem 0.7rem; }
   .daily-offer-img { width: 2.5rem; height: 2.5rem; }
-  .nav-tab { min-height: 50px; }
-  .nav-tab .nav-icon { font-size: 1.1rem; }
+  .nav-tab { min-height: 48px; padding: 0.4rem 0.05rem; }
+  .nav-tab .nav-icon { font-size: 1.05rem; }
+  .nav-tab .nav-label { font-size: 0.5rem; }
+  .nav-tab[data-tab="fight"] { min-height: 44px; margin: 0.25rem 0.05rem; }
+  .nav-tab[data-tab="fight"] .nav-icon { font-size: 1.15rem; }
+  .inv-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .inv-card { padding: 0.75rem 0.5rem; }
+  .inv-card-img { width: 2.6rem; height: 2.6rem; }
+  .shop-item-img { width: 2.6rem; height: 2.6rem; }
 }

@@ -300,6 +300,35 @@ const FISH_TYPES = [
   }
 ];
 
+/* ===== ITEMS DATA ===== */
+const ITEMS = [
+  { id: 'fragmento_coral', name: 'Fragmento de Coral', rarity: 'common', imgPath: 'img/objetos/fragmento_coral.png', emoji: '🪸', description: 'Recupera 5% de los PS Máximos por turno.' },
+  { id: 'diente_tiburon', name: 'Diente de Tiburón', rarity: 'rare', imgPath: 'img/objetos/diente_tiburon.png', emoji: '🦈', description: '+15% al daño físico infligido.' },
+  { id: 'caparazon_tortuga', name: 'Caparazón de Tortuga', rarity: 'rare', imgPath: 'img/objetos/caparazon_tortuga.png', emoji: '🐢', description: 'Aumenta la Defensa Física del portador en un 15%.' },
+  { id: 'tinta_concentrada', name: 'Tinta Concentrada', rarity: 'epic', imgPath: 'img/objetos/tinta_concentrada.png', emoji: '🐙', description: 'Reduce la precisión del rival un 20% los 2 primeros turnos.' },
+  { id: 'aleta_voladora', name: 'Aleta de Pez Volador', rarity: 'epic', imgPath: 'img/objetos/aleta_pez.png', emoji: '⚡', description: '+10% a la Velocidad base del portador.' }
+];
+
+const SHOP_ITEMS = [
+  { itemId: 'fragmento_coral',   cost: 150, costType: 'coins' },
+  { itemId: 'diente_tiburon',    cost: 400, costType: 'coins' },
+  { itemId: 'caparazon_tortuga',  cost: 400, costType: 'coins' },
+  { itemId: 'tinta_concentrada',  cost: 1000, costType: 'coins' },
+  { itemId: 'aleta_voladora',    cost: 1000, costType: 'coins' }
+];
+
+const GEM_PACKS = [
+  { id: 'small',  name: 'Bolsa de Oro Pequeña',  cost: 10,  reward: 250,  imgPath: 'img/oro_pequeno.png',  emoji: '📦' },
+  { id: 'medium', name: 'Cofre de Oro Mediano',   cost: 50,  reward: 1500, imgPath: 'img/oro_mediano.png',   emoji: '📦' },
+  { id: 'large',  name: 'Tesoro de Oro Grande',   cost: 100, reward: 3500, imgPath: 'img/oro_grande.png',   emoji: '📦' }
+];
+
+const DAILY_MISSIONS = [
+  { id: 'win_battles', name: '🏆 Gana 3 Combates', desc: 'Gana combates en la arena', target: 3, reward: 100 },
+  { id: 'fisico_attacks', name: '💪 5 Ataques Físicos', desc: 'Realiza ataques físicos en combate', target: 5, reward: 80 },
+  { id: 'especial_attacks', name: '✨ 5 Ataques Especiales', desc: 'Realiza ataques especiales en combate', target: 5, reward: 80 }
+];
+
 /* ===== CONSTANTS ===== */
 const MAX_LEVEL = 12;
 
@@ -318,8 +347,16 @@ const state = {
   coins: 100, diamonds: 0,
   cups: 0,
   currentArena: 1,
+  arenaMaxReached: 1,
   unlockedFish: ['salmonete'],
   fishLevels: {},
+  items: [],
+  equippedItems: {},
+  lastFreeClaim: null,
+  missions: { win_battles: 0, fisico_attacks: 0, especial_attacks: 0 },
+  missionsClaimed: [],
+  missionsBonusClaimed: false,
+  missionsDate: null,
   player: null,
   enemy: null,
   isPlayerTurn: true,
@@ -334,7 +371,8 @@ const dom = {
   screenMain: $('screen-main'), screenCombat: $('screen-combat'), screenResult: $('screen-result'),
   bottomNav: $('bottom-nav'), coinDisplay: $('coin-display'), diamondDisplay: $('diamond-display'),
   sectionFight: $('section-fight'), sectionBank: $('section-bank'),
-  sectionShop: $('section-shop'), sectionSettings: $('section-settings'),
+  sectionShop: $('section-shop'), sectionInventory: $('section-inventory'),
+  sectionSettings: $('section-settings'),
   fightContent: $('fight-content'), bankCards: $('bank-cards'),   shopContent: $('shop-content'),
   cupsDisplay: $('cups-display'), resultCups: $('result-cups'),
   fishModal: $('fish-modal'), fishModalBody: $('fish-modal-body'),
@@ -347,7 +385,11 @@ const dom = {
   attackMenu: $('attack-menu'), logMessage: $('log-message'),
   resultTitle: $('result-title'), resultEmoji: $('result-emoji'), resultSub: $('result-sub'),
   saveTime: $('save-time'),
-  chestModal: $('chest-modal'), chestModalBody: $('chest-modal-body')
+  chestModal: $('chest-modal'), chestModalBody: $('chest-modal-body'),
+  inventoryContent: $('inventory-content'),
+  equipModal: $('equip-modal'), equipModalBody: $('equip-modal-body'),
+  missionsModal: $('missions-modal'), missionsModalBody: $('missions-modal-body'),
+  itemModal: $('item-modal'), itemModalBody: $('item-modal-body')
 };
 
 /* ===== UTILITY ===== */
@@ -403,6 +445,15 @@ function roundFishStats(fish) {
   };
 }
 
+/* ===== ITEM HELPERS ===== */
+function getEquippedItemId(fishId) {
+  return state.equippedItems[fishId] || null;
+}
+function hasEquippedItem(fishId, itemId) {
+  return state.equippedItems[fishId] === itemId;
+}
+
+/* ===== UPGRADE ===== */
 function getUpgradeCost(level) {
   if (level >= MAX_LEVEL) return null;
   return 100 * Math.pow(2, level - 1);
@@ -430,8 +481,13 @@ function calculateDamage(power, attacker, defender, categoria, attackerStatus, d
     const base = getFishById(attacker.id);
     if (base?.passive?.name === 'Punta Perforante') D = Math.max(1, Math.round(D * 0.8));
   }
-  const dmg = ((((2 * attacker.level / 5) + 2) * power * (A / D)) / 50) + 2;
-  return Math.max(1, Math.round(dmg));
+  let dmg = ((((2 * attacker.level / 5) + 2) * power * (A / D)) / 50) + 2;
+  let result = Math.max(1, Math.round(dmg));
+  if (categoria === 'Fisico' && attacker.id === state.selectedFishId && hasEquippedItem(state.selectedFishId, 'diente_tiburon')) {
+    result = Math.max(1, Math.round(result * 1.15));
+    setLogMessage(`¡Diente de Tiburón potencia el ataque +15%!`, true);
+  }
+  return result;
 }
 
 function getEffectiveSpeed(fighter) {
@@ -598,11 +654,12 @@ function decrementBuffs(fighter) {
 function applyDefensivePassives(dmg, defender, categoria) {
   if (categoria !== 'Fisico') return dmg;
   const base = getFishById(defender.type.id);
-  if (!base || !base.passive) return dmg;
-  if ((base.passive.name === 'Mimetismo Rocoso' || base.passive.name === 'Coraza Prestada') && !defender.mimetismoUsado) {
-    defender.mimetismoUsado = true;
-    setLogMessage(`¡${defender.type.name} activó ${base.passive.name} y redujo el daño a la mitad!`, true);
-    return Math.max(1, Math.round(dmg / 2));
+  if (base && base.passive) {
+    if ((base.passive.name === 'Mimetismo Rocoso' || base.passive.name === 'Coraza Prestada') && !defender.mimetismoUsado) {
+      defender.mimetismoUsado = true;
+      setLogMessage(`¡${defender.type.name} activó ${base.passive.name} y redujo el daño a la mitad!`, true);
+      return Math.max(1, Math.round(dmg / 2));
+    }
   }
   return dmg;
 }
@@ -623,11 +680,17 @@ function applyStatusDamage(fighter) {
 function applyPassiveHealing(fighter) {
   if (fighter.currentHp <= 0 || fighter.currentHp >= fighter.maxHp) return;
   const base = getFishById(fighter.type.id);
-  if (!base || !base.passive) return;
-  if (base.passive.name === 'Regeneración Celular') {
-    const heal = 0.5;
+  if (base && base.passive) {
+    if (base.passive.name === 'Regeneración Celular') {
+      const heal = 0.5;
+      fighter.currentHp = Math.min(fighter.maxHp, fighter.currentHp + heal);
+      setLogMessage(`¡${fighter.type.name} regeneró +${heal} PS! (${base.passive.name})`, true);
+    }
+  }
+  if (fighter.type.id === state.selectedFishId && hasEquippedItem(state.selectedFishId, 'fragmento_coral')) {
+    const heal = Math.max(1, Math.round(fighter.maxHp * 0.05));
     fighter.currentHp = Math.min(fighter.maxHp, fighter.currentHp + heal);
-    setLogMessage(`¡${fighter.type.name} regeneró +${heal} PS! (${base.passive.name})`, true);
+    setLogMessage(`¡${fighter.type.name} recupera +${heal} PS! (Fragmento de Coral)`, true);
   }
 }
 
@@ -691,8 +754,16 @@ function getSaveData() {
     coins: state.coins, diamonds: state.diamonds,
     cups: state.cups,
     currentArena: state.currentArena,
+    arenaMaxReached: state.arenaMaxReached,
     unlockedFish: state.unlockedFish,
     fishLevels: state.fishLevels,
+    items: state.items,
+    equippedItems: state.equippedItems,
+    lastFreeClaim: state.lastFreeClaim,
+    missions: state.missions,
+    missionsClaimed: state.missionsClaimed,
+    missionsBonusClaimed: state.missionsBonusClaimed,
+    missionsDate: state.missionsDate,
     timestamp: Date.now()
   };
 }
@@ -744,8 +815,16 @@ function loadGame() {
     if (typeof data.diamonds === 'number' && data.diamonds >= 0) state.diamonds = data.diamonds;
     if (typeof data.cups === 'number' && data.cups >= 0) state.cups = data.cups;
     if (typeof data.currentArena === 'number') state.currentArena = data.currentArena;
+    if (typeof data.arenaMaxReached === 'number') state.arenaMaxReached = data.arenaMaxReached;
     if (Array.isArray(data.unlockedFish) && data.unlockedFish.length > 0) state.unlockedFish = data.unlockedFish;
     if (data.fishLevels) state.fishLevels = data.fishLevels;
+    if (Array.isArray(data.items)) state.items = data.items;
+    if (data.equippedItems) state.equippedItems = data.equippedItems;
+    if (data.lastFreeClaim) state.lastFreeClaim = data.lastFreeClaim;
+    if (data.missions) state.missions = data.missions;
+    if (Array.isArray(data.missionsClaimed)) state.missionsClaimed = data.missionsClaimed;
+    if (typeof data.missionsBonusClaimed === 'boolean') state.missionsBonusClaimed = data.missionsBonusClaimed;
+    if (data.missionsDate) state.missionsDate = data.missionsDate;
     if (data.selectedFish && getFishById(data.selectedFish) && state.unlockedFish.includes(data.selectedFish)) {
       state.selectedFishId = data.selectedFish;
     }
@@ -771,12 +850,50 @@ function checkArenaChange() {
     const oldName = getArenaConfig(old).name;
     const newName = getArenaConfig(newArena).name;
     if (newArena > old) {
-      alert(`🎉 ¡Felicidades! Has ascendido a la Arena ${newArena}: ${newName}.`);
+      if (newArena > state.arenaMaxReached) {
+        state.arenaMaxReached = newArena;
+        state.diamonds += 15;
+        updateDiamondDisplay();
+        showArenaRewardModal(newArena, newName);
+      } else {
+        alert(`🎉 ¡Has ascendido a la Arena ${newArena}: ${newName}.`);
+      }
     } else {
       alert(`⚠️ ¡Has descendido a la Arena ${newArena}: ${newName}!`);
     }
   }
   updateArenaBackground();
+}
+
+function showArenaRewardModal(arenaId, arenaName) {
+  dom.itemModalBody.innerHTML = `
+    <div class="item-modal-header">
+      <span class="item-modal-title">🏟️ Nueva Arena</span>
+      <button class="item-modal-close" id="arena-reward-close-btn">✕</button>
+    </div>
+    <div class="item-preview" style="gap:0.5rem;padding:1rem 0;">
+      <div style="font-size:4rem;line-height:1;">🏆</div>
+      <div class="item-preview-name" style="font-size:1.3rem;">¡Arena ${arenaId}: ${arenaName}!</div>
+      <div class="item-preview-desc" style="font-size:1.1rem;color:#ce93d8;">
+        Has alcanzado una nueva Arena
+      </div>
+      <div style="background:rgba(255,200,0,0.1);border:1px solid rgba(255,200,0,0.25);border-radius:12px;padding:0.75rem 1.5rem;margin-top:0.5rem;">
+        <span style="font-size:1.5rem;font-weight:900;color:#ffd700;">+15 💎</span>
+      </div>
+    </div>
+    <div class="item-preview-actions">
+      <button class="btn-primary item-buy-btn" id="arena-reward-ok-btn">¡Recibido!</button>
+    </div>`;
+
+  document.getElementById('arena-reward-ok-btn').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    closeItemModal();
+  });
+  const closeBtn = document.getElementById('arena-reward-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeItemModal(); });
+
+  dom.itemModal.classList.add('open');
+  document.body.classList.add('modal-open');
 }
 
 function updateArenaDisplay() {
@@ -909,7 +1026,7 @@ function showScreen(screenName) {
 
 /* ===== NAVEGACIÓN ===== */
 function showSection(sectionId) {
-  ['fight', 'bank', 'shop', 'settings'].forEach(id => {
+  ['fight', 'bank', 'shop', 'inventory', 'settings'].forEach(id => {
     const el = document.getElementById(`section-${id}`);
     const tab = document.querySelector(`[data-tab="${id}"]`);
     if (el) el.classList.toggle('active', id === sectionId);
@@ -918,6 +1035,7 @@ function showSection(sectionId) {
   state.activeSection = sectionId;
   if (sectionId === 'shop') renderShop();
   if (sectionId === 'bank') renderBank();
+  if (sectionId === 'inventory') renderInventory();
 }
 
 /* ===== SECCIÓN: LUCHAR ===== */
@@ -1234,35 +1352,34 @@ function generateDailyOffers() {
 function renderShop() {
   dom.shopContent.innerHTML = '';
 
-  const chestsTitle = document.createElement('h3');
-  chestsTitle.className = 'shop-section-title';
-  chestsTitle.textContent = '🎁 Cofres';
-  dom.shopContent.appendChild(chestsTitle);
+  /* ===== 1. REGALO DIARIO ===== */
+  const giftTitle = document.createElement('h3');
+  giftTitle.className = 'shop-section-title';
+  giftTitle.textContent = '🎁 Regalo Diario';
+  dom.shopContent.appendChild(giftTitle);
 
-  Object.values(CHEST_TYPES).forEach(chest => {
-    const canAfford = chest.costType === 'coins' ? state.coins >= chest.cost : state.diamonds >= chest.cost;
-    const card = document.createElement('div');
-    card.className = `chest-card${canAfford ? '' : ' locked'}`;
-    const rewardTags = [`🟡 ${chest.goldRange[0]}-${chest.goldRange[1]}`];
-    if (chest.diamondChance > 0) rewardTags.push(`💎 ${chest.diamondChance >= 1 ? `${chest.diamondRange[0]}-${chest.diamondRange[1]}` : '?'}`);
-    if (chest.fishChance > 0) rewardTags.push(`🐟 ${Math.round(chest.fishChance * 100)}%`);
-    card.innerHTML = `
-      <img src="${chest.imgPath}" alt="Cofre ${chest.name}" class="chest-img">
-      <div class="chest-info">
-        <div class="chest-name">Cofre de ${chest.name}</div>
-        <div class="chest-rewards">${rewardTags.join(' ')}</div>
-        <div class="chest-cost">${chest.costType === 'coins' ? '🪙' : '💎'} ${chest.cost}</div>
-      </div>
-      <button class="btn-buy chest-buy-btn" ${canAfford ? '' : 'disabled'}>Abrir</button>`;
-    if (canAfford) {
-      card.querySelector('.chest-buy-btn').addEventListener('pointerdown', e => {
-        e.preventDefault();
-        openChest(chest.id);
-      });
-    }
-    dom.shopContent.appendChild(card);
-  });
+  const now = Date.now();
+  const canClaim = !state.lastFreeClaim || (now - state.lastFreeClaim) > 86400000;
+  const giftCard = document.createElement('div');
+  giftCard.className = `daily-gift-card${canClaim ? '' : ' claimed'}`;
+  const nextClaim = canClaim ? '' : `Próximo: ${formatTimeLeft(86400000 - (now - state.lastFreeClaim))}`;
+  giftCard.innerHTML = `
+    <div class="daily-gift-icon">🎁</div>
+    <div class="daily-gift-info">
+      <div class="daily-gift-title">${canClaim ? '¡Reclama tu regalo!' : 'Regalo reclamado'}</div>
+      <div class="daily-gift-reward">🪙 50 monedas gratis</div>
+      ${!canClaim ? `<div class="daily-gift-cooldown">${nextClaim}</div>` : ''}
+    </div>
+    ${canClaim ? '<button class="btn-buy daily-gift-btn">Reclamar</button>' : '<button class="btn-buy daily-gift-btn" disabled>✅</button>'}`;
+  if (canClaim) {
+    giftCard.querySelector('.daily-gift-btn').addEventListener('pointerdown', e => {
+      e.preventDefault();
+      claimFreeGift(50);
+    });
+  }
+  dom.shopContent.appendChild(giftCard);
 
+  /* ===== 2. OFERTAS DEL DÍA ===== */
   const offers = generateDailyOffers();
   if (offers.length > 0) {
     const offersTitle = document.createElement('h3');
@@ -1293,6 +1410,233 @@ function renderShop() {
       dom.shopContent.appendChild(card);
     });
   }
+
+  /* ===== 3. OBJETOS EQUIPABLES ===== */
+  const itemsTitle = document.createElement('h3');
+  itemsTitle.className = 'shop-section-title';
+  itemsTitle.textContent = '🎒 Objetos Equipables';
+  dom.shopContent.appendChild(itemsTitle);
+
+  SHOP_ITEMS.forEach(entry => {
+    const item = ITEMS.find(it => it.id === entry.itemId);
+    if (!item) return;
+    const alreadyOwned = state.items.includes(item.id);
+    const canAfford = entry.costType === 'coins' ? state.coins >= entry.cost : state.diamonds >= entry.cost;
+    const card = document.createElement('div');
+    card.className = `chest-card${canAfford && !alreadyOwned ? '' : ' locked'}`;
+    const r = item.rarity;
+    card.innerHTML = `
+      <div class="shop-item-img"><img class="item-img" src="${item.imgPath}" alt="${item.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="item-img-fallback">${item.emoji}</span></div>
+      <div class="chest-info">
+        <div class="chest-name">${item.name}</div>
+        <div class="chest-rewards"><span class="inv-card-rarity ${r}" style="font-size:0.6rem;padding:0.08rem 0.4rem">${r === 'common' ? 'COMÚN' : r === 'rare' ? 'RARO' : r === 'epic' ? 'ÉPICO' : 'LEYENDA'}</span></div>
+        <div class="chest-cost">🪙 ${entry.cost}</div>
+      </div>
+      <button class="btn-buy chest-buy-btn" disabled style="opacity:0.6">${alreadyOwned ? '✅' : 'Ver'}</button>`;
+    card.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      openItemModal(item.id, entry.cost);
+    });
+    dom.shopContent.appendChild(card);
+  });
+
+  /* ===== 4. COFRES ===== */
+  const chestsTitle = document.createElement('h3');
+  chestsTitle.className = 'shop-section-title';
+  chestsTitle.textContent = '🎁 Cofres';
+  dom.shopContent.appendChild(chestsTitle);
+
+  Object.values(CHEST_TYPES).forEach(chest => {
+    const canAfford = chest.costType === 'coins' ? state.coins >= chest.cost : state.diamonds >= chest.cost;
+    const card = document.createElement('div');
+    card.className = `chest-card${canAfford ? '' : ' locked'}`;
+    const rewardTags = [`🟡 ${chest.goldRange[0]}-${chest.goldRange[1]}`];
+    if (chest.diamondChance > 0) rewardTags.push(`💎 ${chest.diamondChance >= 1 ? `${chest.diamondRange[0]}-${chest.diamondRange[1]}` : '?'}`);
+    if (chest.fishChance > 0) rewardTags.push(`🐟 ${Math.round(chest.fishChance * 100)}%`);
+    card.innerHTML = `
+      <img src="${chest.imgPath}" alt="Cofre ${chest.name}" class="chest-img">
+      <div class="chest-info">
+        <div class="chest-name">Cofre de ${chest.name}</div>
+        <div class="chest-rewards">${rewardTags.join(' ')}</div>
+        <div class="chest-cost">${chest.costType === 'coins' ? '🪙' : '💎'} ${chest.cost}</div>
+      </div>
+      <button class="btn-buy chest-buy-btn" ${canAfford ? '' : 'disabled'}>Abrir</button>`;
+    if (canAfford) {
+      card.querySelector('.chest-buy-btn').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        openChest(chest.id);
+      });
+    }
+    dom.shopContent.appendChild(card);
+  });
+
+  /* ===== 5. BANCO DE GEMAS ===== */
+  const gemTitle = document.createElement('h3');
+  gemTitle.className = 'shop-section-title';
+  gemTitle.textContent = '💎 Banco de Gemas';
+  dom.shopContent.appendChild(gemTitle);
+
+  GEM_PACKS.forEach(pack => {
+    const canAfford = state.diamonds >= pack.cost;
+    const card = document.createElement('div');
+    card.className = `chest-card${canAfford ? '' : ' locked'}`;
+    card.innerHTML = `
+      <div class="shop-item-img"><img class="item-img" src="${pack.imgPath}" alt="${pack.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="item-img-fallback">${pack.emoji}</span></div>
+      <div class="chest-info">
+        <div class="chest-name">${pack.name}</div>
+        <div class="chest-cost">💎 ${pack.cost} → 🪙 ${pack.reward}</div>
+      </div>
+      <button class="btn-buy chest-buy-btn" ${canAfford ? '' : 'disabled'}>Canjear</button>`;
+    card.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      openGemPackModal(pack);
+    });
+    dom.shopContent.appendChild(card);
+  });
+}
+
+function claimFreeGift(amount) {
+  state.coins += amount;
+  state.lastFreeClaim = Date.now();
+  updateCoinDisplay();
+  renderShop();
+}
+
+function formatTimeLeft(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return `${h}h ${m}m`;
+}
+
+/* ===== MISIONES DIARIAS ===== */
+function checkDailyReset() {
+  const today = new Date().toDateString();
+  if (state.missionsDate !== today) {
+    state.missions = { win_battles: 0, fisico_attacks: 0, especial_attacks: 0 };
+    state.missionsClaimed = [];
+    state.missionsBonusClaimed = false;
+    state.missionsDate = today;
+  }
+}
+
+function getCompletedMissions() {
+  return DAILY_MISSIONS.filter(m => state.missions[m.id] >= m.target);
+}
+
+function getAllClaimed() {
+  return getCompletedMissions().every(m => state.missionsClaimed.includes(m.id));
+}
+
+function trackMission(id) {
+  if (state.missionsClaimed.includes(id)) return;
+  state.missions[id] = Math.min(state.missions[id] + 1, DAILY_MISSIONS.find(m => m.id === id).target);
+  updateMissionsButton();
+}
+
+function claimMission(id) {
+  if (state.missionsClaimed.includes(id)) return;
+  const mission = DAILY_MISSIONS.find(m => m.id === id);
+  if (!mission || state.missions[id] < mission.target) return;
+  state.missionsClaimed.push(id);
+  state.coins += mission.reward;
+  updateCoinDisplay();
+  renderMissionsModal();
+  updateMissionsButton();
+}
+
+function updateMissionsButton() {
+  const btn = document.getElementById('missions-btn');
+  if (!btn) return;
+  checkDailyReset();
+  const claimed = state.missionsClaimed.length;
+  const progress = btn.querySelector('.missions-btn-progress');
+  if (progress) progress.textContent = `Progreso: ${claimed}/${DAILY_MISSIONS.length}`;
+}
+
+function renderMissionsModal() {
+  checkDailyReset();
+  const body = dom.missionsModalBody;
+  if (!body) return;
+  const completed = getCompletedMissions();
+  const claimedCount = state.missionsClaimed.length;
+  const allClaimed = getAllClaimed();
+  const pct = (claimedCount / DAILY_MISSIONS.length) * 100;
+
+  body.innerHTML = `
+    <div class="missions-modal-header">
+      <span class="missions-modal-title">📋 Misiones Diarias</span>
+      <button class="missions-modal-close" id="missions-modal-close-btn">✕</button>
+    </div>
+    <div class="missions-progress-section">
+      <div class="missions-progress-label">Progreso: ${claimedCount}/${DAILY_MISSIONS.length}</div>
+      <div class="missions-progress-bar"><div class="missions-progress-fill" style="width:${pct}%"></div></div>
+      <div class="missions-bonus-chest ${allClaimed ? 'ready' : ''}">
+        <span class="missions-chest-icon">${allClaimed ? '🎁' : '📦'}</span>
+        <span class="missions-chest-label">${allClaimed ? '¡Bono Diario Listo!' : 'Completa las 3 misiones'}</span>
+        ${allClaimed && !state.missionsBonusClaimed ? '<button class="missions-chest-btn" id="missions-claim-bonus">Reclamar</button>' : ''}
+        ${state.missionsBonusClaimed ? '<span class="missions-chest-done">✅ Reclamado</span>' : ''}
+      </div>
+    </div>
+    <div class="missions-list">`;
+
+  DAILY_MISSIONS.forEach(m => {
+    const prog = state.missions[m.id];
+    const isComplete = prog >= m.target;
+    const isClaimed = state.missionsClaimed.includes(m.id);
+    const pctInd = (prog / m.target) * 100;
+    body.innerHTML += `
+      <div class="mission-card ${isComplete ? 'complete' : ''} ${isClaimed ? 'claimed' : ''}">
+        <div class="mission-info">
+          <div class="mission-name">${m.name}</div>
+          <div class="mission-desc">${m.desc}</div>
+          <div class="mission-progress">
+            <div class="mission-progress-bar"><div class="mission-progress-fill" style="width:${pctInd}%"></div></div>
+            <span class="mission-progress-text">${prog} / ${m.target}</span>
+          </div>
+        </div>
+        <div class="mission-reward-section">
+          <div class="mission-reward">🪙 ${m.reward}</div>
+          ${isClaimed ? '<span class="mission-check">✅</span>' :
+            isComplete ? '<button class="mission-claim-btn" data-mission-id="'+m.id+'">¡RECLAMAR!</button>' :
+            '<button class="mission-claim-btn disabled" disabled>⏳</button>'}
+        </div>
+      </div>`;
+  });
+
+  body.innerHTML += `</div>`;
+
+  body.querySelectorAll('.mission-claim-btn:not(.disabled)').forEach(btn => {
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      claimMission(btn.dataset.missionId);
+    });
+  });
+
+  const bonusBtn = document.getElementById('missions-claim-bonus');
+  if (bonusBtn) {
+    bonusBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      state.missionsBonusClaimed = true;
+      state.coins += 200;
+      updateCoinDisplay();
+      renderMissionsModal();
+      updateMissionsButton();
+    });
+  }
+
+  const closeBtn = document.getElementById('missions-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeMissionsModal(); });
+}
+
+function openMissionsModal() {
+  renderMissionsModal();
+  dom.missionsModal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeMissionsModal() {
+  dom.missionsModal.classList.remove('open');
+  document.body.classList.remove('modal-open');
 }
 
 function buyDailyOfferFish(fishId, price) {
@@ -1303,6 +1647,16 @@ function buyDailyOfferFish(fishId, price) {
   updateCoinDisplay();
   renderBank();
   renderShop();
+}
+
+function buyItem(itemId, price) {
+  if (state.items.includes(itemId)) { alert('Ya tienes este objeto.'); return; }
+  if (state.coins < price) { alert('Monedas insuficientes'); return; }
+  state.coins -= price;
+  state.items.push(itemId);
+  updateCoinDisplay();
+  renderShop();
+  renderInventory();
 }
 
 function openChest(chestId) {
@@ -1422,6 +1776,209 @@ function closeChestModal() {
   document.body.classList.remove('modal-open');
 }
 
+/* ===== SECCIÓN: OBJETOS ===== */
+function renderInventory() {
+  dom.inventoryContent.innerHTML = '';
+  const ownedItems = ITEMS.filter(it => state.items.includes(it.id));
+  if (ownedItems.length === 0) {
+    dom.inventoryContent.innerHTML = `<div class="inv-empty"><p>📦 No tienes objetos</p><p class="inv-empty-sub">Consigue objetos en la Tienda</p></div>`;
+    return;
+  }
+  const grid = document.createElement('div');
+  grid.className = 'inv-grid';
+  ownedItems.forEach(item => {
+    const card = document.createElement('div');
+    const r = item.rarity;
+    card.className = `inv-card rarity-${r}`;
+    const equippedOn = Object.entries(state.equippedItems).find(([fishId, itemId]) => itemId === item.id);
+    const fishName = equippedOn ? getFishById(equippedOn[0])?.name || '???' : null;
+    const fishImg = equippedOn ? getFishById(equippedOn[0])?.imgPath : null;
+    const fishEmoji = equippedOn ? getFishById(equippedOn[0])?.emoji : null;
+    card.innerHTML = `
+      <div class="inv-card-img"><img class="item-img" src="${item.imgPath}" alt="${item.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="item-img-fallback">${item.emoji}</span></div>
+      <div class="inv-card-name">${item.name}</div>
+      <div class="inv-card-rarity ${r}">${r === 'common' ? 'COMÚN' : r === 'rare' ? 'RARO' : r === 'epic' ? 'ÉPICO' : 'LEYENDA'}</div>
+      <div class="inv-card-status ${equippedOn ? 'equipped' : 'free'}">
+        ${equippedOn
+          ? `<span class="inv-equipped-info">🔗 ${imgTagSmall(fishImg, fishName, fishEmoji)} ${fishName}</span>`
+          : '<span>📭 Libre</span>'}
+      </div>`;
+    card.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (!equippedOn) {
+        openEquipModal(item.id);
+      } else {
+        alert(`${item.name} está equipado en ${fishName}.`);
+      }
+    });
+    grid.appendChild(card);
+  });
+  dom.inventoryContent.appendChild(grid);
+}
+
+function openEquipModal(itemId) {
+  const item = ITEMS.find(it => it.id === itemId);
+  if (!item) return;
+  const ownedFish = FISH_TYPES.filter(f => state.unlockedFish.includes(f.id)).sort(sortByRarity);
+  if (ownedFish.length === 0) {
+    alert('No tienes peces para equipar este objeto.');
+    return;
+  }
+  dom.equipModalBody.innerHTML = `
+    <div class="equip-modal-header">
+      <span class="equip-modal-title"><img class="item-img item-img-inline" src="${item.imgPath}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" style="width:1.3rem;height:1.3rem;vertical-align:middle;display:inline-block"><span class="item-img-fallback" style="display:none">${item.emoji}</span> ${item.name}</span>
+      <button class="equip-modal-close" id="equip-modal-close-btn">✕</button>
+    </div>
+    <p class="equip-modal-desc">Selecciona un pez para equiparle este objeto:</p>
+    <div class="equip-fish-list">`;
+  ownedFish.forEach(fish => {
+    const alreadyEquipped = state.equippedItems[fish.id];
+    const fishItem = alreadyEquipped ? ITEMS.find(it => it.id === alreadyEquipped) : null;
+    const r = getRarityConfig(fish);
+    dom.equipModalBody.innerHTML += `
+      <div class="equip-fish-item" data-fish-id="${fish.id}">
+        <div class="equip-fish-img">${imgTagSmall(fish.imgPath, fish.name, fish.emoji)}</div>
+        <div class="equip-fish-info">
+          <span class="equip-fish-name">${fish.name}</span>
+          <span class="rarity-badge ${r.css}">${r.label}</span>
+        </div>
+        <div class="equip-fish-current">${fishItem ? `🔗 ${fishItem.emoji} ${fishItem.name}` : '— Vacío'}</div>
+      </div>`;
+  });
+  dom.equipModalBody.innerHTML += `</div>`;
+  dom.equipModal.classList.add('open');
+  document.body.classList.add('modal-open');
+
+  dom.equipModalBody.querySelectorAll('.equip-fish-item').forEach(el => {
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const fishId = el.dataset.fishId;
+      state.equippedItems[fishId] = itemId;
+      closeEquipModal();
+      renderInventory();
+    });
+  });
+
+  const closeBtn = document.getElementById('equip-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeEquipModal(); });
+}
+
+function closeEquipModal() {
+  dom.equipModal.classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
+/* ===== ITEM CONFIRM MODAL ===== */
+function openItemModal(itemId, cost) {
+  const item = ITEMS.find(it => it.id === itemId);
+  if (!item) return;
+  const r = item.rarity;
+  const alreadyOwned = state.items.includes(item.id);
+  const canAfford = state.coins >= cost;
+
+  dom.itemModalBody.innerHTML = `
+    <div class="item-modal-header">
+      <span class="item-modal-title">${item.name}</span>
+      <button class="item-modal-close" id="item-modal-close-btn">✕</button>
+    </div>
+    <div class="item-preview">
+      <div class="item-preview-img ${r}">
+        <img class="item-img" src="${item.imgPath}" alt="${item.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="item-img-fallback">${item.emoji}</span>
+      </div>
+      <div class="item-preview-name">${item.name}</div>
+      <div><span class="inv-card-rarity ${r}">${r === 'common' ? 'COMÚN' : r === 'rare' ? 'RARO' : r === 'epic' ? 'ÉPICO' : 'LEYENDA'}</span></div>
+      <div class="item-preview-desc">${item.description}</div>
+      <div class="item-preview-cost">🪙 ${cost}</div>
+    </div>
+    <div class="item-preview-actions">
+      <button class="btn-primary item-buy-btn" id="item-buy-btn" ${canAfford && !alreadyOwned ? '' : 'disabled'}>
+        ${alreadyOwned ? '✅ Ya poseído' : canAfford ? 'COMPRAR 🪙 ' + cost : 'Oro insuficiente'}
+      </button>
+    </div>`;
+
+  const buyBtn = document.getElementById('item-buy-btn');
+  if (buyBtn && canAfford && !alreadyOwned) {
+    buyBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      buyItem(item.id, cost);
+      closeItemModal();
+    });
+  }
+
+  const closeBtn = document.getElementById('item-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeItemModal(); });
+
+  dom.itemModal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeItemModal() {
+  dom.itemModal.classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
+/* ===== GEM EXCHANGE ===== */
+function openGemPackModal(pack) {
+  const canAfford = state.diamonds >= pack.cost;
+
+  dom.itemModalBody.innerHTML = `
+    <div class="item-modal-header">
+      <span class="item-modal-title">💎 Banco de Gemas</span>
+      <button class="item-modal-close" id="gem-modal-close-btn">✕</button>
+    </div>
+    <div class="item-preview">
+      <div class="item-preview-img" style="border:none;background:none;width:auto;height:auto;padding:0;"><img class="item-img" src="${pack.imgPath}" alt="${pack.name}" style="width:4rem;height:4rem;" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="item-img-fallback" style="font-size:3rem;">${pack.emoji}</span></div>
+      <div class="item-preview-name">${pack.name}</div>
+      <div class="item-preview-desc" style="font-size:0.95rem;">
+        ¿Quieres canjear <strong>${pack.cost} 💎</strong> por <strong>${pack.reward} 🪙</strong>?
+      </div>
+      <div class="item-preview-cost" style="font-size:0.9rem;">
+        Saldo actual: 💎 ${state.diamonds} → 🪙 ${state.coins + pack.reward}
+      </div>
+    </div>
+    <div class="item-preview-actions">
+      <button class="btn-primary item-buy-btn" id="gem-confirm-btn" ${canAfford ? '' : 'disabled'}>
+        ${canAfford ? `✅ Canjear ${pack.cost} 💎` : '❌ Gemas insuficientes'}
+      </button>
+    </div>`;
+
+  const confirmBtn = document.getElementById('gem-confirm-btn');
+  if (confirmBtn && canAfford) {
+    confirmBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (state.diamonds < pack.cost) return;
+      state.diamonds -= pack.cost;
+      state.coins += pack.reward;
+      updateCoinDisplay();
+      updateDiamondDisplay();
+      showCoinReward(pack.reward);
+      closeItemModal();
+      renderShop();
+      renderInventory();
+    });
+  }
+
+  const closeBtn = document.getElementById('gem-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeItemModal(); });
+
+  dom.itemModal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function showCoinReward(amount) {
+  const el = document.createElement('div');
+  el.className = 'coin-reward';
+  el.textContent = `+${amount} 🪙`;
+  document.getElementById('app').appendChild(el);
+  requestAnimationFrame(() => el.classList.add('coin-reward-active'));
+  setTimeout(() => el.remove(), 1500);
+}
+
+function imgTagSmall(src, alt, fallbackEmoji) {
+  return `<div class="equip-img-wrap"><img class="equip-fish-thumb" src="${src}" alt="${alt}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="equip-img-fallback">${fallbackEmoji || '🐟'}</span></div>`;
+}
+
 /* ===== COMBATE ===== */
 function initCombat() {
   const playerFishId = state.selectedFishId;
@@ -1446,10 +2003,23 @@ function initCombat() {
   state.turnPhase = 'player_first';
   state.isFirstEnemyTurn = true;
 
+  if (hasEquippedItem(state.selectedFishId, 'aleta_voladora')) {
+    state.player.type.spe = Math.round(state.player.type.spe * 1.1);
+    setLogMessage(`¡Aleta de Pez Volador aumenta la velocidad! (+10%)`, true);
+  }
+  if (hasEquippedItem(state.selectedFishId, 'caparazon_tortuga')) {
+    state.player.type.def = Math.round(state.player.type.def * 1.15);
+    setLogMessage(`¡Caparazón de Tortuga aumenta la defensa! (+15%)`, true);
+  }
+  if (hasEquippedItem(state.selectedFishId, 'tinta_concentrada')) {
+    state.enemy.debuff = { type: 'precision_reducida', turns: 2 };
+    setLogMessage(`¡Tinta Concentrada reduce la precisión del rival!`, true);
+  }
+
   renderCombat();
   showScreen('combat');
-  dom.enemySpd.textContent = `SPE: ${enemyType.spe}`;
-  dom.playerSpd.textContent = `SPE: ${playerType.spe}`;
+  dom.enemySpd.textContent = `SPE: ${state.enemy.type.spe}`;
+  dom.playerSpd.textContent = `SPE: ${state.player.type.spe}`;
   dom.logMessage.textContent = '¡Comienza la batalla!';
   setTimeout(() => startTurn(), 600);
 }
@@ -1592,6 +2162,8 @@ function playerAttack(index) {
   let dmg = calculateDamage(atk.power, state.player.type, state.enemy.type, atk.categoria, state.player.status, state.enemy.buffs, state.player.atkReduction);
   dmg = applyDefensivePassives(dmg, state.enemy, atk.categoria);
   state.enemy.currentHp = Math.max(0, state.enemy.currentHp - dmg);
+  if (atk.categoria === 'Fisico') trackMission('fisico_attacks');
+  if (atk.categoria === 'Especial') trackMission('especial_attacks');
   setLogMessage(`¡${state.player.type.name} usa ${atk.name}! -${dmg} HP`, true);
   if (atk.drain) {
     const heal = Math.max(1, Math.floor(dmg * atk.drain));
@@ -1735,6 +2307,7 @@ function showResult(victory) {
   dom.resultEmoji.textContent = victory ? '🏆' : '💀';
   dom.resultCups.textContent = victory ? '+30 🏆' : '-1 🏆';
   dom.resultCups.style.color = victory ? '#4facfe' : '#f44336';
+  if (victory) trackMission('win_battles');
   dom.resultSub.textContent = victory
     ? `¡${state.player.type.name} ha vencido a ${state.enemy.type.name}! +${reward} 🪙`
     : `${state.enemy.type.name} ha derrotado a ${state.player.type.name}... +${reward} 🪙`;
@@ -1745,7 +2318,8 @@ function resetGame() {
   state.player = null; state.enemy = null;
   state.isPlayerTurn = true; state.gameOver = false; state.isAnimating = false;
   state.turnPhase = 'player_first';
-  renderFightContent(); renderBank(); updateCoinDisplay(); updateDiamondDisplay();
+  renderFightContent(); renderBank(); renderInventory();
+  updateCoinDisplay(); updateDiamondDisplay();
   showSection('fight'); showScreen('main');
 }
 
@@ -1758,6 +2332,11 @@ function setupEvents() {
     initCombat();
   });
   dom.arenaDisplay.addEventListener('pointerdown', e => { e.preventDefault(); openArenaModal(); });
+  dom.equipModal.addEventListener('pointerdown', e => {
+    if (e.target === dom.equipModal || e.target.classList.contains('equip-modal-backdrop')) {
+      e.preventDefault(); closeEquipModal();
+    }
+  });
   dom.arenaModal.addEventListener('pointerdown', e => {
     if (e.target === dom.arenaModal || e.target.classList.contains('arena-modal-backdrop')) {
       e.preventDefault(); closeArenaModal();
@@ -1765,6 +2344,18 @@ function setupEvents() {
   });
   dom.btnRestart.addEventListener('pointerdown', e => { e.preventDefault(); resetGame(); });
   dom.btnSave.addEventListener('pointerdown', e => { e.preventDefault(); saveGame(); });
+  const missionsBtn = document.getElementById('missions-btn');
+  if (missionsBtn) missionsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openMissionsModal(); });
+  dom.missionsModal.addEventListener('pointerdown', e => {
+    if (e.target === dom.missionsModal || e.target.classList.contains('missions-modal-backdrop')) {
+      e.preventDefault(); closeMissionsModal();
+    }
+  });
+  dom.itemModal.addEventListener('pointerdown', e => {
+    if (e.target === dom.itemModal || e.target.classList.contains('item-modal-backdrop')) {
+      e.preventDefault(); closeItemModal();
+    }
+  });
   dom.bottomNav.addEventListener('pointerdown', e => {
     const tab = e.target.closest('.nav-tab');
     if (!tab) return;
@@ -1777,15 +2368,18 @@ function setupEvents() {
 /* ===== INIT ===== */
 function init() {
   loadGame();
+  checkDailyReset();
   setupEvents();
   renderFightContent();
   renderBank();
+  renderInventory();
   updateCoinDisplay();
   updateDiamondDisplay();
   updateCupsDisplay();
   updateArenaDisplay();
   updateArenaBackground();
   updateSaveTimestampDisplay();
+  updateMissionsButton();
   showSection('fight');
   showScreen('main');
 }
