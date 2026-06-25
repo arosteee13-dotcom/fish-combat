@@ -270,6 +270,25 @@ body.modal-open .section.active { overflow: hidden; }
   line-height: 1.3;
 }
 
+/* Cups badge (top-right) */
+.card-grid-cups {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: #ffd700;
+  background: rgba(0,0,0,0.75);
+  padding: 0.08rem 0.3rem;
+  border-radius: 4px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.fish-card-grid.locked .card-grid-cups {
+  display: none;
+}
+
 /* Image container */
 .card-grid-img {
   width: 62%;
@@ -1050,6 +1069,7 @@ body.modal-open .section.active { overflow: hidden; }
   .bank-section-list { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 0.5rem; }
   .card-grid-img .img-fallback { font-size: 1.4rem; }
   .card-grid-level { font-size: 0.45rem; top: 3px; left: 3px; }
+  .card-grid-cups { font-size: 0.45rem; top: 3px; right: 3px; }
   .fish-detail-header .img-wrap { width: 3.5rem; height: 3.5rem; }
   .fish-detail-header .fish-img { width: 3.5rem; height: 3.5rem; }
   .fish-detail-header .img-fallback { font-size: 2.8rem; }

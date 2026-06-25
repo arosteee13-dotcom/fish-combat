@@ -544,6 +544,7 @@ const state = {
   arenaMaxReached: 1,
   unlockedFish: ['salmonete'],
   fishLevels: {},
+  fishCups: {},
   items: [],
   equippedItems: {},
   lastFreeClaim: null,
@@ -621,6 +622,9 @@ function sortByRarity(a, b) { return RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rar
 
 /* ===== LEVEL SYSTEM ===== */
 function getFishLevel(fishId) { return state.fishLevels[fishId] || 1; }
+
+function getFishCups(fishId) { return state.fishCups[fishId] || 0; }
+function getTotalCups() { return state.unlockedFish.reduce((sum, id) => sum + getFishCups(id), 0); }
 
 function getLeveledFishType(base, level) {
   const steps = level - 1;
@@ -1094,6 +1098,7 @@ function getSaveData() {
     arenaMaxReached: state.arenaMaxReached,
     unlockedFish: state.unlockedFish,
     fishLevels: state.fishLevels,
+    fishCups: state.fishCups,
     items: state.items,
     equippedItems: state.equippedItems,
     lastFreeClaim: state.lastFreeClaim,
@@ -1155,6 +1160,7 @@ function loadGame() {
     if (typeof data.arenaMaxReached === 'number') state.arenaMaxReached = data.arenaMaxReached;
     if (Array.isArray(data.unlockedFish) && data.unlockedFish.length > 0) state.unlockedFish = data.unlockedFish;
     if (data.fishLevels) state.fishLevels = data.fishLevels;
+    if (data.fishCups) state.fishCups = data.fishCups;
     if (Array.isArray(data.items)) state.items = data.items;
     if (data.equippedItems) state.equippedItems = data.equippedItems;
     if (data.lastFreeClaim) state.lastFreeClaim = data.lastFreeClaim;
@@ -1361,7 +1367,8 @@ function updateDiamondDisplay() {
 
 /* ===== COPAS ===== */
 function updateCupsDisplay() {
-  if (dom.cupsDisplay) dom.cupsDisplay.textContent = `🏆 ${state.cups}`;
+  const total = getTotalCups();
+  if (dom.cupsDisplay) dom.cupsDisplay.textContent = `🏆 ${total}`;
 }
 
 /* ===== SCREEN MANAGEMENT ===== */
@@ -1456,10 +1463,12 @@ function renderBank() {
     card.dataset.fishId = fish.id;
 
     const levelHtml = isUnlocked ? `<span class="card-grid-level">Nv.${level}</span>` : '';
+    const cupsHtml = isUnlocked ? `<span class="card-grid-cups">🏆${getFishCups(fish.id)}</span>` : '';
     const lockHtml = !isUnlocked ? '<span class="card-grid-lock">🔒</span>' : '';
 
     card.innerHTML = `
       ${levelHtml}
+      ${cupsHtml}
       <div class="card-grid-img">
         <img src="${fish.imgPath}" alt="${fish.name}" class="fish-img" onerror="this.classList.add('img-broken')">
         <span class="img-fallback">${fish.emoji}</span>
@@ -1545,6 +1554,9 @@ function getAttackEffectDescriptions(atk) {
         break;
       case 'sangrado':
         parts.push({ text: `${prob}Produce sangrado al rival (-1 PS por turno, ${e.turns || 3} turnos)`, type: 'debuff' });
+        break;
+      case 'spd_reduction':
+        parts.push({ text: `Reduce la DFE del rival -${Math.round((e.amount || 0.15) * 100)}%`, type: 'debuff' });
         break;
       case 'def_boost':
         parts.push({ text: `Aumenta tu Defensa Física +${e.amount || 2} (${e.turns || 2} turnos)`, type: 'buff' });
@@ -2556,12 +2568,15 @@ function initCombat() {
   const playerBase = getFishById(playerFishId);
   const playerLevel = getFishLevel(playerFishId);
   const playerType = roundFishStats(getLeveledFishType(playerBase, playerLevel));
-  const arenaCfg = getArenaConfig(state.currentArena);
-  const enemyLevel = arenaCfg.minLevel + Math.floor(Math.random() * (arenaCfg.maxLevel - arenaCfg.minLevel + 1));
-  const enemyBase = randomArenaFish(state.currentArena);
-  const enemyType = roundFishStats(getLeveledFishType(enemyBase, enemyLevel));
 
   const playerBaseFish = getFishById(playerFishId);
+  // Matchmaking: enemy strength based on selected fish's cups
+  const matchArena = getArenaForCups(getFishCups(playerFishId));
+  const arenaCfg = getArenaConfig(matchArena);
+  const enemyLevel = arenaCfg.minLevel + Math.floor(Math.random() * (arenaCfg.maxLevel - arenaCfg.minLevel + 1));
+  const enemyBase = randomArenaFish(matchArena);
+  const enemyType = roundFishStats(getLeveledFishType(enemyBase, enemyLevel));
+
   if (playerBaseFish?.passive?.name === 'Barbillones') playerType.atk += 0.5;
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
@@ -2918,10 +2933,14 @@ function checkGameOver() {
 function showResult(victory) {
   const arena = getArenaConfig(state.currentArena);
   const reward = victory ? arena.winGold : arena.loseGold;
-  const arenaCups = ARENA_CUP_CHANGES[state.currentArena] || ARENA_CUP_CHANGES[1];
+  const matchArena = getArenaForCups(getFishCups(state.selectedFishId));
+  const arenaCups = ARENA_CUP_CHANGES[matchArena] || ARENA_CUP_CHANGES[1];
   const cupChange = victory ? arenaCups.win : arenaCups.lose;
   state.coins += reward;
-  state.cups = Math.max(0, state.cups + cupChange);
+  const fishId = state.selectedFishId;
+  const current = getFishCups(fishId);
+  state.fishCups[fishId] = Math.max(0, current + cupChange);
+  state.cups = getTotalCups();
   updateCoinDisplay(); updateCupsDisplay();
   checkArenaChange();
   showScreen('result');
@@ -2989,6 +3008,7 @@ function resetAccount() {
   state.arenaMaxReached = 1;
   state.unlockedFish = ['salmonete'];
   state.fishLevels = {};
+  state.fishCups = {};
   state.items = [];
   state.equippedItems = {};
   state.lastFreeClaim = null;
