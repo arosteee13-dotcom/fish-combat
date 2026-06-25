@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Fish Battle Arena</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ====== PANTALLA PRINCIPAL (con barra inferior) ====== -->
+    <div id="screen-main" class="screen active">
+      <header class="main-header">
+        <h1 class="title">🐟 Fish Battle Arena</h1>
+      </header>
+
+      <div class="sections-container">
+
+        <!-- SECCIÓN: LUCHAR -->
+        <div id="section-fight" class="section active">
+          <h2 class="section-title">⚔️ Buscar Combate</h2>
+          <div id="fight-content" class="fight-content"></div>
+          <button id="btn-battle" class="btn-primary" disabled>¡Buscar Combate!</button>
+        </div>
+
+        <!-- SECCIÓN: BANCO -->
+        <div id="section-bank" class="section">
+          <h2 class="section-title">🐟 Tu Colección</h2>
+          <p class="section-desc">Toca un pez para seleccionarlo como tu luchador</p>
+          <div id="bank-cards" class="bank-cards"></div>
+        </div>
+
+        <!-- SECCIÓN: TIENDA -->
+        <div id="section-shop" class="section">
+          <h2 class="section-title">🛒 Tienda de Peces</h2>
+          <div class="shop-content">
+            <div class="shop-placeholder">
+              <span class="shop-icon">🎴</span>
+              <p>Próximamente: ¡Compra sobres de cartas y mejora tus peces con monedas!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN: AJUSTES -->
+        <div id="section-settings" class="section">
+          <h2 class="section-title">⚙️ Ajustes</h2>
+          <div class="settings-content">
+            <p class="settings-desc">Tu progreso se guarda automáticamente al seleccionar un pez. También puedes guardar manualmente aquí.</p>
+            <button id="btn-save" class="btn-primary">💾 Guardar Partida</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+      <nav id="bottom-nav">
+        <button class="nav-tab" data-tab="shop">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-label">Tienda</span>
+        </button>
+        <button class="nav-tab" data-tab="bank">
+          <span class="nav-icon">🐟</span>
+          <span class="nav-label">Banco</span>
+        </button>
+        <button class="nav-tab active" data-tab="fight">
+          <span class="nav-icon">⚔️</span>
+          <span class="nav-label">Luchar</span>
+        </button>
+        <button class="nav-tab" data-tab="settings">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Ajustes</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- ====== PANTALLA 2: COMBATE ====== -->
+    <div id="screen-combat" class="screen">
+      <div class="combat-arena">
+
+        <div id="enemy-area" class="fighter-area enemy-area">
+          <div class="fighter-info">
+            <span id="enemy-name" class="fighter-name"></span>
+            <span id="enemy-hp-text" class="fighter-hp-text"></span>
+          </div>
+          <div class="hp-bar">
+            <div id="enemy-hp-fill" class="hp-fill"></div>
+          </div>
+          <div id="enemy-emoji" class="fighter-emoji"></div>
+        </div>
+
+        <div class="battle-log">
+          <p id="log-message">Prepara tu ataque...</p>
+        </div>
+
+        <div id="player-area" class="fighter-area player-area">
+          <div id="player-emoji" class="fighter-emoji"></div>
+          <div class="hp-bar">
+            <div id="player-hp-fill" class="hp-fill"></div>
+          </div>
+          <div class="fighter-info">
+            <span id="player-name" class="fighter-name"></span>
+            <span id="player-hp-text" class="fighter-hp-text"></span>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="attack-menu" class="attack-menu"></div>
+    </div>
+
+    <!-- ====== PANTALLA 3: RESULTADO ====== -->
+    <div id="screen-result" class="screen">
+      <div class="result-content">
+        <h2 id="result-title" class="result-title"></h2>
+        <div id="result-emoji" class="result-emoji"></div>
+        <p id="result-sub" class="result-sub"></p>
+        <button id="btn-restart" class="btn-primary">Volver al Mazo</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

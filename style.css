@@ -1,0 +1,565 @@
+/* ===== RESET & BASE ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #0a0e1a;
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== APP CONTAINER ===== */
+#app {
+  width: 100%;
+  max-width: 480px;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0a1628 0%, #0d1f3c 40%, #132a4a 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== SCREENS ===== */
+.screen {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.screen.active {
+  display: flex;
+}
+
+/* ===== MAIN HEADER ===== */
+.main-header {
+  text-align: center;
+  padding: 0.6rem 1rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.2);
+}
+.title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== SECTIONS CONTAINER ===== */
+.sections-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== SECTIONS (tabs) ===== */
+.section {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.5rem;
+}
+.section.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 1rem 1rem 0.25rem;
+  flex-shrink: 0;
+}
+.section-desc {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.45);
+  text-align: center;
+  padding: 0 1rem 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ===== SECCIÓN: LUCHAR ===== */
+.fight-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.fight-empty {
+  text-align: center;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.95rem;
+  padding: 2rem;
+}
+
+.fight-card {
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(79,172,254,0.3);
+  border-radius: 18px;
+  padding: 1.5rem 2rem;
+  text-align: center;
+  max-width: 280px;
+  width: 100%;
+}
+.fight-card-emoji {
+  font-size: 4.5rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.fight-card-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.fight-card-hp {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 0.75rem;
+}
+.fight-card-attacks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.fight-card-attack {
+  font-size: 0.85rem;
+  background: rgba(255,255,255,0.08);
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.7);
+}
+
+/* ===== SECCIÓN: BANCO ===== */
+.bank-cards {
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.fish-card {
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.25s, background 0.25s, transform 0.15s;
+  position: relative;
+}
+.fish-card:active {
+  transform: scale(0.97);
+}
+.fish-card.selected {
+  border-color: #4facfe;
+  background: rgba(79,172,254,0.12);
+  box-shadow: 0 0 20px rgba(79,172,254,0.15);
+}
+
+.fish-card-emoji {
+  font-size: 2.8rem;
+  flex-shrink: 0;
+  width: 3.5rem;
+  text-align: center;
+}
+
+.fish-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.fish-card-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.fish-card-badge {
+  font-size: 0.6rem;
+  background: #4facfe;
+  color: #fff;
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.fish-card-hp {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 0.4rem;
+}
+
+.fish-card-attacks {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.fish-card-attack {
+  font-size: 0.75rem;
+  background: rgba(255,255,255,0.08);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+}
+
+/* ===== SECCIÓN: TIENDA ===== */
+.shop-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.shop-placeholder {
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 300px;
+}
+.shop-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* ===== SECCIÓN: AJUSTES ===== */
+.settings-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1.5rem;
+}
+.settings-desc {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.45);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 320px;
+}
+
+/* ===== BOTÓN PRIMARIO ===== */
+.btn-primary {
+  display: block;
+  width: calc(100% - 2rem);
+  margin: 0.75rem auto 0;
+  padding: 1rem;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: opacity 0.25s, transform 0.15s;
+  text-align: center;
+  flex-shrink: 0;
+}
+.btn-primary:active {
+  transform: scale(0.97);
+}
+.btn-primary:disabled {
+  opacity: 0.3;
+  cursor: default;
+  transform: none;
+}
+
+/* ===== BARRA DE NAVEGACIÓN INFERIOR ===== */
+#bottom-nav {
+  display: flex;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.45);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.2rem;
+  min-height: 60px;
+  border: none;
+  background: none;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color 0.2s, background 0.2s;
+  position: relative;
+}
+.nav-tab .nav-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.nav-tab .nav-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.nav-tab.active {
+  color: #4facfe;
+}
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 3px;
+  background: #4facfe;
+  border-radius: 0 0 3px 3px;
+}
+
+/* ===== COMBAT SCREEN ===== */
+.combat-arena {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.fighter-area {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.enemy-area {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.player-area {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.fighter-info {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0.15rem;
+}
+.enemy-area .fighter-info {
+  flex-direction: row-reverse;
+}
+
+.fighter-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.fighter-hp-text {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
+}
+
+.hp-bar {
+  width: 100%;
+  height: 0.7rem;
+  background: rgba(255,255,255,0.12);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.3rem;
+}
+.hp-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease, background 0.5s ease;
+  background: #4caf50;
+}
+
+.fighter-emoji {
+  font-size: 4rem;
+  line-height: 1;
+  padding: 0.3rem 0;
+}
+.enemy-area .fighter-emoji {
+  transform: scaleX(-1);
+}
+
+.battle-log {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  min-height: 2.5rem;
+}
+#log-message {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.75);
+  text-align: center;
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.attack-menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.2);
+}
+
+.btn-attack {
+  padding: 0.9rem 0.5rem;
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+.btn-attack .atk-emoji { font-size: 1.4rem; }
+.btn-attack .atk-name { font-size: 0.8rem; }
+.btn-attack .atk-dmg { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
+.btn-attack:active { transform: scale(0.95); }
+.btn-attack:disabled,
+.btn-attack.disabled {
+  opacity: 0.3;
+  cursor: default;
+  transform: none;
+  pointer-events: none;
+}
+.btn-attack:not(:disabled):hover {
+  border-color: #4facfe;
+  background: rgba(79,172,254,0.1);
+}
+
+/* ===== RESULT SCREEN ===== */
+#screen-result {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.result-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.result-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+.result-title.victory {
+  background: linear-gradient(135deg, #f9d423, #ff4e50);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.result-title.defeat {
+  color: #f44336;
+  -webkit-text-fill-color: #f44336;
+}
+.result-emoji { font-size: 5rem; }
+.result-sub { font-size: 1rem; color: rgba(255,255,255,0.5); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+@keyframes flash-damage {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.shake {
+  animation: shake 0.4s ease;
+}
+.flash-damage {
+  animation: flash-damage 0.4s ease;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (min-width: 481px) {
+  #app {
+    border-radius: 20px;
+    margin-top: 1vh;
+    box-shadow: 0 0 60px rgba(0,0,0,0.5);
+    height: 98vh;
+    height: 98dvh;
+  }
+  body {
+    background: #060a14;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 380px) {
+  .title { font-size: 1rem; }
+  .fish-card-emoji { font-size: 2.2rem; width: 2.8rem; }
+  .fish-card { padding: 0.6rem 0.75rem; gap: 0.6rem; }
+  .fight-card-emoji { font-size: 3.5rem; }
+  .fighter-emoji { font-size: 3rem; }
+  .btn-attack { padding: 0.7rem 0.4rem; }
+  .btn-primary { padding: 0.85rem; font-size: 1rem; }
+  .nav-tab { min-height: 50px; }
+  .nav-tab .nav-icon { font-size: 1.1rem; }
+}
