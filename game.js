@@ -1433,10 +1433,23 @@ function renderShop() {
         <div class="chest-cost">🪙 ${entry.cost}</div>
       </div>
       <button class="btn-buy chest-buy-btn" disabled style="opacity:0.6">${alreadyOwned ? '✅' : 'Ver'}</button>`;
+    let tStartX, tStartY, tMoved;
     card.addEventListener('pointerdown', e => {
+      tStartX = e.clientX; tStartY = e.clientY;
+      tMoved = false;
+      card.setPointerCapture(e.pointerId);
+    });
+    card.addEventListener('pointermove', e => {
+      if (tStartX === undefined) return;
+      if (Math.abs(e.clientX - tStartX) > 10 || Math.abs(e.clientY - tStartY) > 10) tMoved = true;
+    });
+    card.addEventListener('pointerup', e => {
+      if (tMoved) return;
       e.preventDefault();
       openItemModal(item.id, entry.cost);
+      tStartX = tStartY = undefined;
     });
+    card.addEventListener('pointercancel', () => { tMoved = true; tStartX = tStartY = undefined; });
     dom.shopContent.appendChild(card);
   });
 
@@ -1487,10 +1500,23 @@ function renderShop() {
         <div class="chest-cost">💎 ${pack.cost} → 🪙 ${pack.reward}</div>
       </div>
       <button class="btn-buy chest-buy-btn" ${canAfford ? '' : 'disabled'}>Canjear</button>`;
+    let tStartX, tStartY, tMoved;
     card.addEventListener('pointerdown', e => {
+      tStartX = e.clientX; tStartY = e.clientY;
+      tMoved = false;
+      card.setPointerCapture(e.pointerId);
+    });
+    card.addEventListener('pointermove', e => {
+      if (tStartX === undefined) return;
+      if (Math.abs(e.clientX - tStartX) > 10 || Math.abs(e.clientY - tStartY) > 10) tMoved = true;
+    });
+    card.addEventListener('pointerup', e => {
+      if (tMoved) return;
       e.preventDefault();
       openGemPackModal(pack);
+      tStartX = tStartY = undefined;
     });
+    card.addEventListener('pointercancel', () => { tMoved = true; tStartX = tStartY = undefined; });
     dom.shopContent.appendChild(card);
   });
 }
