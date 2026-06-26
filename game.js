@@ -518,6 +518,23 @@ const FISH_TYPES = [
       name: 'Resistencia Marina',
       description: 'Cuando su vida baja del 50%, su Defensa Física aumenta un +20% automáticamente el resto del combate.'
     }
+  },
+  {
+    id: 'tiburon_martillo',
+    name: 'Tiburón Martillo',
+    rarity: 'epic',
+    imgPath: 'img/tiburon_martillo.png',
+    emoji: '🦈',
+    maxHp: 11, atk: 13, def: 9, spa: 6, spd: 8, spe: 10,
+    growth: { maxHp: 1.1, atk: 1.3, def: 0.9, spa: 0.6, spd: 0.8, spe: 1.0 },
+    attacks: [
+      { name: 'Golpe de Testa', power: 65, emoji: '💥', categoria: 'Fisico', efecto: { probabilidad: 0.2, estado: 'spe_reduction', turns: 1, amount: 15 } },
+      { name: 'Frenesí de Caza', power: 0, emoji: '🔥', categoria: 'Efecto', selfBuff: { stat: 'atk', amount: 3, turns: 3 } }
+    ],
+    passive: {
+      name: 'Sensor Electromagnético',
+      description: 'Los ataques del Tiburón Martillo nunca pueden fallar y reduce la probabilidad de evasión del rival a la mitad.'
+    }
   }
 ];
 
@@ -1729,7 +1746,8 @@ const ARENA_FISH = {
   ],
   3: [
     { fishId: 'pez_espada' },
-    { fishId: 'atun_rojo' }
+    { fishId: 'atun_rojo' },
+    { fishId: 'tiburon_martillo' }
   ]
 };
 
