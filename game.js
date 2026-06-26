@@ -534,6 +534,64 @@ const DAILY_MISSIONS = [
   { id: 'earn_cups_fish', name: '🏅 Especialista', desc: 'Gana 15 copas individuales con un mismo pez', target: 15, reward: 200 }
 ];
 
+const BATTLE_PASS_XP_PER_LEVEL = 100;
+const BATTLE_PASS_XP_REWARDS = { victory: 25, defeat: 10, dailyMission: 50 };
+const BATTLE_PASS_DURATION_DAYS = 30;
+const BATTLE_PASS_TOTAL_LEVELS = 10;
+const BATTLE_PASS_DURATION_MS = BATTLE_PASS_DURATION_DAYS * 24 * 60 * 60 * 1000;
+const BATTLE_PASS_LEVELS = [
+  {
+    level: 1,
+    free: { type: 'coins', amount: 100, label: '100 Monedas' },
+    premium: { type: 'coins', amount: 300, label: '300 Monedas Extra' }
+  },
+  {
+    level: 2,
+    free: { type: 'item', label: 'Concha Común' },
+    premium: { type: 'item', label: 'Diente de Tiburón' }
+  },
+  {
+    level: 3,
+    free: { type: 'coins', amount: 150, label: '150 Monedas' },
+    premium: { type: 'coins', amount: 400, label: '400 Monedas Extra' }
+  },
+  {
+    level: 4,
+    free: { type: 'coins', amount: 200, label: '200 Monedas' },
+    premium: { type: 'item', label: 'Anzuelo de la Suerte' }
+  },
+  {
+    level: 5,
+    free: { type: 'coins', amount: 250, label: '250 Monedas' },
+    premium: { type: 'coins', amount: 600, label: '600 Monedas Extra' }
+  },
+  {
+    level: 6,
+    free: { type: 'item', label: 'Coral Defensivo' },
+    premium: { type: 'item', label: 'Perla del Abismo' }
+  },
+  {
+    level: 7,
+    free: { type: 'coins', amount: 300, label: '300 Monedas' },
+    premium: { type: 'coins', amount: 800, label: '800 Monedas Extra' }
+  },
+  {
+    level: 8,
+    free: { type: 'item', label: 'Concha Reforzada' },
+    premium: { type: 'item', label: 'Tridente Roto' }
+  },
+  {
+    level: 9,
+    free: { type: 'coins', amount: 400, label: '400 Monedas' },
+    premium: { type: 'coins', amount: 1200, label: '1200 Monedas Extra' }
+  },
+  {
+    level: 10,
+    free: { type: 'title', label: 'Guardián del Mar' },
+    premium: { type: 'frame', label: 'Marco Cosmético Dorado' }
+  }
+];
+
 const COLLECTION_MASTER_REWARD = { coins: 2000, diamonds: 30 };
 
 /* ===== CONSTANTS ===== */
@@ -573,6 +631,14 @@ const state = {
   missionsClaimed: [],
   missionsBonusClaimed: false,
   missionsRefreshTime: null,
+  nivel_pase: 0,
+  xp_pase: 0,
+  tiene_premium: false,
+  paseInicioTemporada: Date.now(),
+  paseRecompensasReclamadas: [],
+  paseObjetos: [],
+  titulosDesbloqueados: [],
+  marcosDesbloqueados: [],
   achievements: {
     collectionMaster: {
       rewardedForTotal: 0
@@ -1243,6 +1309,14 @@ function getSaveData() {
     missionsClaimed: state.missionsClaimed,
     missionsBonusClaimed: state.missionsBonusClaimed,
     missionsRefreshTime: state.missionsRefreshTime,
+    nivel_pase: state.nivel_pase,
+    xp_pase: state.xp_pase,
+    tiene_premium: state.tiene_premium,
+    paseInicioTemporada: state.paseInicioTemporada,
+    paseRecompensasReclamadas: state.paseRecompensasReclamadas,
+    paseObjetos: state.paseObjetos,
+    titulosDesbloqueados: state.titulosDesbloqueados,
+    marcosDesbloqueados: state.marcosDesbloqueados,
     achievements: state.achievements,
     timestamp: Date.now()
   };
@@ -1252,6 +1326,125 @@ function formatTimestamp(ts) {
   const d = new Date(ts);
   const pad = n => String(n).padStart(2, '0');
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} a las ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function ensureBattlePassState() {
+  if (!Number.isFinite(state.nivel_pase) || state.nivel_pase < 0) state.nivel_pase = 0;
+  if (!Number.isFinite(state.xp_pase) || state.xp_pase < 0) state.xp_pase = 0;
+  if (typeof state.tiene_premium !== 'boolean') state.tiene_premium = false;
+  if (!Number.isFinite(state.paseInicioTemporada) || state.paseInicioTemporada <= 0) state.paseInicioTemporada = Date.now();
+  if (!Array.isArray(state.paseRecompensasReclamadas)) state.paseRecompensasReclamadas = [];
+  if (!Array.isArray(state.paseObjetos)) state.paseObjetos = [];
+  if (!Array.isArray(state.titulosDesbloqueados)) state.titulosDesbloqueados = [];
+  if (!Array.isArray(state.marcosDesbloqueados)) state.marcosDesbloqueados = [];
+}
+
+function getBattlePassEndTimestamp() {
+  ensureBattlePassState();
+  return state.paseInicioTemporada + BATTLE_PASS_DURATION_MS;
+}
+
+function getBattlePassRemainingMs(now = Date.now()) {
+  return Math.max(0, getBattlePassEndTimestamp() - now);
+}
+
+function getBattlePassRemainingText() {
+  const remaining = getBattlePassRemainingMs();
+  const days = Math.floor(remaining / 86400000);
+  const hours = Math.floor((remaining % 86400000) / 3600000);
+  return `Termina en: ${days} días, ${hours} horas`;
+}
+
+function resetBattlePassSeason() {
+  state.nivel_pase = 0;
+  state.xp_pase = 0;
+  state.tiene_premium = false;
+  state.paseInicioTemporada = Date.now();
+  state.paseRecompensasReclamadas = [];
+}
+
+function checkBattlePassSeasonExpiration() {
+  ensureBattlePassState();
+  if (getBattlePassRemainingMs() > 0) return false;
+  resetBattlePassSeason();
+  return true;
+}
+
+function getBattlePassLevelFromXp(xp) {
+  return Math.min(BATTLE_PASS_TOTAL_LEVELS, Math.floor(xp / BATTLE_PASS_XP_PER_LEVEL));
+}
+
+function addBattlePassXp(amount) {
+  checkBattlePassSeasonExpiration();
+  if (!Number.isFinite(amount) || amount <= 0) return { added: 0, levelUp: false, level: state.nivel_pase, xp: state.xp_pase };
+  const prevLevel = state.nivel_pase;
+  state.xp_pase = Math.max(0, state.xp_pase + amount);
+  state.nivel_pase = getBattlePassLevelFromXp(state.xp_pase);
+  return { added: amount, levelUp: state.nivel_pase > prevLevel, level: state.nivel_pase, xp: state.xp_pase };
+}
+
+function addBattlePassXpFromCombat(victory) {
+  return addBattlePassXp(victory ? BATTLE_PASS_XP_REWARDS.victory : BATTLE_PASS_XP_REWARDS.defeat);
+}
+
+function addBattlePassXpFromDailyMission() {
+  return addBattlePassXp(BATTLE_PASS_XP_REWARDS.dailyMission);
+}
+
+function grantBattlePassReward(reward) {
+  if (!reward) return null;
+  if (reward.type === 'coins') {
+    state.coins += reward.amount || 0;
+    updateCoinDisplay();
+    return reward.label;
+  }
+  if (reward.type === 'item') {
+    if (!state.paseObjetos.includes(reward.label)) state.paseObjetos.push(reward.label);
+    return reward.label;
+  }
+  if (reward.type === 'title') {
+    if (!state.titulosDesbloqueados.includes(reward.label)) state.titulosDesbloqueados.push(reward.label);
+    return reward.label;
+  }
+  if (reward.type === 'frame') {
+    if (!state.marcosDesbloqueados.includes(reward.label)) state.marcosDesbloqueados.push(reward.label);
+    return reward.label;
+  }
+  return null;
+}
+
+function claimBattlePassLevelRewards(level) {
+  checkBattlePassSeasonExpiration();
+  if (!Number.isInteger(level)) return { ok: false, reason: 'Nivel inválido.' };
+  const tier = BATTLE_PASS_LEVELS.find(l => l.level === level);
+  if (!tier) return { ok: false, reason: 'Nivel fuera de rango.' };
+  if (state.nivel_pase < level) return { ok: false, reason: 'Nivel aún no desbloqueado.' };
+  if (state.paseRecompensasReclamadas.includes(level)) return { ok: false, reason: 'Nivel ya reclamado.' };
+
+  const granted = [grantBattlePassReward(tier.free)];
+  if (state.tiene_premium) granted.push(grantBattlePassReward(tier.premium));
+  state.paseRecompensasReclamadas.push(level);
+  return { ok: true, rewards: granted.filter(Boolean) };
+}
+
+function claimAllAvailableBattlePassRewards() {
+  checkBattlePassSeasonExpiration();
+  const claimed = [];
+  for (let level = 1; level <= state.nivel_pase; level++) {
+    const result = claimBattlePassLevelRewards(level);
+    if (result.ok) claimed.push({ level, rewards: result.rewards });
+  }
+  return claimed;
+}
+
+let battlePassTicker = null;
+function startBattlePassTicker() {
+  if (battlePassTicker) clearInterval(battlePassTicker);
+  battlePassTicker = setInterval(() => {
+    if (checkBattlePassSeasonExpiration() && dom.profileModal?.classList.contains('open')) {
+      renderProfileModal();
+    }
+  }, 60000);
 }
 
 function updateSaveTimestampDisplay() {
@@ -1308,6 +1501,16 @@ function loadGame() {
     if (Array.isArray(data.missionsClaimed)) state.missionsClaimed = data.missionsClaimed;
     if (typeof data.missionsBonusClaimed === 'boolean') state.missionsBonusClaimed = data.missionsBonusClaimed;
     if (data.missionsRefreshTime) state.missionsRefreshTime = data.missionsRefreshTime;
+    if (Number.isFinite(data.nivel_pase) && data.nivel_pase >= 0) state.nivel_pase = Math.floor(data.nivel_pase);
+    if (Number.isFinite(data.xp_pase) && data.xp_pase >= 0) state.xp_pase = Math.floor(data.xp_pase);
+    if (typeof data.tiene_premium === 'boolean') state.tiene_premium = data.tiene_premium;
+    if (Number.isFinite(data.paseInicioTemporada) && data.paseInicioTemporada > 0) state.paseInicioTemporada = data.paseInicioTemporada;
+    if (Array.isArray(data.paseRecompensasReclamadas)) state.paseRecompensasReclamadas = data.paseRecompensasReclamadas;
+    if (Array.isArray(data.paseObjetos)) state.paseObjetos = data.paseObjetos;
+    if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
+    if (Array.isArray(data.marcosDesbloqueados)) state.marcosDesbloqueados = data.marcosDesbloqueados;
+    ensureBattlePassState();
+    checkBattlePassSeasonExpiration();
     const savedAchievement = data.achievements?.collectionMaster;
     if (savedAchievement && Number.isFinite(savedAchievement.rewardedForTotal)) {
       state.achievements.collectionMaster.rewardedForTotal = Math.max(0, savedAchievement.rewardedForTotal);
@@ -2265,6 +2468,7 @@ function claimMission(id) {
   if (!mission || state.missions[id] < mission.target) return;
   state.missionsClaimed.push(id);
   state.coins += mission.reward;
+  addBattlePassXpFromDailyMission();
   updateCoinDisplay();
   renderMissionsModal();
   updateMissionsButton();
@@ -2387,6 +2591,7 @@ function closeMissionsModal() {
 }
 
 function renderProfileModal() {
+  checkBattlePassSeasonExpiration();
   const body = dom.profileModalBody;
   if (!body) return;
   const { totalFish, unlockedFish } = getCollectionProgress();
@@ -2394,6 +2599,8 @@ function renderProfileModal() {
   const totalArenas = Object.keys(ARENA_CONFIG).length;
   const selectedFish = getFishById(state.selectedFishId);
   const badges = getTrophyBadges();
+  const battlePassXpCurrentLevel = state.nivel_pase >= BATTLE_PASS_TOTAL_LEVELS ? BATTLE_PASS_XP_PER_LEVEL : (state.xp_pase % BATTLE_PASS_XP_PER_LEVEL);
+  const battlePassXpToNext = state.nivel_pase >= BATTLE_PASS_TOTAL_LEVELS ? 0 : (BATTLE_PASS_XP_PER_LEVEL - battlePassXpCurrentLevel);
   body.innerHTML = `
     <div class="profile-modal-header">
       <span class="profile-modal-title">⚙️ Ajustes y Perfil</span>
@@ -2420,6 +2627,13 @@ function renderProfileModal() {
     <div class="profile-wallet-row">
       <span class="profile-wallet-chip">🪙 ${state.coins}</span>
       <span class="profile-wallet-chip">💎 ${state.diamonds}</span>
+    </div>
+    <div class="profile-stat-card" style="margin-bottom:0.8rem;">
+      <span class="profile-stat-label">Pase de Batalla Mensual</span>
+      <strong class="profile-stat-value">Nivel ${state.nivel_pase}/${BATTLE_PASS_TOTAL_LEVELS} · XP ${battlePassXpCurrentLevel}/${BATTLE_PASS_XP_PER_LEVEL}</strong>
+      <span class="profile-save-time">${battlePassXpToNext > 0 ? `Faltan ${battlePassXpToNext} XP para el siguiente nivel` : 'Nivel máximo alcanzado'}</span>
+      <span class="profile-save-time">${state.tiene_premium ? 'Premium activo: reclamas Gratis + Premium' : 'Premium inactivo: solo recompensa Gratis'}</span>
+      <span class="profile-save-time">${getBattlePassRemainingText()}</span>
     </div>
     <div class="profile-trophies-header">
       <span class="profile-trophies-title">🏅 Vitrina de Trofeos</span>
@@ -3249,6 +3463,7 @@ function showResult(victory) {
   checkArenaChange();
   trackMission('play_battles');
   if (victory) trackMission('win_battles');
+  addBattlePassXpFromCombat(victory);
   if (matchArena === state.arenaMaxReached) trackMission('top_arena_battles');
   if (cupChange > 0) {
     for (let i = 0; i < cupChange; i++) trackMission('earn_cups_fish');
@@ -3328,6 +3543,14 @@ function resetAccount() {
   state.missionsClaimed = [];
   state.missionsBonusClaimed = false;
   state.missionsRefreshTime = null;
+  state.nivel_pase = 0;
+  state.xp_pase = 0;
+  state.tiene_premium = false;
+  state.paseInicioTemporada = Date.now();
+  state.paseRecompensasReclamadas = [];
+  state.paseObjetos = [];
+  state.titulosDesbloqueados = [];
+  state.marcosDesbloqueados = [];
   state.achievements = { collectionMaster: { rewardedForTotal: 0 } };
   state.selectedFishId = 'salmonete';
   state.player = null;
@@ -3781,6 +4004,9 @@ function setupEvents() {
 /* ===== INIT ===== */
 function init() {
   loadGame();
+  ensureBattlePassState();
+  checkBattlePassSeasonExpiration();
+  startBattlePassTicker();
   checkMissionsRefresh();
   setupEvents();
   renderFightContent();
