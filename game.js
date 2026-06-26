@@ -922,7 +922,8 @@ const state = {
   gameOver: false,
   isAnimating: false,
   turnPhase: 'player_first',
-  muelle: null
+  muelle: null,
+  tickets_muelle: 3
 };
 
 /* ===== DOM HELPERS ===== */
@@ -1736,6 +1737,7 @@ function getSaveData() {
     titulosDesbloqueados: state.titulosDesbloqueados,
     marcosDesbloqueados: state.marcosDesbloqueados,
     achievements: state.achievements,
+    tickets_muelle: state.tickets_muelle,
     timestamp: Date.now()
   };
 }
@@ -1964,6 +1966,7 @@ function loadGame() {
     if (Array.isArray(data.paseObjetos)) state.paseObjetos = data.paseObjetos;
     if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
     if (Array.isArray(data.marcosDesbloqueados)) state.marcosDesbloqueados = data.marcosDesbloqueados;
+    if (typeof data.tickets_muelle === 'number' && data.tickets_muelle >= 0) state.tickets_muelle = data.tickets_muelle;
     ensureBattlePassState();
     checkBattlePassSeasonExpiration();
     const savedAchievement = data.achievements?.collectionMaster;
@@ -2915,6 +2918,7 @@ function selectDailyMissions() {
   selected.forEach(id => { state.missions[id] = 0; });
   state.missionsClaimed = [];
   state.missionsBonusClaimed = false;
+  state.tickets_muelle = 3;
   state.missionsRefreshTime = Date.now();
 }
 
@@ -4177,6 +4181,7 @@ function resetAccount() {
   state.titulosDesbloqueados = [];
   state.marcosDesbloqueados = [];
   state.achievements = { collectionMaster: { rewardedForTotal: 0 } };
+  state.tickets_muelle = 3;
   state.selectedFishId = 'salmonete';
   state.player = null;
   state.enemy = null;
@@ -4268,6 +4273,13 @@ function syncMuelleBetForm() {
   const error = document.getElementById('muelle-bet-error');
   if (!input || !confirmBtn || !error) return;
 
+  if (state.tickets_muelle <= 0) {
+    confirmBtn.disabled = true;
+    error.textContent = 'Muelle cerrado. Espera a la recarga diaria.';
+    error.classList.remove('valid');
+    return;
+  }
+
   const validation = getMuelleBetValidation(input.value);
   if (input.value !== validation.cleanValue) input.value = validation.cleanValue;
   confirmBtn.disabled = !validation.isValid;
@@ -4279,29 +4291,34 @@ function openMuelleBetModal() {
   const modal = document.getElementById('muelle-bet-modal');
   if (!modal) return;
   const body = document.getElementById('muelle-bet-modal-body');
+  const hasTickets = state.tickets_muelle > 0;
   const hasCoins = state.coins >= MUELLE_MIN_BET;
-  const defaultBet = hasCoins ? String(Math.min(25, state.coins)) : '';
+  const canPlay = hasTickets && hasCoins;
+  const defaultBet = canPlay ? String(Math.min(25, state.coins)) : '';
   if (body) {
     body.innerHTML = `
       <div class="muelle-bet-header">
         <span class="muelle-bet-title">🎣 El Muelle de la Suerte</span>
         <button class="muelle-bet-close" id="muelle-bet-close-btn">✕</button>
       </div>
-      <div class="muelle-bet-coins">Tienes: <strong>${state.coins} 🪙</strong></div>
-      <p class="muelle-bet-hint">Escribe la cantidad exacta que quieres apostar.</p>
-      <input type="text" id="muelle-bet-input" class="muelle-bet-input"
-        inputmode="numeric" autocomplete="off" spellcheck="false"
-        value="${defaultBet}" placeholder="${MUELLE_MIN_BET}–${state.coins}">
-      <p class="muelle-bet-error" id="muelle-bet-error"></p>
-      <button class="btn-primary muelle-confirm-bet-btn" id="muelle-confirm-bet-btn" ${hasCoins ? '' : 'disabled'}>
-        🎣 ¡Lanzar el Sedal!
-      </button>
-      ${!hasCoins ? `<p class="muelle-no-coins">Necesitas al menos ${MUELLE_MIN_BET} 🪙 para jugar.</p>` : ''}
+      <div class="muelle-bet-coins">Tienes: <strong>${state.coins} 🪙</strong> &nbsp;|&nbsp; Tickets: <strong>${state.tickets_muelle} 🎟️</strong></div>
+      ${!hasTickets ? `<p class="muelle-no-coins">Muelle cerrado. Espera a la recarga diaria.</p>` : ''}
+      ${!hasCoins && hasTickets ? `<p class="muelle-no-coins">Necesitas al menos ${MUELLE_MIN_BET} 🪙 para jugar.</p>` : ''}
+      ${canPlay ? `
+        <p class="muelle-bet-hint">Escribe la cantidad exacta que quieres apostar.</p>
+        <input type="text" id="muelle-bet-input" class="muelle-bet-input"
+          inputmode="numeric" autocomplete="off" spellcheck="false"
+          value="${defaultBet}" placeholder="${MUELLE_MIN_BET}–${state.coins}">
+        <p class="muelle-bet-error" id="muelle-bet-error"></p>
+        <button class="btn-primary muelle-confirm-bet-btn" id="muelle-confirm-bet-btn">
+          🎣 ¡Lanzar el Sedal!
+        </button>
+      ` : ''}
     `;
   }
   modal.classList.add('open');
   document.body.classList.add('modal-open');
-  if (hasCoins) syncMuelleBetForm();
+  if (canPlay) syncMuelleBetForm();
 }
 
 function closeMuelleBetModal() {
@@ -4312,6 +4329,7 @@ function closeMuelleBetModal() {
 }
 
 function initMuelle(bet) {
+  state.tickets_muelle = Math.max(0, state.tickets_muelle - 1);
   const round = 1;
   state.muelle = {
     active: true,
@@ -4349,7 +4367,9 @@ function renderMuelleSection() {
           <div class="muelle-rule muelle-rule-fish"><span class="muelle-rule-icon">🐟</span><strong>Pez</strong><span>×1 agujero</span></div>
           <div class="muelle-rule muelle-rule-boot"><span class="muelle-rule-icon">🥾</span><strong>Bota</strong><span>5 agujeros o más</span></div>
         </div>
-        <button class="btn-primary muelle-play-btn" id="muelle-play-btn">¡Ir al Muelle!</button>
+        <div class="muelle-tickets">Tickets de acceso: <strong>${'🎟️'.repeat(state.tickets_muelle)}${'<span class="muelle-ticket-gastado">🎟️</span>'.repeat(3 - state.tickets_muelle)}</strong> (${state.tickets_muelle}/3)</div>
+        ${state.tickets_muelle <= 0 ? '<p class="muelle-no-coins">Muelle cerrado. Espera a la recarga diaria.</p>' : ''}
+        <button class="btn-primary muelle-play-btn" id="muelle-play-btn" ${state.tickets_muelle <= 0 ? 'disabled' : ''}>¡Ir al Muelle!</button>
       </div>`;
     return;
   }
@@ -4599,6 +4619,7 @@ function setupEvents() {
       if (confirmBtn) {
         e.preventDefault();
         if (confirmBtn.disabled) return;
+        if (state.tickets_muelle <= 0) { syncMuelleBetForm(); return; }
         const input = document.getElementById('muelle-bet-input');
         const validation = getMuelleBetValidation(input ? input.value : '');
         if (input && input.value !== validation.cleanValue) input.value = validation.cleanValue;
@@ -4620,6 +4641,7 @@ function setupEvents() {
       const targetEl = getEventTargetElement(e.target);
       if (!targetEl || targetEl.id !== 'muelle-bet-input' || e.key !== 'Enter') return;
       e.preventDefault();
+      if (state.tickets_muelle <= 0) { syncMuelleBetForm(); return; }
       const validation = getMuelleBetValidation(targetEl.value);
       if (targetEl.value !== validation.cleanValue) targetEl.value = validation.cleanValue;
       if (!validation.isValid || validation.bet === null) {
