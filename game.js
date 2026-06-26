@@ -620,6 +620,142 @@ const FISH_TYPES = [
       name: 'Tentáculos Flotantes',
       description: 'Cualquier rival que la ataque con un golpe Físico queda envenenado automáticamente durante 2 turnos.'
     }
+  },
+  {
+    id: 'pez_linterna',
+    name: 'Pez Linterna',
+    rarity: 'common',
+    imgPath: 'img/pez_linterna.png',
+    emoji: '🏮',
+    maxHp: 6, atk: 5, def: 4, spa: 8, spd: 6, spe: 7,
+    growth: { maxHp: 0.6, atk: 0.5, def: 0.4, spa: 0.8, spd: 0.6, spe: 0.7 },
+    attacks: [
+      { name: 'Destello Ciego', power: 45, emoji: '💡', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'precision_reducida', turns: 2 } },
+      { name: 'Aleta Brillante', power: 35, emoji: '✨', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Luz Guía',
+      description: 'Sus ataques de tipo Especial nunca pueden fallar, ignorando la evasión del rival.'
+    }
+  },
+  {
+    id: 'pez_tripode',
+    name: 'Pez Trípode',
+    rarity: 'common',
+    imgPath: 'img/pez_tripode.png',
+    emoji: '🦯',
+    maxHp: 8, atk: 4, def: 9, spa: 4, spd: 8, spe: 2,
+    growth: { maxHp: 0.8, atk: 0.4, def: 0.9, spa: 0.4, spd: 0.8, spe: 0.2 },
+    attacks: [
+      { name: 'Anclaje', power: 0, emoji: '⚓', categoria: 'Efecto', efecto: { estado: 'def_boost', turns: 3, amount: 2 } },
+      { name: 'Coletazo de Fangos', power: 50, emoji: '💩', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Inamovible',
+      description: 'Es inmune a ser aturdido o ralentizado mientras tenga más del 50% de la vida.'
+    }
+  },
+  {
+    id: 'pez_demonio',
+    name: 'Pez Demonio',
+    rarity: 'rare',
+    imgPath: 'img/pez_demonio.png',
+    emoji: '🧛',
+    maxHp: 7, atk: 11, def: 6, spa: 2, spd: 5, spe: 9,
+    growth: { maxHp: 0.7, atk: 1.1, def: 0.6, spa: 0.2, spd: 0.5, spe: 0.9 },
+    attacks: [
+      { name: 'Mordisco de Agujas', power: 75, emoji: '🦷', categoria: 'Fisico', efecto: { probabilidad: 1, estado: 'sangrado', turns: 3 } },
+      { name: 'Aletazo Cortante', power: 50, emoji: '🔪', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Mandíbula Traba',
+      description: 'Si el rival está sufriendo Sangrado, se cura un 15% del daño que inflija con ataques físicos.'
+    }
+  },
+  {
+    id: 'tiburon_anguila',
+    name: 'Tiburón Anguila',
+    rarity: 'rare',
+    imgPath: 'img/tiburon_anguila.png',
+    emoji: '🐍',
+    maxHp: 10, atk: 9, def: 7, spa: 4, spd: 6, spe: 7,
+    growth: { maxHp: 1.0, atk: 0.9, def: 0.7, spa: 0.4, spd: 0.6, spe: 0.7 },
+    attacks: [
+      { name: 'Constricción Abisal', power: 65, emoji: '🔄', categoria: 'Fisico', efecto: { probabilidad: 0.2, estado: 'aturdido' } },
+      { name: 'Coletazo Eléctrico', power: 50, emoji: '⚡', categoria: 'Especial' }
+    ],
+    passive: {
+      name: 'Piel Ancestral',
+      description: 'Reduce un 15% el daño recibido por estados alterados (veneno/sangrado).'
+    }
+  },
+  {
+    id: 'pez_vibora',
+    name: 'Pez Víbora',
+    rarity: 'rare',
+    imgPath: 'img/pez_vibora.png',
+    emoji: '🐍💀',
+    maxHp: 6, atk: 12, def: 4, spa: 3, spd: 4, spe: 11,
+    growth: { maxHp: 0.6, atk: 1.2, def: 0.4, spa: 0.3, spd: 0.4, spe: 1.1 },
+    attacks: [
+      { name: 'Estocada Invisible', power: 80, emoji: '🗡️', categoria: 'Fisico', ignoraDefensa: 0.2 },
+      { name: 'Colmillo Relámpago', power: 55, emoji: '⚡', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Emboscada',
+      description: 'En el primer turno de combate, su probabilidad de Golpe Crítico aumenta un +30%.'
+    }
+  },
+  {
+    id: 'tiburon_duende',
+    name: 'Tiburón Duende',
+    rarity: 'epic',
+    imgPath: 'img/tiburon_duende.png',
+    emoji: '👺',
+    maxHp: 11, atk: 13, def: 8, spa: 3, spd: 7, spe: 5,
+    growth: { maxHp: 1.1, atk: 1.3, def: 0.8, spa: 0.3, spd: 0.7, spe: 0.5 },
+    attacks: [
+      { name: 'Mandíbula Extensible', power: 95, emoji: '👄', categoria: 'Fisico', efecto: { probabilidad: 1, estado: 'spe_reduction', turns: 2, amount: 2 } },
+      { name: 'Embestida Abisal', power: 60, emoji: '💥', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Sorpresa Abismal',
+      description: 'Cuando usa Mandíbula Extensible, rompe instantáneamente cualquier escudo protector del rival.'
+    }
+  },
+  {
+    id: 'engullidor_negro',
+    name: 'Engullidor Negro',
+    rarity: 'epic',
+    imgPath: 'img/engullidor_negro.png',
+    emoji: '🕳️',
+    maxHp: 13, atk: 7, def: 5, spa: 11, spd: 9, spe: 4,
+    growth: { maxHp: 1.3, atk: 0.7, def: 0.5, spa: 1.1, spd: 0.9, spe: 0.4 },
+    attacks: [
+      { name: 'Fagocitosis', power: 85, emoji: '🌀', categoria: 'Especial', drain: 0.3 },
+      { name: 'Tirón Gravitatorio', power: 50, emoji: '🌌', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'spe_reduction', turns: 2, amount: 1 } }
+    ],
+    passive: {
+      name: 'Estómago Sin Fondo',
+      description: 'Cada vez que derrota a un rival, recupera un 25% de sus PS máximos instantáneamente.'
+    }
+  },
+  {
+    id: 'kraken',
+    name: 'Kraken',
+    rarity: 'legendary',
+    imgPath: 'img/kraken.png',
+    emoji: '🦑',
+    maxHp: 15, atk: 14, def: 9, spa: 5, spd: 10, spe: 4,
+    growth: { maxHp: 1.5, atk: 1.4, def: 0.9, spa: 0.5, spd: 1.0, spe: 0.4 },
+    attacks: [
+      { name: 'Presión del Abismo', power: 110, emoji: '🌊', categoria: 'Fisico', efecto: { probabilidad: 0.3, estado: 'aturdido' } },
+      { name: 'Tentáculos Opresores', power: 70, emoji: '🦑', categoria: 'Fisico', efecto: { probabilidad: 1, estado: 'atk_reduction', turns: 2, amount: 0.15 } }
+    ],
+    passive: {
+      name: 'Kraken Desatado',
+      description: 'Al bajar del 40% de vida, se limpia de estados alterados y su ataque sube un +30%.'
+    }
   }
 ];
 
@@ -1059,6 +1195,10 @@ function checkStatusImmunity(fighter) {
     setLogMessage(`¡${fighter.type?.name || fighter.name} bloqueó el efecto con Cierre Hermético!`, true);
     return true;
   }
+  if (base.passive.name === 'Inamovible' && fighter.currentHp > fighter.maxHp * 0.5) {
+    setLogMessage(`¡${fighter.type?.name || fighter.name} es Inamovible y no se inmuta!`, true);
+    return true;
+  }
   return false;
 }
 
@@ -1175,8 +1315,12 @@ function triggerPassive(defFighter, atkFighter, categoria) {
   }
 }
 
-function checkDodge(defenderFighter, categoria) {
+function checkDodge(defenderFighter, categoria, attackerFighter) {
   const base = getFishById(defenderFighter.type.id);
+  if (categoria === 'Especial' && attackerFighter) {
+    const atkBase = getFishById(attackerFighter.type.id);
+    if (atkBase?.passive?.name === 'Luz Guía') return false;
+  }
   let chance = 0;
   if (base?.passive) {
     if (categoria === 'Fisico') {
@@ -1209,6 +1353,8 @@ function checkDodge(defenderFighter, categoria) {
 
 function checkPrecision(attacker) {
   if (attacker.debuff && attacker.debuff.type === 'precision_reducida' && Math.random() < 0.2) {
+    const base = getFishById(attacker.type.id);
+    if (base?.passive?.name === 'Luz Guía') return false;
     setLogMessage(`¡${attacker.type.name} falló por la arena!`, true);
     return true;
   }
@@ -1223,6 +1369,18 @@ function checkResistenciaMarina(fighter) {
     fighter.resistenciaMarinaActivo = true;
     fighter.type.def = Math.round(fighter.type.def * 1.2);
     setLogMessage(`¡Resistencia Marina de ${fighter.type.name}! DEF +20%`, true);
+  }
+}
+
+function checkKrakenDesatado(fighter) {
+  if (fighter.krakenActivo) return;
+  const base = getFishById(fighter.type.id);
+  if (base?.passive?.name !== 'Kraken Desatado') return;
+  if (fighter.currentHp <= fighter.maxHp * 0.4) {
+    fighter.krakenActivo = true;
+    fighter.status = null;
+    fighter.type.atk = Math.round(fighter.type.atk * 1.3);
+    setLogMessage(`¡Kraken Desatado de ${fighter.type.name}! Se limpia de estados y su ATF +30%`, true);
   }
 }
 
@@ -1356,9 +1514,11 @@ function applyStatusDamage(fighter) {
   const isEnemy = fighter === state.enemy;
   const base = getFishById(fighter.type.id);
   const pielCuero = base && base.passive && base.passive.name === 'Piel de Cuero';
+  const pielAncestral = base && base.passive && base.passive.name === 'Piel Ancestral';
   if (fighter.status === 'envenenado' || fighter.status === 'quemado') {
     let dmg = 1;
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    if (pielAncestral) dmg = Math.max(1, Math.round(dmg * 0.85));
     if (fighter.shield > 0) {
       const absorbed = Math.min(fighter.shield, dmg);
       fighter.shield -= absorbed;
@@ -1367,11 +1527,12 @@ function applyStatusDamage(fighter) {
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     if (isEnemy) trackMission('poison_bleed_damage');
     const labels = { envenenado: 'ENV', quemado: 'QUE' };
-    setLogMessage(`${fighter.type.name} sufre daño por ${labels[fighter.status]} (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
+    setLogMessage(`${fighter.type.name} sufre daño por ${labels[fighter.status]} (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}${pielAncestral ? ' (Piel Ancestral -15%)' : ''}`, true);
   }
   if (fighter.status === 'veneno_grave') {
     let dmg = 2;
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    if (pielAncestral) dmg = Math.max(1, Math.round(dmg * 0.85));
     if (fighter.shield > 0) {
       const absorbed = Math.min(fighter.shield, dmg);
       fighter.shield -= absorbed;
@@ -1379,11 +1540,12 @@ function applyStatusDamage(fighter) {
     }
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     if (isEnemy) trackMission('poison_bleed_damage');
-    setLogMessage(`${fighter.type.name} sufre daño por Veneno Grave (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
+    setLogMessage(`${fighter.type.name} sufre daño por Veneno Grave (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}${pielAncestral ? ' (Piel Ancestral -15%)' : ''}`, true);
   }
   if (fighter.sangradoTurns > 0) {
     let dmg = 1;
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    if (pielAncestral) dmg = Math.max(1, Math.round(dmg * 0.85));
     if (fighter.shield > 0) {
       const absorbed = Math.min(fighter.shield, dmg);
       fighter.shield -= absorbed;
@@ -1392,8 +1554,17 @@ function applyStatusDamage(fighter) {
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     fighter.sangradoTurns--;
     if (isEnemy) trackMission('poison_bleed_damage');
-    setLogMessage(`${fighter.type.name} sufre daño por Sangrado (-${dmg} PS, ${fighter.sangradoTurns} turnos restantes)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
+    setLogMessage(`${fighter.type.name} sufre daño por Sangrado (-${dmg} PS, ${fighter.sangradoTurns} turnos restantes)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}${pielAncestral ? ' (Piel Ancestral -15%)' : ''}`, true);
   }
+}
+
+function triggerEstomagoSinFondo(fighter) {
+  const base = getFishById(fighter.type.id);
+  if (!base || base.passive?.name !== 'Estómago Sin Fondo') return;
+  if (fighter.currentHp <= 0) return;
+  const heal = Math.round(fighter.maxHp * 0.25);
+  fighter.currentHp = Math.min(fighter.maxHp, fighter.currentHp + heal);
+  setLogMessage(`¡Estómago Sin Fondo de ${fighter.type.name}! Recupera +${heal} PS al derrotar al rival.`, true);
 }
 
 function applyPassiveHealing(fighter) {
@@ -1435,7 +1606,7 @@ function checkImpulsoHuida(fighter) {
   }
 }
 
-function triggerOnHitPassive(attacker, defender, atk) {
+function triggerOnHitPassive(attacker, defender, atk, dmg) {
   const base = getFishById(attacker.type.id);
   if (!base || !base.passive) return;
   if (base.passive.name === 'Excreción de Arena' && atk.name === 'Mordisco de Pico') {
@@ -1452,6 +1623,15 @@ function triggerOnHitPassive(attacker, defender, atk) {
       defender.debuff = { type: 'spe_reduction', turns: 1, amount };
       setLogMessage(`¡Onda Expansiva! Velocidad del rival -${amount}`, true);
     }
+  }
+  if (base.passive.name === 'Mandíbula Traba' && dmg && atk.categoria === 'Fisico' && defender.sangradoTurns > 0) {
+    const heal = Math.max(1, Math.floor(dmg * 0.15));
+    attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + heal);
+    setLogMessage(`¡Mandíbula Traba de ${attacker.type.name}! Absorbe +${heal} PS del sangrado.`, true);
+  }
+  if (base.passive.name === 'Sorpresa Abismal' && atk.name === 'Mandíbula Extensible' && defender.shield > 0) {
+    defender.shield = 0;
+    setLogMessage(`¡Sorpresa Abismal! ${attacker.type.name} destruye el escudo de ${defender.type.name}.`, true);
   }
 }
 
@@ -1905,7 +2085,7 @@ const ARENA_FISH = {
     { fishId: 'pez_angel_emperador' },
     { fishId: 'pez_piedra' }
   ],
-   3: [
+    3: [
     { fishId: 'pez_espada' },
     { fishId: 'atun_rojo' },
     { fishId: 'tiburon_martillo' },
@@ -1914,6 +2094,16 @@ const ARENA_FISH = {
     { fishId: 'barracuda' },
     { fishId: 'pez_vela' },
     { fishId: 'carabela_portuguesa' }
+  ],
+  4: [
+    { fishId: 'pez_linterna' },
+    { fishId: 'pez_tripode' },
+    { fishId: 'pez_demonio' },
+    { fishId: 'tiburon_anguila' },
+    { fishId: 'pez_vibora' },
+    { fishId: 'tiburon_duende' },
+    { fishId: 'engullidor_negro' },
+    { fishId: 'calamar_gigante' }
   ]
 };
 
@@ -3467,8 +3657,8 @@ function initCombat() {
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
   if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
-  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, selfHealUsed: {} };
-  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, selfHealUsed: {} };
+  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
+  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.isAnimating = false;
@@ -3480,6 +3670,15 @@ function initCombat() {
 
   if (playerBaseFish?.passive?.name === 'Rompebarreras') state.player.rompebarrerasActivo = true;
   if (enemyBase?.passive?.name === 'Rompebarreras') state.enemy.rompebarrerasActivo = true;
+
+  if (playerBaseFish?.passive?.name === 'Emboscada') {
+    state.player.buffs = { ...(state.player.buffs || {}), critChance: 0.3, critTurns: 1 };
+    setLogMessage(`¡${playerBaseFish.name} se oculta para una Emboscada! +30% crítico en el primer turno`, true);
+  }
+  if (enemyBase?.passive?.name === 'Emboscada') {
+    state.enemy.buffs = { ...(state.enemy.buffs || {}), critChance: 0.3, critTurns: 1 };
+    setLogMessage(`¡${enemyBase.name} se oculta para una Emboscada! +30% crítico en el primer turno`, true);
+  }
 
   if (hasEquippedItem(state.selectedFishId, 'aleta_voladora')) {
     state.player.type.spe = Math.round(state.player.type.spe * 1.1);
@@ -3681,7 +3880,7 @@ function playerAttack(index) {
     afterPlayerAction();
     return;
   }
-  if (checkDodge(state.enemy, atk.categoria)) {
+  if (checkDodge(state.enemy, atk.categoria, state.player)) {
     applyPassiveHealing(state.player);
     decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
     afterPlayerAction();
@@ -3696,6 +3895,7 @@ function playerAttack(index) {
   dmg = applyDefensivePassives(dmg, state.enemy, atk.categoria);
   state.enemy.currentHp = Math.max(0, state.enemy.currentHp - dmg);
   checkResistenciaMarina(state.enemy);
+  checkKrakenDesatado(state.enemy);
   if (atk.categoria === 'Fisico') trackMission('fisico_attacks');
   if (atk.categoria === 'Especial') trackMission('especial_attacks');
   setLogMessage(`¡${state.player.type.name} usa ${atk.name}! -${dmg} HP`, true);
@@ -3705,7 +3905,7 @@ function playerAttack(index) {
     setLogMessage(`¡${state.player.type.name} absorbió +${heal} PS!`, true);
   }
   animateHit(dom.enemyArea); updateHpBars();
-  triggerOnHitPassive(state.player, state.enemy, atk);
+  triggerOnHitPassive(state.player, state.enemy, atk, dmg);
   triggerPassive(state.enemy, state.player, atk.categoria);
   applySecondaryEffect(atk, state.enemy);
   if (atk.efecto?.estado === 'aturdido') trackMission('apply_stun');
@@ -3713,8 +3913,12 @@ function playerAttack(index) {
   applySelfBuff(atk, state.player);
   checkDestelloAdvertencia(state.enemy, state.player);
   checkImpulsoHuida(state.enemy);
-  if (state.enemy.currentHp <= 0) { state.gameOver = true; setTimeout(() => showResult(true), 800); return; }
+  if (state.enemy.currentHp <= 0) {
+    triggerEstomagoSinFondo(state.player);
+    state.gameOver = true; setTimeout(() => showResult(true), 800); return;
+  }
   applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
+  checkKrakenDesatado(state.player);
   if (checkGameOver()) return;
   applyPassiveHealing(state.player);
   decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
@@ -3812,7 +4016,7 @@ function doEnemyAttack() {
     afterEnemyAction();
     return;
   }
-  if (checkDodge(state.player, atk.categoria)) {
+  if (checkDodge(state.player, atk.categoria, state.enemy)) {
     applyPassiveHealing(state.enemy);
     decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
     afterEnemyAction();
@@ -3828,6 +4032,7 @@ function doEnemyAttack() {
   }
   state.player.currentHp = Math.max(0, state.player.currentHp - dmg);
   checkResistenciaMarina(state.player);
+  checkKrakenDesatado(state.player);
   if (dmg > 0) setLogMessage(`¡${state.enemy.type.name} usa ${atk.name}! -${dmg} HP`, true);
   if (atk.drain) {
     const heal = Math.max(1, Math.floor(dmg * atk.drain));
@@ -3835,14 +4040,18 @@ function doEnemyAttack() {
     setLogMessage(`¡${state.enemy.type.name} absorbió +${heal} PS!`, true);
   }
   animateHit(dom.playerArea); updateHpBars();
-  triggerOnHitPassive(state.enemy, state.player, atk);
+  triggerOnHitPassive(state.enemy, state.player, atk, dmg);
   triggerPassive(state.player, state.enemy, atk.categoria);
   applySecondaryEffect(atk, state.player);
   applySelfBuff(atk, state.enemy);
   checkDestelloAdvertencia(state.player, state.enemy);
   checkImpulsoHuida(state.player);
-  if (state.player.currentHp <= 0) { state.gameOver = true; setTimeout(() => showResult(false), 800); return; }
+  if (state.player.currentHp <= 0) {
+    triggerEstomagoSinFondo(state.enemy);
+    state.gameOver = true; setTimeout(() => showResult(false), 800); return;
+  }
   applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
+  checkKrakenDesatado(state.enemy);
   if (checkGameOver()) return;
   applyPassiveHealing(state.enemy);
   decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
