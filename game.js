@@ -3496,7 +3496,7 @@ function renderMuelleSection() {
         <p class="muelle-idle-desc">Apuesta monedas y pesca en los 9 agujeros del muelle.<br>Más de la mitad son botas y, si sigues pescando, la siguiente ronda se llena aún más de basura.</p>
         <div class="muelle-rules-grid">
           <div class="muelle-rule muelle-rule-x2"><span class="muelle-rule-icon">🪙</span><strong>x2</strong><span>Solo 2 agujeros al inicio</span></div>
-          <div class="muelle-rule muelle-rule-x5"><span class="muelle-rule-icon">💰</span><strong>x5</strong><span>1 agujero seguro, 2 al máximo</span></div>
+          <div class="muelle-rule muelle-rule-x5"><span class="muelle-rule-icon">💰</span><strong>x5</strong><span>Premio grande en muy pocos huecos</span></div>
           <div class="muelle-rule muelle-rule-fish"><span class="muelle-rule-icon">🐟</span><strong>Pez</strong><span>×1 agujero</span></div>
           <div class="muelle-rule muelle-rule-boot"><span class="muelle-rule-icon">🥾</span><strong>Bota</strong><span>5 agujeros o más</span></div>
         </div>
@@ -3756,8 +3756,14 @@ function setupEvents() {
       const targetEl = getEventTargetElement(e.target);
       if (!targetEl || targetEl.id !== 'muelle-bet-input' || e.key !== 'Enter') return;
       e.preventDefault();
-      const confirmBtn = document.getElementById('muelle-confirm-bet-btn');
-      if (confirmBtn && !confirmBtn.disabled) confirmBtn.click();
+      const validation = getMuelleBetValidation(targetEl.value);
+      if (targetEl.value !== validation.cleanValue) targetEl.value = validation.cleanValue;
+      if (!validation.isValid || validation.bet === null) {
+        syncMuelleBetForm();
+        return;
+      }
+      closeMuelleBetModal();
+      initMuelle(validation.bet);
     });
   }
 }
