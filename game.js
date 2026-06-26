@@ -867,6 +867,9 @@ const AUTH_ACCOUNTS_KEY = 'fba_accounts_registry';
 const AUTH_SESSION_KEY = 'fba_auth_session';
 const SAVE_KEY_PREFIX = 'fba_manual_save:';
 const LEGACY_SAVE_KEY = 'fba_manual_save';
+const GUEST_SAVE_KEY = 'fba_guest_save';
+const CLOUD_EMAIL_DOMAIN = 'fisharena.local';
+const PROGRESS_COLLECTION = 'usuarios';
 
 /* ===== CONSTANTS ===== */
 const MAX_LEVEL = 12;
@@ -890,6 +893,7 @@ const state = {
   screen: 'main',
   selectedFishId: null,
   activeSection: 'fight',
+  lastSavedAt: null,
   coins: 100, diamonds: 0,
   cups: 0,
   currentArena: 1,
@@ -1160,6 +1164,7 @@ function upgradeFish(fishId) {
   updateCoinDisplay();
   trackMission('level_up_fish');
   showFishDetail(fishId);
+  scheduleAutosave(0);
 }
 
 /* ===== DAMAGE FORMULA ===== */
@@ -1799,21 +1804,99 @@ function getCurrentAuthEmail() {
 }
 
 function getCurrentAuthUid() {
-  if (state.authSession?.uid) return String(state.authSession.uid).trim();
-  if (isLocalSessionActive()) return getLocalAuthUid();
+  const sessionUid = normalizeAuthUsername(state.authSession?.uid || '');
+  if (sessionUid) return sessionUid;
+  if (isLocalSessionActive()) return normalizeAuthUsername(getLocalAuthUid() || getLocalAuthUsername());
   return '';
 }
 
-function getSaveKey() {
-  const uid = getCurrentAuthUid();
+function getFirebaseAuth() {
+  return isFirebaseAuthAvailable() ? window.firebase.auth() : null;
+}
+
+function getFirebaseCurrentUser() {
+  return getFirebaseAuth()?.currentUser || null;
+}
+
+let firebaseAuthReadyPromise = null;
+
+function waitForFirebaseAuthReady() {
+  if (!isFirebaseAuthAvailable()) return Promise.resolve(null);
+  if (firebaseAuthReadyPromise) return firebaseAuthReadyPromise;
+  firebaseAuthReadyPromise = new Promise(resolve => {
+    const auth = getFirebaseAuth();
+    if (!auth || typeof auth.onAuthStateChanged !== 'function') {
+      resolve(getFirebaseCurrentUser());
+      return;
+    }
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      try { unsubscribe(); } catch (e) {}
+      resolve(user || null);
+    }, () => resolve(null));
+  });
+  return firebaseAuthReadyPromise;
+}
+
+function isFirebaseAuthAvailable() {
+  return !!(window.firebase && typeof window.firebase.auth === 'function' && window.__FIREBASE_CONFIG__ && window.__FIREBASE_CONFIG__.projectId);
+}
+
+function isCloudSessionActive() {
+  return !!getCurrentAuthUid();
+}
+
+function isGuestSessionActive() {
+  return isLocalSessionActive() && !isCloudSessionActive();
+}
+
+function getCloudEmailForUsername(username) {
+  const slug = normalizeAuthUsername(username).toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9._-]/g, '');
+  return `${slug || 'player'}@${CLOUD_EMAIL_DOMAIN}`;
+}
+
+function getFirebaseErrorMessage(error) {
+  const code = String(error?.code || '').toLowerCase();
+  if (code.includes('weak-password')) return 'La contraseña debe tener al menos 6 caracteres.';
+  if (code.includes('email-already-in-use')) return 'Ese usuario ya está registrado.';
+  if (code.includes('invalid-email')) return 'El nombre de usuario no es válido.';
+  if (code.includes('operation-not-allowed')) return 'Firebase Auth no está activado en este proyecto.';
+  if (code.includes('network-request-failed')) return 'No hay conexión con Firebase.';
+  if (code.includes('permission-denied')) return 'Firebase bloqueó el guardado. Revisa las reglas de Firestore.';
+  if (String(error?.message || '').includes('Firebase Auth no está disponible')) return 'Firebase no está configurado en este entorno.';
+  return String(error?.message || 'Error inesperado');
+}
+
+function getGuestSaveRaw() {
+  try {
+    return localStorage.getItem(GUEST_SAVE_KEY);
+  } catch (e) {
+    return null;
+  }
+}
+
+function getCloudSaveKey(uid = getCurrentAuthUid()) {
   return uid ? `${SAVE_KEY_PREFIX}${uid}` : LEGACY_SAVE_KEY;
+}
+
+function firebaseProgressDoc(username) {
+  if (!socialDb) return null;
+  const docId = normalizeAuthUsername(username);
+  if (!docId) return null;
+  return socialDb.collection(PROGRESS_COLLECTION).doc(docId);
+}
+
+function getSaveKey() {
+  if (isCloudSessionActive()) return getCloudSaveKey();
+  if (isGuestSessionActive()) return GUEST_SAVE_KEY;
+  return LEGACY_SAVE_KEY;
 }
 
 function getCurrentSaveRaw() {
   const key = getSaveKey();
   const raw = localStorage.getItem(key);
   if (raw) return raw;
-  if (key !== LEGACY_SAVE_KEY) return localStorage.getItem(LEGACY_SAVE_KEY);
+  if (key === GUEST_SAVE_KEY) return getGuestSaveRaw() || localStorage.getItem(LEGACY_SAVE_KEY);
+  if (!isCloudSessionActive() && key !== LEGACY_SAVE_KEY) return localStorage.getItem(LEGACY_SAVE_KEY);
   return null;
 }
 
@@ -1833,15 +1916,104 @@ function updateHeaderUsernameDisplay() {
   if (dom.headerUserBox) dom.headerUserBox.setAttribute('aria-label', `Editar nombre de usuario: ${username}`);
 }
 
-function saveGame() {
+async function persistCloudSave(data) {
+  if (!isCloudSessionActive() || !initFirebaseIfNeeded()) return false;
   const uid = getCurrentAuthUid();
-  if (!uid) return;
+  const profileRef = firebaseProgressDoc(uid);
+  if (!profileRef) return false;
+  await profileRef.set({
+    username: uid,
+    usernameLower: normalizeFriendSearch(uid),
+    saveData: data,
+    savedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  localStorage.setItem(getCloudSaveKey(uid), JSON.stringify(data));
+  return true;
+}
+
+function applyFreshGameState(username) {
+  state.lastSavedAt = null;
+  state.coins = 100;
+  state.diamonds = 0;
+  state.cups = 0;
+  state.currentArena = 1;
+  state.arenaMaxReached = 1;
+  state.unlockedFish = ['salmonete'];
+  state.fishLevels = {};
+  state.fishCups = {};
+  state.items = [];
+  state.equippedItems = {};
+  state.lastFreeClaim = null;
+  state.missions = {};
+  state.missionsActive = [];
+  state.missionsClaimed = [];
+  state.missionsBonusClaimed = false;
+  state.lastResetDate = null;
+  state.nivel_pase = 0;
+  state.xp_pase = 0;
+  state.tiene_premium = false;
+  state.paseInicioTemporada = Date.now();
+  state.paseSeasonMonth = null;
+  state.paseRecompensasReclamadas = [];
+  state.paseObjetos = [];
+  state.titulosDesbloqueados = [];
+  state.marcosDesbloqueados = [];
+  state.shopRotation = null;
+  state.achievements = { collectionMaster: { rewardedForTotal: 0 } };
+  state.battlesPlayed = 0;
+  state.battlesWon = 0;
+  state.tickets_muelle = 3;
+  state.selectedFishId = 'salmonete';
+  state.player = null;
+  state.enemy = null;
+  state.isPlayerTurn = true;
+  state.gameOver = false;
+  state.isAnimating = false;
+  state.turnPhase = 'player_first';
+  state.muelle = null;
+  state.playerUsername = normalizeAuthUsername(username || state.playerUsername || 'Jugador123') || 'Jugador123';
+  updateHeaderUsernameDisplay();
+}
+
+function normalizeSavedTimestamp(value) {
+  if (!value) return null;
+  if (typeof value.toDate === 'function') return value.toDate();
+  if (value instanceof Date) return value;
+  if (typeof value === 'number') return new Date(value);
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+}
+
+function formatSavedTimestamp(value) {
+  const d = normalizeSavedTimestamp(value);
+  if (!d) return 'Nunca guardado';
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} - ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+async function saveGame({ manual = false } = {}) {
+  if (!manual) return false;
+  const data = getSaveData();
   const username = normalizeAuthUsername(state.playerUsername);
   if (username) localStorage.setItem(LOCAL_AUTH_USERNAME_KEY, username);
-  const data = getSaveData();
-  localStorage.setItem(getSaveKey(), JSON.stringify(data));
+  const uid = getCurrentAuthUid();
+  if (uid) {
+    localStorage.setItem(getCloudSaveKey(uid), JSON.stringify(data));
+    if (isCloudSessionActive()) {
+      await persistCloudSave(data);
+    }
+  } else if (isGuestSessionActive()) {
+    localStorage.setItem(GUEST_SAVE_KEY, JSON.stringify(data));
+  }
+  state.lastSavedAt = new Date();
   updateSaveTimestampDisplay();
+  return true;
 }
+
+function scheduleAutosave() {}
 
 function hasManualSave() {
   const data = getCurrentSaveData();
@@ -1943,40 +2115,86 @@ function updateSaveTimestampDisplay() {
   const el = document.getElementById('profile-save-time');
   if (!el) return;
   const data = getCurrentSaveData();
-  if (data && data.timestamp) {
-    el.textContent = `Última vez guardado: ${formatTimestamp(data.timestamp)}`;
-    return;
-  }
-  el.textContent = 'Nunca guardado';
+  const savedAt = state.lastSavedAt || data?.savedAt || data?.timestamp || null;
+  el.textContent = `Última vez guardado: ${formatSavedTimestamp(savedAt)}`;
 }
 
-function loadGame() {
+async function loadGame() {
+  if (isCloudSessionActive()) {
+    const uid = getCurrentAuthUid();
+    if (!uid) return false;
+    if (!initFirebaseIfNeeded()) {
+      const cached = localStorage.getItem(getCloudSaveKey(uid));
+      if (cached) {
+        try {
+          const cachedData = JSON.parse(cached);
+          const loaded = applySaveData(cachedData);
+          if (loaded) {
+            state.playerUsername = uid;
+            state.lastSavedAt = normalizeSavedTimestamp(cachedData.savedAt || cachedData.timestamp) || null;
+            updateHeaderUsernameDisplay();
+            return true;
+          }
+        } catch (e) {}
+      }
+      applyFreshGameState(uid);
+      return true;
+    }
+    const profileRef = firebaseProgressDoc(uid);
+    if (!profileRef) return false;
+    try {
+      const snap = await profileRef.get();
+      const data = snap.exists ? snap.data() : null;
+      const saveData = data?.saveData || null;
+      if (!saveData) {
+        applyFreshGameState(uid);
+        const created = getSaveData();
+        await persistCloudSave(created);
+        localStorage.setItem(getCloudSaveKey(uid), JSON.stringify(created));
+        state.lastSavedAt = new Date();
+        return true;
+      }
+      const loaded = applySaveData(saveData);
+      if (loaded) {
+        state.playerUsername = uid;
+        state.lastSavedAt = normalizeSavedTimestamp(data?.savedAt || data?.timestamp) || null;
+        updateHeaderUsernameDisplay();
+        localStorage.setItem(getCloudSaveKey(uid), JSON.stringify(saveData));
+      }
+      return loaded;
+    } catch (e) {
+      const cached = localStorage.getItem(getCloudSaveKey(uid));
+      if (cached) {
+        try {
+          const cachedData = JSON.parse(cached);
+          const loaded = applySaveData(cachedData);
+          if (loaded) {
+            state.playerUsername = uid;
+            state.lastSavedAt = normalizeSavedTimestamp(cachedData.savedAt || cachedData.timestamp) || null;
+            updateHeaderUsernameDisplay();
+            return true;
+          }
+        } catch (err) {}
+      }
+      applyFreshGameState(uid);
+      return true;
+    }
+  }
   const data = getCurrentSaveData();
   if (!data) return false;
   const loaded = applySaveData(data);
-  const uid = getCurrentAuthUid();
-  if (loaded && uid && normalizeAuthUsername(state.playerUsername)) {
+  if (loaded && normalizeAuthUsername(state.playerUsername)) {
     localStorage.setItem(LOCAL_AUTH_USERNAME_KEY, normalizeAuthUsername(state.playerUsername));
   }
-  if (loaded && getCurrentAuthEmail() && localStorage.getItem(getSaveKey()) === null && localStorage.getItem(LEGACY_SAVE_KEY)) {
-    saveGame();
+  if (loaded && isGuestSessionActive() && localStorage.getItem(GUEST_SAVE_KEY) === null && localStorage.getItem(LEGACY_SAVE_KEY)) {
+    localStorage.setItem(GUEST_SAVE_KEY, JSON.stringify(data));
   }
   return loaded;
 }
 
 async function syncCurrentSaveToFirebase() {
-  if (!initFirebaseIfNeeded()) return false;
-  const uid = getCurrentAuthUid();
-  if (!uid) return false;
-  const profileRef = await ensureSocialUserProfile();
-  if (!profileRef) return false;
-  await profileRef.set({
-    username: state.playerUsername,
-    usernameLower: normalizeFriendSearch(state.playerUsername),
-    saveData: getSaveData(),
-    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
-  return true;
+  if (!isCloudSessionActive()) return false;
+  return persistCloudSave(getSaveData());
 }
 
 /* ===== FIRESTORE SOCIAL ===== */
@@ -2026,10 +2244,8 @@ function setFriendsFeedback(message = '', kind = 'info') {
 async function ensureSocialUserProfile() {
   if (!initFirebaseIfNeeded()) return null;
   const uid = getCurrentAuthUid();
-  const email = getCurrentAuthEmail();
-  if (!uid || !email) return null;
-  const account = getAccountRecord(email);
-  const username = normalizeAuthUsername(state.playerUsername || account?.username || '');
+  if (!uid) return null;
+  const username = normalizeAuthUsername(state.playerUsername || uid || '');
   const profileRef = firebaseUserDoc(uid);
   if (!profileRef) return null;
   try {
@@ -2037,7 +2253,7 @@ async function ensureSocialUserProfile() {
     if (!snapshot.exists) {
       await profileRef.set({
         uid,
-        email,
+        email: uid,
         username,
         usernameLower: normalizeFriendSearch(username),
         pendingRequests: [],
@@ -2047,7 +2263,7 @@ async function ensureSocialUserProfile() {
       }, { merge: true });
     } else {
       await profileRef.set({
-        email,
+        email: uid,
         username,
         usernameLower: normalizeFriendSearch(username),
         updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
@@ -2270,14 +2486,12 @@ function updateAccountRecord(email, patch) {
   return next;
 }
 
-function isUsernameTaken(username, exceptEmail = null) {
-  const target = normalizeAuthUsername(username).toLowerCase();
-  if (!target) return false;
-  return Object.values(getAccountsRegistry()).some(account => {
-    if (!account || !account.username) return false;
-    if (exceptEmail && normalizeAuthEmail(account.email) === normalizeAuthEmail(exceptEmail)) return false;
-    return normalizeAuthUsername(account.username).toLowerCase() === target;
-  });
+async function isUsernameTaken(username, exceptUid = null) {
+  const normalized = normalizeFriendSearch(username);
+  if (!normalized || !initFirebaseIfNeeded()) return false;
+  const snapshot = await socialDb.collection(SOCIAL_COLLECTION).where('usernameLower', '==', normalized).limit(1).get();
+  if (snapshot.empty) return false;
+  return snapshot.docs.some(doc => doc.id !== String(exceptUid || '').trim());
 }
 
 function syncSessionAccount() {
@@ -2332,14 +2546,14 @@ function setLocalSessionActive(active) {
 
 function syncLocalAuthSession(username = getLocalAuthUsername()) {
   const cleanUsername = normalizeAuthUsername(username);
-  const uid = ensureLocalAuthUid();
-  state.authSession = cleanUsername ? { email: uid, uid } : null;
+  ensureLocalAuthUid();
+  state.authSession = cleanUsername ? { email: cleanUsername, uid: cleanUsername } : null;
   if (cleanUsername) {
     state.playerUsername = cleanUsername;
     localStorage.setItem(LOCAL_AUTH_USERNAME_KEY, cleanUsername);
   }
   updateHeaderUsernameDisplay();
-  return uid;
+  return getLocalAuthUid();
 }
 
 function activateLocalAccess(username, password = null) {
@@ -2353,94 +2567,80 @@ function activateLocalAccess(username, password = null) {
   return true;
 }
 
+async function signInCloudAccount(username, password) {
+  if (!isFirebaseAuthAvailable()) throw new Error('Firebase Auth no está disponible');
+  const auth = getFirebaseAuth();
+  const email = getCloudEmailForUsername(username);
+  const credential = await auth.signInWithEmailAndPassword(email, password);
+  const user = credential?.user || auth.currentUser;
+  if (!user) throw new Error('No se pudo iniciar sesión');
+  setLocalSessionActive(false);
+  state.authSession = { email: user.uid, uid: user.uid };
+  state.playerUsername = normalizeAuthUsername(user.displayName || username);
+  updateHeaderUsernameDisplay();
+  return user;
+}
+
+async function registerCloudAccount(username, password) {
+  if (!isFirebaseAuthAvailable()) throw new Error('Firebase Auth no está disponible');
+  const auth = getFirebaseAuth();
+  const email = getCloudEmailForUsername(username);
+  const credential = await auth.createUserWithEmailAndPassword(email, password);
+  const user = credential?.user || auth.currentUser;
+  if (!user) throw new Error('No se pudo crear la sesión de Firebase.');
+  if (user.updateProfile) {
+    await user.updateProfile({ displayName: normalizeAuthUsername(username) });
+  }
+  setLocalSessionActive(false);
+  state.authSession = { email: user.uid, uid: user.uid };
+  state.playerUsername = normalizeAuthUsername(username);
+  updateHeaderUsernameDisplay();
+  return user;
+}
+
 function openFightScreen() {
   showSection('fight');
   showScreen('main');
 }
 
-function renderStartModal(mode = 'menu', error = '') {
+function renderStartModal(_mode = 'menu', error = '') {
   if (!dom.authModalBody) return;
-  const isGuest = mode === 'guest';
-  const isRegister = mode === 'register';
-  const isLogin = mode === 'login';
-  const selectedLabel = isGuest ? 'Jugar como invitado' : isRegister ? 'Registrarse' : isLogin ? 'Iniciar sesión' : 'Elige una opción';
-  const fieldTitle = isGuest ? 'Solo se pedirá tu nombre de usuario' : 'Introduce tus datos para continuar';
+  const currentName = normalizeAuthUsername(getLocalAuthUsername() || state.playerUsername || '');
   dom.authModalBody.innerHTML = `
     <div class="start-modal-title">Fish Arena</div>
-    <div class="start-modal-subtitle">Elige cómo quieres entrar</div>
-    <div class="start-mode-row">
-      <button type="button" class="start-mode-btn ${isGuest ? 'active' : ''}" data-start-mode="guest">🕵️‍♂️ JUGAR COMO INVITADO</button>
-      <button type="button" class="start-mode-btn ${isRegister ? 'active' : ''}" data-start-mode="register">📝 REGISTRARSE</button>
-      <button type="button" class="start-mode-btn ${isLogin ? 'active' : ''}" data-start-mode="login">🔑 INICIAR SESIÓN</button>
-    </div>
+    <div class="start-modal-subtitle">Escribe tu nombre de usuario para cargar o crear tu partida nueva</div>
     <div class="start-panel">
-      <div class="start-panel-label">${selectedLabel}</div>
-      <div class="start-panel-copy">${fieldTitle}</div>
-      ${mode === 'menu' ? '<div class="start-panel-note">Selecciona una opción para continuar.</div>' : `
-        <form id="start-form">
-          <input class="auth-field" id="start-username" type="text" placeholder="Nombre de usuario" autocomplete="nickname" maxlength="24" required>
-          ${isGuest ? '' : '<input class="auth-field" id="start-password" type="password" placeholder="Contraseña" autocomplete="current-password" required>'}
-          <div class="auth-error" id="start-error">${error || ''}</div>
-          <button type="submit" class="auth-submit">Aceptar</button>
-        </form>
-      `}
+      <div class="start-panel-label">Nombre de Usuario</div>
+        <div class="start-panel-copy">Se cargará el último guardado o se creará una partida nueva en Firestore.</div>
+      <form id="start-form">
+        <input class="auth-field" id="start-username" type="text" placeholder="Arosteee04" autocomplete="nickname" maxlength="24" value="${escapeHtml(currentName)}" required>
+        <div class="auth-error" id="start-error">${error || ''}</div>
+        <button type="submit" class="auth-submit">Cargar/Guardar por Usuario</button>
+      </form>
     </div>
   `;
-  const modeButtons = dom.authModalBody.querySelectorAll('[data-start-mode]');
   const form = document.getElementById('start-form');
   const usernameInput = document.getElementById('start-username');
-  const passwordInput = document.getElementById('start-password');
   const errorEl = document.getElementById('start-error');
-  modeButtons.forEach(btn => {
-    btn.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      renderStartModal(btn.dataset.startMode || 'menu');
-    });
-  });
   if (form) {
     form.addEventListener('submit', async e => {
       e.preventDefault();
       const username = normalizeAuthUsername(usernameInput?.value || '');
-      const password = String(passwordInput?.value || '').trim();
       if (!username) {
         if (errorEl) errorEl.textContent = 'Escribe un nombre de usuario.';
         return;
       }
-      if (isGuest) {
+      try {
         activateLocalAccess(username, null);
-        loadGame();
-        saveGame();
+        await loadGame();
         closeAuthModal();
         openFightScreen();
-        return;
+      } catch (err) {
+        if (errorEl) errorEl.textContent = 'No se pudo cargar el usuario.';
       }
-      if (!password) {
-        if (errorEl) errorEl.textContent = 'Completa usuario y contraseña.';
-        return;
-      }
-      if (isRegister) {
-        activateLocalAccess(username, password);
-        loadGame();
-        saveGame();
-        closeAuthModal();
-        openFightScreen();
-        return;
-      }
-      const savedUser = normalizeAuthUsername(getLocalAuthUsername());
-      const savedPass = String(getLocalAuthPassword() || '');
-      if (savedUser !== username || savedPass !== password) {
-        if (errorEl) errorEl.textContent = 'Usuario o contraseña incorrectos';
-        return;
-      }
-      activateLocalAccess(savedUser, savedPass);
-      loadGame();
-      saveGame();
-      closeAuthModal();
-      openFightScreen();
     });
   }
-  if (usernameInput) usernameInput.value = normalizeAuthUsername(getLocalAuthUsername() || '');
-  if (passwordInput) passwordInput.value = '';
+  if (usernameInput) usernameInput.value = currentName;
   setTimeout(() => usernameInput?.focus(), 50);
 }
 
@@ -2478,25 +2678,27 @@ function renderUsernameModal(error = '') {
         if (errorEl) errorEl.textContent = 'Escribe un nombre de usuario.';
         return;
       }
-      if (isUsernameTaken(nextName, getCurrentAuthEmail())) {
-        if (errorEl) errorEl.textContent = 'Ese nombre ya está en uso.';
-        return;
-      }
       state.playerUsername = nextName;
-      updateAccountRecord(getCurrentAuthEmail(), { username: nextName });
-      if (initFirebaseIfNeeded()) {
+      if (isCloudSessionActive()) {
         const uid = getCurrentAuthUid();
-        const profileRef = uid ? firebaseUserDoc(uid) : null;
-        if (profileRef) {
-          await profileRef.set({
-            username: nextName,
-            usernameLower: normalizeFriendSearch(nextName),
-            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
+        if (await isUsernameTaken(nextName, uid)) {
+          if (errorEl) errorEl.textContent = 'Ese nombre ya está en uso.';
+          return;
         }
+        if (initFirebaseIfNeeded()) {
+          const profileRef = uid ? firebaseUserDoc(uid) : null;
+          if (profileRef) {
+            await profileRef.set({
+              username: nextName,
+              usernameLower: normalizeFriendSearch(nextName),
+              updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          }
+        }
+      } else {
+        localStorage.setItem(LOCAL_AUTH_USERNAME_KEY, nextName);
       }
       updateHeaderUsernameDisplay();
-      saveGame();
       closeUsernameModal();
     });
   }
@@ -2919,7 +3121,7 @@ function renderArenaModal() {
     }).join('');
 
     html += `
-      <section class="arena-map-card ${isUnlocked ? 'unlocked' : 'locked'}">
+      <section class="arena-map-card ${isUnlocked ? 'unlocked' : 'locked'}" data-arena-id="${id}">
         <div class="arena-map-card-head">
           <div>
             <div class="arena-map-card-title">${cfg.icon} Arena ${id}: ${cfg.name}</div>
@@ -2958,9 +3160,24 @@ function renderArenaModal() {
 
   const closeBtn = document.getElementById('arena-modal-close-btn');
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeArenaModal(); });
+
+  body.querySelectorAll('.arena-map-card').forEach(card => {
+    card.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const arenaId = Number(card.dataset.arenaId || 0);
+      const cfg = getArenaConfig(arenaId);
+      if (!arenaId || state.cups < cfg.minCups) return;
+      state.currentArena = arenaId;
+      updateArenaDisplay();
+      if (state.activeSection === 'fight') renderFightContent();
+      closeArenaModal();
+    });
+  });
 }
 
 function openArenaModal() {
+  const arenaButton = document.getElementById('arena-display');
+  if (arenaButton) arenaButton.style.display = 'none';
   renderArenaModal();
   dom.arenaModal.classList.add('open');
   document.body.classList.add('modal-open');
@@ -2969,6 +3186,8 @@ function openArenaModal() {
 function closeArenaModal() {
   dom.arenaModal.classList.remove('open');
   document.body.classList.remove('modal-open');
+  const arenaButton = document.getElementById('arena-display');
+  if (arenaButton) arenaButton.style.display = '';
 }
 
 /* ===== MONEDAS ===== */
@@ -2992,6 +3211,7 @@ function showScreen(screenName) {
   const map = { main: dom.screenMain, combat: dom.screenCombat, result: dom.screenResult };
   if (map[screenName]) map[screenName].classList.add('active');
   state.screen = screenName || '';
+  scheduleAutosave();
 }
 
 /* ===== NAVEGACIÓN ===== */
@@ -3009,6 +3229,7 @@ function showSection(sectionId) {
   if (sectionId === 'bank') renderBank();
   if (sectionId === 'inventory') renderInventory();
   if (sectionId === 'muelle') renderMuelleSection();
+  scheduleAutosave();
 }
 
 /* ===== SECCIÓN: LUCHAR ===== */
@@ -4017,19 +4238,12 @@ function renderProfileModal() {
       `).join('')}
     </div>
     <div class="profile-actions-section">
-      <button type="button" class="btn-primary" id="profile-sync-btn">🔄 Sincronizar Perfil</button>
+      <p class="profile-auto-save-note">Gestiona tu partida desde el menú de ajustes.</p>
     </div>`;
   const closeBtn = document.getElementById('profile-modal-close-btn');
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeProfileModal(); });
   const renameBtn = document.getElementById('profile-rename-btn');
   if (renameBtn) renameBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeProfileModal(); openUsernameModal(); });
-  const syncBtn = document.getElementById('profile-sync-btn');
-  if (syncBtn) syncBtn.addEventListener('pointerdown', async e => {
-    e.preventDefault();
-    saveGame();
-    const synced = await syncCurrentSaveToFirebase();
-    alert(synced ? 'Perfil sincronizado.' : 'Partida guardada en este dispositivo.');
-  });
 }
 
 function renderSettingsModal() {
@@ -4045,16 +4259,16 @@ function renderSettingsModal() {
       <button type="button" class="settings-action-btn danger" id="settings-reset-btn">🗑️ Nueva Partida</button>
       <button type="button" class="settings-action-btn logout" id="settings-logout-btn">🚪 Cerrar Sesión</button>
     </div>
-    <p class="settings-note">Solo opciones técnicas. Tu perfil y estadísticas están en el panel del jugador.</p>
+    <div id="settings-save-time" class="save-time">Última vez guardado: ${formatSavedTimestamp(state.lastSavedAt)}</div>
+    <p class="settings-note">El guardado solo ocurre al pulsar Guardar Partida. Tu perfil y estadísticas están en el panel del jugador.</p>
   `;
   const closeBtn = document.getElementById('settings-modal-close-btn');
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeSettingsModal(); });
   const saveBtn = document.getElementById('settings-save-btn');
   if (saveBtn) saveBtn.addEventListener('pointerdown', async e => {
     e.preventDefault();
-    saveGame();
-    const synced = await syncCurrentSaveToFirebase();
-    alert(synced ? 'Partida guardada y sincronizada.' : 'Partida guardada en este dispositivo.');
+    await saveGame({ manual: true });
+    renderSettingsModal();
   });
   const resetBtn = document.getElementById('settings-reset-btn');
   if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
@@ -4236,6 +4450,7 @@ function buyDailyOfferFish(fishId, price) {
   renderBank();
   renderShop();
   checkCollectionMasterAchievement();
+  scheduleAutosave(0);
 }
 
 function buyItem(itemId, price) {
@@ -4246,6 +4461,7 @@ function buyItem(itemId, price) {
   updateCoinDisplay();
   renderShop();
   renderInventory();
+  scheduleAutosave(0);
 }
 
 function openChest(chestId) {
@@ -4262,6 +4478,7 @@ function openChest(chestId) {
   updateCoinDisplay();
   updateDiamondDisplay();
   renderShop();
+  scheduleAutosave(0);
 
   const goldAmount = randInt(chest.goldRange[0], chest.goldRange[1]);
   let diamondAmount = 0;
@@ -4308,6 +4525,7 @@ function showChestReveal(chest, gold, diamonds, fish, compensation) {
       if (lvl < 10) state.fishLevels[fish.id] = lvl + 1;
     }
   }
+  scheduleAutosave(0);
 
   let currentStep = 0;
   const steps = [];
@@ -5075,6 +5293,7 @@ function showResult(victory) {
   dom.resultSub.textContent = victory
     ? `¡${state.player.type.name} ha vencido a ${state.enemy.type.name}! +${reward} 🪙`
     : `${state.enemy.type.name} ha derrotado a ${state.player.type.name}... +${reward} 🪙`;
+  scheduleAutosave(0);
 }
 
 /* ===== REINICIO ===== */
@@ -5122,9 +5341,10 @@ function closeResetModal() {
   }
 }
 
-function resetAccount() {
+async function resetAccount() {
   localStorage.removeItem(getSaveKey());
   localStorage.removeItem(LEGACY_SAVE_KEY);
+  state.lastSavedAt = null;
 
   state.coins = 100;
   state.diamonds = 0;
@@ -5500,6 +5720,7 @@ function muelleContinue() {
 function endMuelle() {
   state.muelle = null;
   renderMuelleSection();
+  scheduleAutosave(0);
 }
 
 /* ===== EVENTOS ===== */
@@ -5534,7 +5755,7 @@ function setupEvents() {
     if (resetConfirmBtn) resetConfirmBtn.addEventListener('pointerdown', e => {
       e.preventDefault();
       if (resetConfirmBtn.disabled) return;
-      resetAccount();
+      void resetAccount();
     });
     const resetCloseBtn = document.getElementById('reset-modal-close-btn');
     if (resetCloseBtn) resetCloseBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeResetModal(); });
@@ -5742,13 +5963,14 @@ function closeFriendsModal() {
   document.body.classList.remove('modal-open');
 }
 
-function init() {
-  const hasSession = isLocalSessionActive() && !!getLocalAuthUsername();
+async function init() {
+  const storedUsername = normalizeAuthUsername(getLocalAuthUsername());
+  const hasSession = isLocalSessionActive() && !!storedUsername;
   if (hasSession) {
-    syncLocalAuthSession(getLocalAuthUsername());
-    state.playerUsername = getLocalAuthUsername();
+    syncLocalAuthSession(storedUsername);
+    state.playerUsername = storedUsername;
     updateHeaderUsernameDisplay();
-    loadGame();
+    await loadGame();
     checkUpdatePopup();
   } else {
     state.playerUsername = 'Jugador123';
