@@ -1075,6 +1075,19 @@ body.modal-open .section.active { overflow: hidden; }
   font-weight: 800;
   text-align: center;
 }
+.battle-pass-season-banner {
+  text-align: center;
+  padding: 0.4rem 0.6rem;
+  margin: 0.25rem 0 0.4rem;
+  border-radius: 10px;
+  background: rgba(255,215,64,0.08);
+  border: 1px solid rgba(255,215,64,0.2);
+}
+.battle-pass-season-label {
+  font-size: 0.78rem;
+  color: #ffe082;
+  font-weight: 600;
+}
 .battle-pass-summary {
   margin-bottom: 0.9rem;
   padding: 0.75rem;

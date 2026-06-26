@@ -808,9 +808,7 @@ const DAILY_MISSIONS = [
 
 const BATTLE_PASS_XP_PER_LEVEL = 100;
 const BATTLE_PASS_XP_REWARDS = { victory: 25, defeat: 10, dailyMission: 50 };
-const BATTLE_PASS_DURATION_DAYS = 30;
 const BATTLE_PASS_TOTAL_LEVELS = 10;
-const BATTLE_PASS_DURATION_MS = BATTLE_PASS_DURATION_DAYS * 24 * 60 * 60 * 1000;
 const BATTLE_PASS_LEVELS = [
   {
     level: 1,
@@ -907,6 +905,7 @@ const state = {
   xp_pase: 0,
   tiene_premium: false,
   paseInicioTemporada: Date.now(),
+  paseSeasonMonth: null,
   paseRecompensasReclamadas: [],
   paseObjetos: [],
   titulosDesbloqueados: [],
@@ -1732,6 +1731,7 @@ function getSaveData() {
     xp_pase: state.xp_pase,
     tiene_premium: state.tiene_premium,
     paseInicioTemporada: state.paseInicioTemporada,
+    paseSeasonMonth: state.paseSeasonMonth,
     paseRecompensasReclamadas: state.paseRecompensasReclamadas,
     paseObjetos: state.paseObjetos,
     titulosDesbloqueados: state.titulosDesbloqueados,
@@ -1753,6 +1753,7 @@ function ensureBattlePassState() {
   if (!Number.isFinite(state.xp_pase) || state.xp_pase < 0) state.xp_pase = 0;
   if (typeof state.tiene_premium !== 'boolean') state.tiene_premium = false;
   if (!Number.isFinite(state.paseInicioTemporada) || state.paseInicioTemporada <= 0) state.paseInicioTemporada = Date.now();
+  if (typeof state.paseSeasonMonth !== 'string' || state.paseSeasonMonth === '') state.paseSeasonMonth = null;
   if (!Array.isArray(state.paseRecompensasReclamadas)) state.paseRecompensasReclamadas = [];
   state.paseRecompensasReclamadas = normalizeBattlePassClaimedRewards(state.paseRecompensasReclamadas);
   if (!Array.isArray(state.paseObjetos)) state.paseObjetos = [];
@@ -1784,20 +1785,32 @@ function isBattlePassRewardClaimed(level, track) {
   return state.paseRecompensasReclamadas.includes(getBattlePassRewardKey(level, track));
 }
 
-function getBattlePassEndTimestamp() {
-  ensureBattlePassState();
-  return state.paseInicioTemporada + BATTLE_PASS_DURATION_MS;
+function getCurrentSeasonMonthStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function getBattlePassRemainingMs(now = Date.now()) {
-  return Math.max(0, getBattlePassEndTimestamp() - now);
+function getSeasonEndDate() {
+  const now = new Date();
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  lastDay.setHours(23, 59, 59, 999);
+  return lastDay;
 }
 
-function getBattlePassRemainingText() {
-  const remaining = getBattlePassRemainingMs();
+function getSeasonRemainingMs(now = Date.now()) {
+  return Math.max(0, getSeasonEndDate().getTime() - now);
+}
+
+function getSeasonName() {
+  const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return `Temporada de las Profundidades - ${months[new Date().getMonth()]}`;
+}
+
+function getSeasonCountdownText() {
+  const remaining = getSeasonRemainingMs();
   const days = Math.floor(remaining / 86400000);
   const hours = Math.floor((remaining % 86400000) / 3600000);
-  return `Termina en: ${days} días, ${hours} horas`;
+  return `${days} días, ${String(hours).padStart(2, '0')} horas`;
 }
 
 function resetBattlePassSeason() {
@@ -1805,12 +1818,13 @@ function resetBattlePassSeason() {
   state.xp_pase = 0;
   state.tiene_premium = false;
   state.paseInicioTemporada = Date.now();
+  state.paseSeasonMonth = getCurrentSeasonMonthStr();
   state.paseRecompensasReclamadas = [];
 }
 
 function checkBattlePassSeasonExpiration() {
   ensureBattlePassState();
-  if (getBattlePassRemainingMs() > 0) return false;
+  if (state.paseSeasonMonth === getCurrentSeasonMonthStr()) return false;
   resetBattlePassSeason();
   return true;
 }
@@ -1962,6 +1976,7 @@ function loadGame() {
     if (Number.isFinite(data.xp_pase) && data.xp_pase >= 0) state.xp_pase = Math.floor(data.xp_pase);
     if (typeof data.tiene_premium === 'boolean') state.tiene_premium = data.tiene_premium;
     if (Number.isFinite(data.paseInicioTemporada) && data.paseInicioTemporada > 0) state.paseInicioTemporada = data.paseInicioTemporada;
+    if (typeof data.paseSeasonMonth === 'string') state.paseSeasonMonth = data.paseSeasonMonth;
     if (Array.isArray(data.paseRecompensasReclamadas)) state.paseRecompensasReclamadas = data.paseRecompensasReclamadas;
     if (Array.isArray(data.paseObjetos)) state.paseObjetos = data.paseObjetos;
     if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
@@ -2696,17 +2711,20 @@ function formatCountdown(ms) {
 let globalCountdownInterval = null;
 
 function updateCountdownDisplays() {
-  const ms = getTimeToMidnight();
-  const str = formatCountdown(ms);
+  const midnightMs = getTimeToMidnight();
+  const midnightStr = formatCountdown(midnightMs);
 
   const muelleEl = document.getElementById('countdown-muelle');
-  if (muelleEl) muelleEl.textContent = str;
+  if (muelleEl) muelleEl.textContent = midnightStr;
 
   const missionsEl = document.getElementById('countdown-misiones');
-  if (missionsEl) missionsEl.textContent = str;
+  if (missionsEl) missionsEl.textContent = midnightStr;
 
   const shopEl = document.getElementById('offers-countdown');
-  if (shopEl) shopEl.textContent = `Rotación en: ${str}`;
+  if (shopEl) shopEl.textContent = `Rotación en: ${midnightStr}`;
+
+  const paseEl = document.getElementById('countdown-pase');
+  if (paseEl) paseEl.textContent = getSeasonCountdownText();
 }
 
 function startGlobalCountdown() {
@@ -2939,6 +2957,7 @@ function checkDailyReset() {
     state.lastResetDate = today;
     selectDailyMissions();
   }
+  checkBattlePassSeasonExpiration();
   updateNotificationDots();
 }
 
@@ -3185,8 +3204,11 @@ function renderBattlePassModal() {
   const battlePassXpToNext = state.nivel_pase >= BATTLE_PASS_TOTAL_LEVELS ? 0 : (BATTLE_PASS_XP_PER_LEVEL - battlePassXpCurrentLevel);
   body.innerHTML = `
     <div class="battle-pass-modal-header">
-      <span class="battle-pass-modal-title">🎟️ Pase de Batalla</span>
+      <span class="battle-pass-modal-title">${getSeasonName()}</span>
       <button class="battle-pass-modal-close" id="battle-pass-close-btn">✕</button>
+    </div>
+    <div class="battle-pass-season-banner">
+      <span class="battle-pass-season-label">Tiempo restante: <span id="countdown-pase">${getSeasonCountdownText()}</span></span>
     </div>
     <div class="battle-pass-premium-cta">
       ${state.tiene_premium
@@ -3197,7 +3219,6 @@ function renderBattlePassModal() {
       <strong class="battle-pass-summary-main">Nivel ${state.nivel_pase}/${BATTLE_PASS_TOTAL_LEVELS} · XP ${battlePassXpCurrentLevel}/${BATTLE_PASS_XP_PER_LEVEL}</strong>
       <span class="battle-pass-summary-sub">${battlePassXpToNext > 0 ? `Faltan ${battlePassXpToNext} XP para el siguiente nivel` : 'Nivel máximo alcanzado'}</span>
       <span class="battle-pass-summary-sub">${state.tiene_premium ? 'Premium activo: Gratis + Premium habilitados' : 'Premium inactivo: solo Gratis habilitado'}</span>
-      <span class="battle-pass-summary-sub">${getBattlePassRemainingText()}</span>
     </div>
     <div class="battle-pass-level-list">
       ${BATTLE_PASS_LEVELS.map(tier => {
@@ -4183,6 +4204,7 @@ function resetAccount() {
   state.xp_pase = 0;
   state.tiene_premium = false;
   state.paseInicioTemporada = Date.now();
+  state.paseSeasonMonth = null;
   state.paseRecompensasReclamadas = [];
   state.paseObjetos = [];
   state.titulosDesbloqueados = [];
