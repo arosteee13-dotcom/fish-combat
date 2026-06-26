@@ -863,6 +863,10 @@ const BATTLE_PASS_LEVELS = [
 ];
 
 const COLLECTION_MASTER_REWARD = { coins: 2000, diamonds: 30 };
+const AUTH_ACCOUNTS_KEY = 'fba_accounts_registry';
+const AUTH_SESSION_KEY = 'fba_auth_session';
+const SAVE_KEY_PREFIX = 'fba_manual_save:';
+const LEGACY_SAVE_KEY = 'fba_manual_save';
 
 /* ===== CONSTANTS ===== */
 const MAX_LEVEL = 12;
@@ -923,14 +927,25 @@ const state = {
   isAnimating: false,
   turnPhase: 'player_first',
   muelle: null,
-  tickets_muelle: 3
+  tickets_muelle: 3,
+  playerUsername: 'Jugador123',
+  authSession: null
 };
+
+const FRIENDS_DEMO = [
+  { id: 'FA-1042', username: 'AquaWolf', cups: 1420, online: true },
+  { id: 'FA-2218', username: 'CoralNova', cups: 980, online: true },
+  { id: 'FA-3301', username: 'MareaX', cups: 740, online: false },
+  { id: 'FA-4410', username: 'TiburonRojo', cups: 125, online: false },
+  { id: 'FA-5508', username: 'NeonReef', cups: 2150, online: true }
+];
 
 /* ===== DOM HELPERS ===== */
 const $ = id => document.getElementById(id);
 const dom = {
   screenMain: $('screen-main'), screenCombat: $('screen-combat'), screenResult: $('screen-result'),
   bottomNav: $('bottom-nav'), coinDisplay: $('coin-display'), diamondDisplay: $('diamond-display'),
+  headerUserBox: $('header-user-box'), headerUserName: document.querySelector('.header-user-name'),
   actionFooter: document.querySelector('.action-footer'),
   mainHeader: document.querySelector('.main-header'),
   sectionFight: $('section-fight'), sectionBank: $('section-bank'),
@@ -952,7 +967,9 @@ const dom = {
   missionsModal: $('missions-modal'), missionsModalBody: $('missions-modal-body'),
   battlePassModal: $('battle-pass-modal'), battlePassModalBody: $('battle-pass-modal-body'),
   itemModal: $('item-modal'), itemModalBody: $('item-modal-body'),
-  profileModal: $('profile-modal'), profileModalBody: $('profile-modal-body')
+  profileModal: $('profile-modal'), profileModalBody: $('profile-modal-body'),
+  authModal: $('auth-modal'), authModalBody: $('auth-modal-body'),
+  usernameModal: $('username-modal'), usernameModalBody: $('username-modal-body')
 };
 
 function getEventTargetElement(target) {
@@ -1712,11 +1729,151 @@ function updateNotificationDots() {
 }
 
 /* ===== PERSISTENCIA ===== */
-const SAVE_KEY = 'fba_manual_save';
+function normalizeAuthEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function normalizeAuthUsername(username) {
+  return String(username || '').trim().replace(/\s+/g, ' ').slice(0, 24);
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getAccountsRegistry() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_ACCOUNTS_KEY) || '{}') || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function setAccountsRegistry(registry) {
+  localStorage.setItem(AUTH_ACCOUNTS_KEY, JSON.stringify(registry || {}));
+}
+
+function getStoredSession() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || 'null');
+  } catch (e) {
+    return null;
+  }
+}
+
+function setStoredSession(session) {
+  const next = session && session.email ? { email: normalizeAuthEmail(session.email) } : null;
+  if (next) {
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(next));
+  } else {
+    localStorage.removeItem(AUTH_SESSION_KEY);
+  }
+  state.authSession = next;
+  return next;
+}
+
+function getCurrentAuthEmail() {
+  return normalizeAuthEmail(state.authSession?.email || getStoredSession()?.email || '');
+}
+
+function getSaveKey() {
+  const email = getCurrentAuthEmail();
+  return email ? `${SAVE_KEY_PREFIX}${email}` : LEGACY_SAVE_KEY;
+}
+
+function getCurrentSaveRaw() {
+  const key = getSaveKey();
+  const raw = localStorage.getItem(key);
+  if (raw) return raw;
+  if (key !== LEGACY_SAVE_KEY) return localStorage.getItem(LEGACY_SAVE_KEY);
+  return null;
+}
+
+function getCurrentSaveData() {
+  const raw = getCurrentSaveRaw();
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+function updateHeaderUsernameDisplay() {
+  const username = state.playerUsername || 'Jugador123';
+  if (dom.headerUserName) dom.headerUserName.textContent = username;
+  if (dom.headerUserBox) dom.headerUserBox.setAttribute('aria-label', `Editar nombre de usuario: ${username}`);
+}
+
+function saveGame() {
+  const email = getCurrentAuthEmail();
+  if (!email) return;
+  if (normalizeAuthUsername(state.playerUsername)) updateAccountRecord(email, { username: normalizeAuthUsername(state.playerUsername) });
+  const data = getSaveData();
+  localStorage.setItem(getSaveKey(), JSON.stringify(data));
+  updateSaveTimestampDisplay();
+}
+
+function hasManualSave() {
+  const data = getCurrentSaveData();
+  return !!(data && data.timestamp);
+}
+
+function applySaveData(data) {
+  if (!data || typeof data !== 'object') return false;
+  if (typeof data.coins === 'number' && data.coins >= 0) state.coins = data.coins;
+  if (typeof data.diamonds === 'number' && data.diamonds >= 0) state.diamonds = data.diamonds;
+  if (typeof data.cups === 'number' && data.cups >= 0) state.cups = data.cups;
+  if (typeof data.currentArena === 'number') state.currentArena = data.currentArena;
+  if (typeof data.arenaMaxReached === 'number') state.arenaMaxReached = data.arenaMaxReached;
+  if (Array.isArray(data.unlockedFish) && data.unlockedFish.length > 0) state.unlockedFish = data.unlockedFish;
+  if (data.fishLevels) state.fishLevels = data.fishLevels;
+  if (data.fishCups) state.fishCups = data.fishCups;
+  if (Array.isArray(data.items)) state.items = data.items;
+  if (data.equippedItems) state.equippedItems = data.equippedItems;
+  if (data.lastFreeClaim) state.lastFreeClaim = data.lastFreeClaim;
+  if (data.missions) state.missions = data.missions;
+  if (Array.isArray(data.missionsActive)) state.missionsActive = data.missionsActive;
+  if (Array.isArray(data.missionsClaimed)) state.missionsClaimed = data.missionsClaimed;
+  if (typeof data.missionsBonusClaimed === 'boolean') state.missionsBonusClaimed = data.missionsBonusClaimed;
+  if (data.lastResetDate) state.lastResetDate = data.lastResetDate;
+  if (Number.isFinite(data.nivel_pase) && data.nivel_pase >= 0) state.nivel_pase = Math.floor(data.nivel_pase);
+  if (Number.isFinite(data.xp_pase) && data.xp_pase >= 0) state.xp_pase = Math.floor(data.xp_pase);
+  if (typeof data.tiene_premium === 'boolean') state.tiene_premium = data.tiene_premium;
+  if (Number.isFinite(data.paseInicioTemporada) && data.paseInicioTemporada > 0) state.paseInicioTemporada = data.paseInicioTemporada;
+  if (typeof data.paseSeasonMonth === 'string') state.paseSeasonMonth = data.paseSeasonMonth;
+  if (Array.isArray(data.paseRecompensasReclamadas)) state.paseRecompensasReclamadas = data.paseRecompensasReclamadas;
+  if (Array.isArray(data.paseObjetos)) state.paseObjetos = data.paseObjetos;
+  if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
+  if (Array.isArray(data.marcosDesbloqueados)) state.marcosDesbloqueados = data.marcosDesbloqueados;
+  if (data.shopRotation && typeof data.shopRotation === 'object') state.shopRotation = data.shopRotation;
+  if (typeof data.tickets_muelle === 'number' && data.tickets_muelle >= 0) state.tickets_muelle = data.tickets_muelle;
+  ensureBattlePassState();
+  checkBattlePassSeasonExpiration();
+  const savedAchievement = data.achievements?.collectionMaster;
+  if (savedAchievement && Number.isFinite(savedAchievement.rewardedForTotal)) {
+    state.achievements.collectionMaster.rewardedForTotal = Math.max(0, savedAchievement.rewardedForTotal);
+  }
+  if (data.selectedFish && getFishById(data.selectedFish) && state.unlockedFish.includes(data.selectedFish)) {
+    state.selectedFishId = data.selectedFish;
+  }
+  if (typeof data.playerUsername === 'string' && normalizeAuthUsername(data.playerUsername)) {
+    state.playerUsername = normalizeAuthUsername(data.playerUsername);
+    updateHeaderUsernameDisplay();
+  }
+  checkCollectionMasterAchievement({ notify: false });
+  return true;
+}
 
 function getSaveData() {
   return {
     selectedFish: state.selectedFishId,
+    playerUsername: state.playerUsername,
     coins: state.coins, diamonds: state.diamonds,
     cups: state.cups,
     currentArena: state.currentArena,
@@ -1752,6 +1909,223 @@ function formatTimestamp(ts) {
   const d = new Date(ts);
   const pad = n => String(n).padStart(2, '0');
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} a las ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function updateSaveTimestampDisplay() {
+  const el = document.getElementById('profile-save-time');
+  if (!el) return;
+  const data = getCurrentSaveData();
+  if (data && data.timestamp) {
+    el.textContent = `Última vez guardado: ${formatTimestamp(data.timestamp)}`;
+    return;
+  }
+  el.textContent = 'Nunca guardado';
+}
+
+function loadGame() {
+  const data = getCurrentSaveData();
+  if (!data) return false;
+  const loaded = applySaveData(data);
+  const email = getCurrentAuthEmail();
+  const account = email ? getAccountRecord(email) : null;
+  if (loaded && email && account && !normalizeAuthUsername(account.username) && normalizeAuthUsername(state.playerUsername)) {
+    updateAccountRecord(email, { username: state.playerUsername });
+  }
+  if (loaded && getCurrentAuthEmail() && localStorage.getItem(getSaveKey()) === null && localStorage.getItem(LEGACY_SAVE_KEY)) {
+    saveGame();
+  }
+  return loaded;
+}
+
+function getAccountRecord(email) {
+  const registry = getAccountsRegistry();
+  return registry[normalizeAuthEmail(email)] || null;
+}
+
+function updateAccountRecord(email, patch) {
+  const normalizedEmail = normalizeAuthEmail(email);
+  if (!normalizedEmail) return null;
+  const registry = getAccountsRegistry();
+  const next = { ...(registry[normalizedEmail] || { email: normalizedEmail }), ...patch, email: normalizedEmail };
+  registry[normalizedEmail] = next;
+  setAccountsRegistry(registry);
+  return next;
+}
+
+function isUsernameTaken(username, exceptEmail = null) {
+  const target = normalizeAuthUsername(username).toLowerCase();
+  if (!target) return false;
+  return Object.values(getAccountsRegistry()).some(account => {
+    if (!account || !account.username) return false;
+    if (exceptEmail && normalizeAuthEmail(account.email) === normalizeAuthEmail(exceptEmail)) return false;
+    return normalizeAuthUsername(account.username).toLowerCase() === target;
+  });
+}
+
+function syncSessionAccount() {
+  const session = getStoredSession();
+  if (!session?.email) return false;
+  const account = getAccountRecord(session.email);
+  if (!account) {
+    setStoredSession(null);
+    return false;
+  }
+  state.authSession = { email: normalizeAuthEmail(session.email) };
+  state.playerUsername = normalizeAuthUsername(account.username) || 'Jugador123';
+  updateHeaderUsernameDisplay();
+  return true;
+}
+
+function renderAuthModal(mode = 'login', error = '') {
+  if (!dom.authModalBody) return;
+  const isRegister = mode === 'register';
+  dom.authModalBody.innerHTML = `
+    <div class="auth-modal-title">${isRegister ? 'Crear cuenta' : 'Iniciar sesión'}</div>
+    <div class="auth-mode-row">
+      <button type="button" class="auth-mode-btn ${!isRegister ? 'active' : ''}" data-auth-mode="login">Entrar</button>
+      <button type="button" class="auth-mode-btn ${isRegister ? 'active' : ''}" data-auth-mode="register">Registro</button>
+    </div>
+    <form id="auth-form">
+      <input class="auth-field" id="auth-email" type="email" placeholder="Correo" autocomplete="email" required>
+      <input class="auth-field" id="auth-password" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+      ${isRegister ? '<input class="auth-field" id="auth-username" type="text" placeholder="Nombre de usuario" autocomplete="nickname" maxlength="24" required>' : ''}
+      <div class="auth-error" id="auth-error">${error || ''}</div>
+      <div class="auth-hint">${isRegister ? 'El nombre de usuario debe ser único.' : 'Usa tu correo y contraseña para entrar.'}</div>
+      <button type="submit" class="auth-submit">${isRegister ? 'Crear cuenta' : 'Entrar'}</button>
+    </form>
+  `;
+  const form = document.getElementById('auth-form');
+  const modeButtons = dom.authModalBody.querySelectorAll('[data-auth-mode]');
+  const emailInput = document.getElementById('auth-email');
+  const passwordInput = document.getElementById('auth-password');
+  const usernameInput = document.getElementById('auth-username');
+  const errorEl = document.getElementById('auth-error');
+  modeButtons.forEach(btn => {
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      renderAuthModal(btn.dataset.authMode || 'login');
+    });
+  });
+  if (form) {
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const email = normalizeAuthEmail(emailInput?.value);
+      const password = String(passwordInput?.value || '').trim();
+      const username = normalizeAuthUsername(usernameInput?.value || '');
+      if (!email || !password) {
+        if (errorEl) errorEl.textContent = 'Completa correo y contraseña.';
+        return;
+      }
+      const registry = getAccountsRegistry();
+      const existing = registry[email];
+      if (isRegister) {
+        if (!username) {
+          if (errorEl) errorEl.textContent = 'Escribe un nombre de usuario.';
+          return;
+        }
+        if (existing) {
+          if (errorEl) errorEl.textContent = 'Ese correo ya está registrado.';
+          return;
+        }
+        if (isUsernameTaken(username)) {
+          if (errorEl) errorEl.textContent = 'Ese nombre de usuario ya existe.';
+          return;
+        }
+        registry[email] = { email, password, username };
+        setAccountsRegistry(registry);
+        setStoredSession({ email });
+        state.playerUsername = username;
+        updateHeaderUsernameDisplay();
+        saveGame();
+        closeAuthModal();
+        return;
+      }
+      if (!existing || existing.password !== password) {
+        if (errorEl) errorEl.textContent = 'Correo o contraseña incorrectos.';
+        return;
+      }
+      setStoredSession({ email });
+      state.playerUsername = normalizeAuthUsername(existing.username) || 'Jugador123';
+      updateHeaderUsernameDisplay();
+      if (!loadGame()) saveGame();
+      closeAuthModal();
+      if (!normalizeAuthUsername(existing.username)) openUsernameModal();
+    });
+  }
+  if (emailInput) emailInput.value = '';
+  if (passwordInput) passwordInput.value = '';
+  if (usernameInput) usernameInput.value = '';
+  setTimeout(() => emailInput?.focus(), 50);
+}
+
+function openAuthModal(mode = 'login', error = '') {
+  renderAuthModal(mode, error);
+  if (dom.authModal) dom.authModal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeAuthModal() {
+  if (dom.authModal) dom.authModal.classList.remove('open');
+  if (!dom.usernameModal?.classList.contains('open')) {
+    document.body.classList.remove('modal-open');
+  }
+}
+
+function renderUsernameModal(error = '') {
+  if (!dom.usernameModalBody) return;
+  const currentName = normalizeAuthUsername(state.playerUsername || '');
+  dom.usernameModalBody.innerHTML = `
+    <div class="username-modal-title">Editar nombre</div>
+    <div class="username-hint">Tu nombre es visible para otros jugadores y debe ser único.</div>
+    <input class="auth-field" id="username-input" type="text" maxlength="24" value="${escapeHtml(currentName)}" placeholder="Nombre de usuario" autocomplete="nickname">
+    <div class="username-error" id="username-error">${error || ''}</div>
+    <button type="button" class="username-submit" id="username-save-btn">Guardar</button>
+  `;
+  const input = document.getElementById('username-input');
+  const errorEl = document.getElementById('username-error');
+  const saveBtn = document.getElementById('username-save-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const nextName = normalizeAuthUsername(input?.value || '');
+      if (!nextName) {
+        if (errorEl) errorEl.textContent = 'Escribe un nombre de usuario.';
+        return;
+      }
+      if (isUsernameTaken(nextName, getCurrentAuthEmail())) {
+        if (errorEl) errorEl.textContent = 'Ese nombre ya está en uso.';
+        return;
+      }
+      state.playerUsername = nextName;
+      updateAccountRecord(getCurrentAuthEmail(), { username: nextName });
+      updateHeaderUsernameDisplay();
+      saveGame();
+      closeUsernameModal();
+    });
+  }
+  if (input) input.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (saveBtn) saveBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+  });
+  setTimeout(() => input?.focus(), 50);
+}
+
+function openUsernameModal() {
+  if (!getCurrentAuthEmail()) {
+    openAuthModal();
+    return;
+  }
+  renderUsernameModal();
+  if (dom.usernameModal) dom.usernameModal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeUsernameModal() {
+  if (dom.usernameModal) dom.usernameModal.classList.remove('open');
+  if (!dom.authModal?.classList.contains('open')) {
+    document.body.classList.remove('modal-open');
+  }
 }
 
 function ensureBattlePassState() {
@@ -1979,84 +2353,6 @@ function startBattlePassTicker() {
     if (dom.profileModal?.classList.contains('open')) renderProfileModal();
     if (dom.battlePassModal?.classList.contains('open')) renderBattlePassModal();
   }, 60000);
-}
-
-function updateSaveTimestampDisplay() {
-  const el = document.getElementById('profile-save-time');
-  if (!el) return;
-  const raw = localStorage.getItem(SAVE_KEY);
-  if (!raw) { el.textContent = 'Nunca guardado'; return; }
-  try {
-    const data = JSON.parse(raw);
-    if (data.timestamp) {
-      el.textContent = `Última vez guardado: ${formatTimestamp(data.timestamp)}`;
-    } else {
-      el.textContent = 'Nunca guardado';
-    }
-  } catch (e) {
-    el.textContent = 'Nunca guardado';
-  }
-}
-
-function saveGame() {
-  const data = getSaveData();
-  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-  updateSaveTimestampDisplay();
-}
-
-function hasManualSave() {
-  const raw = localStorage.getItem(SAVE_KEY);
-  if (!raw) return false;
-  try {
-    const data = JSON.parse(raw);
-    return !!data.timestamp;
-  } catch (e) { return false; }
-}
-
-function loadGame() {
-  if (!hasManualSave()) return;
-  const raw = localStorage.getItem(SAVE_KEY);
-  if (!raw) return;
-  try {
-    const data = JSON.parse(raw);
-    if (typeof data.coins === 'number' && data.coins >= 0) state.coins = data.coins;
-    if (typeof data.diamonds === 'number' && data.diamonds >= 0) state.diamonds = data.diamonds;
-    if (typeof data.cups === 'number' && data.cups >= 0) state.cups = data.cups;
-    if (typeof data.currentArena === 'number') state.currentArena = data.currentArena;
-    if (typeof data.arenaMaxReached === 'number') state.arenaMaxReached = data.arenaMaxReached;
-    if (Array.isArray(data.unlockedFish) && data.unlockedFish.length > 0) state.unlockedFish = data.unlockedFish;
-    if (data.fishLevels) state.fishLevels = data.fishLevels;
-    if (data.fishCups) state.fishCups = data.fishCups;
-    if (Array.isArray(data.items)) state.items = data.items;
-    if (data.equippedItems) state.equippedItems = data.equippedItems;
-    if (data.lastFreeClaim) state.lastFreeClaim = data.lastFreeClaim;
-    if (data.missions) state.missions = data.missions;
-    if (Array.isArray(data.missionsActive)) state.missionsActive = data.missionsActive;
-    if (Array.isArray(data.missionsClaimed)) state.missionsClaimed = data.missionsClaimed;
-    if (typeof data.missionsBonusClaimed === 'boolean') state.missionsBonusClaimed = data.missionsBonusClaimed;
-    if (data.lastResetDate) state.lastResetDate = data.lastResetDate;
-    if (Number.isFinite(data.nivel_pase) && data.nivel_pase >= 0) state.nivel_pase = Math.floor(data.nivel_pase);
-    if (Number.isFinite(data.xp_pase) && data.xp_pase >= 0) state.xp_pase = Math.floor(data.xp_pase);
-    if (typeof data.tiene_premium === 'boolean') state.tiene_premium = data.tiene_premium;
-    if (Number.isFinite(data.paseInicioTemporada) && data.paseInicioTemporada > 0) state.paseInicioTemporada = data.paseInicioTemporada;
-    if (typeof data.paseSeasonMonth === 'string') state.paseSeasonMonth = data.paseSeasonMonth;
-    if (Array.isArray(data.paseRecompensasReclamadas)) state.paseRecompensasReclamadas = data.paseRecompensasReclamadas;
-    if (Array.isArray(data.paseObjetos)) state.paseObjetos = data.paseObjetos;
-    if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
-    if (Array.isArray(data.marcosDesbloqueados)) state.marcosDesbloqueados = data.marcosDesbloqueados;
-    if (data.shopRotation && typeof data.shopRotation === 'object') state.shopRotation = data.shopRotation;
-    if (typeof data.tickets_muelle === 'number' && data.tickets_muelle >= 0) state.tickets_muelle = data.tickets_muelle;
-    ensureBattlePassState();
-    checkBattlePassSeasonExpiration();
-    const savedAchievement = data.achievements?.collectionMaster;
-    if (savedAchievement && Number.isFinite(savedAchievement.rewardedForTotal)) {
-      state.achievements.collectionMaster.rewardedForTotal = Math.max(0, savedAchievement.rewardedForTotal);
-    }
-    if (data.selectedFish && getFishById(data.selectedFish) && state.unlockedFish.includes(data.selectedFish)) {
-      state.selectedFishId = data.selectedFish;
-    }
-    checkCollectionMasterAchievement({ notify: false });
-  } catch (e) {}
 }
 
 /* ===== ARENA SYSTEM ===== */
@@ -4314,7 +4610,8 @@ function closeResetModal() {
 }
 
 function resetAccount() {
-  localStorage.removeItem('fba_manual_save');
+  localStorage.removeItem(getSaveKey());
+  localStorage.removeItem(LEGACY_SAVE_KEY);
 
   state.coins = 100;
   state.diamonds = 0;
@@ -4728,11 +5025,12 @@ function setupEvents() {
     if (resetCloseBtn) resetCloseBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeResetModal(); });
   }
   const amigosBtn = document.getElementById('btn-amigos');
-  if (amigosBtn) amigosBtn.addEventListener('pointerdown', e => { e.preventDefault(); /* TODO: abrir amigos */ });
+  if (amigosBtn) amigosBtn.addEventListener('pointerdown', e => { e.preventDefault(); openFriendsModal(); });
   const newsBtn = document.getElementById('btn-news');
   if (newsBtn) newsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openUpdateModal(); });
   const settingsBtn = document.getElementById('btn-settings');
   if (settingsBtn) settingsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openProfileModal(); });
+  if (dom.headerUserBox) dom.headerUserBox.addEventListener('pointerdown', e => { e.preventDefault(); if (!getCurrentAuthEmail()) openAuthModal(); else openUsernameModal(); });
   const headerBpBtn = document.getElementById('header-bp-btn');
   if (headerBpBtn) headerBpBtn.addEventListener('pointerdown', e => { e.preventDefault(); openBattlePassModal(); });
   const missionsBtn = document.getElementById('header-missions-btn');
@@ -4757,6 +5055,30 @@ function setupEvents() {
       e.preventDefault(); closeItemModal();
     }
   });
+  const friendsModal = document.getElementById('friends-modal');
+  if (friendsModal) {
+    friendsModal.addEventListener('pointerdown', e => {
+      if (e.target === friendsModal || e.target.classList.contains('friends-modal-backdrop')) {
+        e.preventDefault(); closeFriendsModal();
+      }
+    });
+  }
+  if (dom.authModal) {
+    dom.authModal.addEventListener('pointerdown', e => {
+      if (e.target === dom.authModal || e.target.classList.contains('auth-modal-backdrop')) {
+        e.preventDefault();
+        if (getCurrentAuthEmail()) closeAuthModal();
+      }
+    });
+  }
+  if (dom.usernameModal) {
+    dom.usernameModal.addEventListener('pointerdown', e => {
+      if (e.target === dom.usernameModal || e.target.classList.contains('username-modal-backdrop')) {
+        e.preventDefault();
+        closeUsernameModal();
+      }
+    });
+  }
   dom.bottomNav.addEventListener('pointerdown', e => {
     const targetEl = getEventTargetElement(e.target);
     const tab = targetEl ? targetEl.closest('.nav-tab') : null;
@@ -4835,14 +5157,8 @@ function hasVeteranProgressForUpdatePopup() {
   const legacyCoins = localStorage.getItem('monedas');
   if (legacyCoins !== null) return true;
   if (!hasManualSave()) return false;
-  const raw = localStorage.getItem(SAVE_KEY);
-  if (!raw) return false;
-  try {
-    const data = JSON.parse(raw);
-    return typeof data.coins === 'number';
-  } catch (e) {
-    return false;
-  }
+  const data = getCurrentSaveData();
+  return !!(data && typeof data.coins === 'number');
 }
 
 function checkUpdatePopup() {
@@ -4882,8 +5198,93 @@ function closeUpdateModal() {
   localStorage.setItem(UPDATE_POPUP_KEY, 'true');
 }
 
+function renderFriendsModal() {
+  const body = document.getElementById('friends-modal-body');
+  if (!body) return;
+
+  const friendsHtml = FRIENDS_DEMO.map(friend => {
+    const statusClass = friend.online ? 'online' : 'offline';
+    const inviteDisabled = !friend.online;
+    return `
+      <div class="friend-row">
+        <div class="friend-user">
+          <span class="friend-status-dot ${statusClass}"></span>
+          <span class="friend-name">${friend.username}</span>
+        </div>
+        <div class="friend-cups">🏆 ${Number(friend.cups).toLocaleString('en-US')}</div>
+        <button class="friend-invite-btn" data-friend-id="${friend.id}" ${inviteDisabled ? 'disabled' : ''}>Invitar</button>
+      </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="friends-modal-header">
+      <span class="friends-modal-title">👥 Amigos</span>
+      <button class="friends-modal-close" id="friends-modal-close-btn">✕</button>
+    </div>
+    <div class="friends-search-row">
+      <input id="friends-search-input" class="friends-search-input" type="text" placeholder="Nombre o ID de jugador">
+      <button id="friends-add-btn" class="friends-add-btn" aria-label="Añadir amigo">+</button>
+    </div>
+    <div class="friends-list">
+      ${friendsHtml}
+    </div>
+    <div class="friends-hint">Invita a un amigo online para una batalla amistosa. Los jugadores offline aparecen deshabilitados.</div>
+  `;
+
+  body.querySelectorAll('.friend-invite-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (btn.disabled) return;
+      const friend = FRIENDS_DEMO.find(f => f.id === btn.dataset.friendId);
+      if (!friend) return;
+      alert(`Invitación amistosa enviada a ${friend.username}`);
+    });
+  });
+
+  const addBtn = document.getElementById('friends-add-btn');
+  const searchInput = document.getElementById('friends-search-input');
+  if (addBtn && searchInput) {
+    addBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const value = searchInput.value.trim();
+      if (!value) {
+        alert('Escribe un nombre o ID de jugador.');
+        return;
+      }
+      alert(`Solicitud de amistad enviada a ${value}`);
+      searchInput.value = '';
+    });
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+      }
+    });
+  }
+
+  const closeBtn = document.getElementById('friends-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeFriendsModal(); });
+}
+
+function openFriendsModal() {
+  renderFriendsModal();
+  const modal = document.getElementById('friends-modal');
+  if (!modal) return;
+  modal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeFriendsModal() {
+  const modal = document.getElementById('friends-modal');
+  if (!modal) return;
+  modal.classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
 function init() {
-  loadGame();
+  const hasSession = syncSessionAccount();
+  if (hasSession) loadGame();
+  else updateHeaderUsernameDisplay();
   checkUpdatePopup();
   ensureBattlePassState();
   checkBattlePassSeasonExpiration();
@@ -4906,6 +5307,7 @@ function init() {
   updateActionFooter();
   showSection('fight');
   showScreen('main');
+  if (!hasSession) openAuthModal('login');
 }
 
 /* Auto‑save on page close to prevent rollback exploits */
