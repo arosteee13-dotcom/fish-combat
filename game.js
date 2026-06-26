@@ -2708,9 +2708,18 @@ function getBattlePassRewardUiState(level, track) {
   return { text: 'Reclamar', className: 'claim', disabled: false };
 }
 
+const PRECIO_PASE_PREMIUM = 1500;
+
 function comprarPasePremium() {
   if (state.tiene_premium) return;
+  if (state.coins < PRECIO_PASE_PREMIUM) {
+    alert(`¡No tienes suficientes monedas! Necesitas ${PRECIO_PASE_PREMIUM} 🪙 para el Pase Premium.`);
+    return;
+  }
+  state.coins -= PRECIO_PASE_PREMIUM;
   state.tiene_premium = true;
+  updateCoinDisplay();
+  saveGame();
   alert('¡Gracias por tu compra! Pase Premium activado 🌊');
   renderBattlePassModal();
 }
@@ -2729,7 +2738,7 @@ function renderBattlePassModal() {
     <div class="battle-pass-premium-cta">
       ${state.tiene_premium
         ? '<span class="battle-pass-premium-active">👑 Premium Activo</span>'
-        : '<button class="battle-pass-buy-btn" id="battle-pass-buy-btn">¡Hacerse Premium! 👑</button>'}
+        : `<button class="battle-pass-buy-btn" id="battle-pass-buy-btn">¡Hacerse Premium! (${PRECIO_PASE_PREMIUM} 🪙) 👑</button>`}
     </div>
     <div class="battle-pass-summary">
       <strong class="battle-pass-summary-main">Nivel ${state.nivel_pase}/${BATTLE_PASS_TOTAL_LEVELS} · XP ${battlePassXpCurrentLevel}/${BATTLE_PASS_XP_PER_LEVEL}</strong>
