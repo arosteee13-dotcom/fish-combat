@@ -211,7 +211,7 @@ body.modal-open .section.active { overflow: hidden; }
 .arena-modal-content {
   position: relative; z-index: 1;
   width: 92%; max-width: 400px;
-  max-height: 82vh; overflow-y: auto;
+  max-height: 88vh; overflow-y: auto;
   background: linear-gradient(180deg, #0d1f3c, #0a1628);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 20px; padding: 1.5rem;
@@ -224,6 +224,123 @@ body.modal-open .section.active { overflow: hidden; }
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .arena-modal-title { font-size: 1.1rem; font-weight: 800; }
+.arena-detail-header { align-items: flex-start; gap: 0.75rem; }
+.arena-detail-subtitle {
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.5);
+  font-weight: 700;
+}
+.arena-detail-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.arena-map-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.arena-detail-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 0.9rem;
+}
+.arena-map-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.arena-map-card.unlocked {
+  background: linear-gradient(180deg, rgba(79,172,254,0.10), rgba(255,255,255,0.04));
+  border-color: rgba(79,172,254,0.18);
+}
+.arena-map-card.locked {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.06);
+  opacity: 0.78;
+}
+.arena-map-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.arena-map-card-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.arena-map-card-sub {
+  margin-top: 0.18rem;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.48);
+  font-weight: 700;
+}
+.arena-detail-card-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.arena-detail-label {
+  font-size: 0.8rem; font-weight: 800; color: #8fd3ff;
+}
+.arena-detail-count {
+  font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.45);
+}
+.arena-detail-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+.arena-detail-meta-item {
+  background: rgba(7,18,35,0.5);
+  border: 1px solid rgba(143,211,255,0.14);
+  border-radius: 12px;
+  padding: 0.7rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.arena-detail-meta-k {
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.45);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.arena-detail-meta-v {
+  font-size: 0.82rem;
+  color: #fff;
+  font-weight: 800;
+}
+.arena-detail-fish-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  gap: 0.5rem;
+  align-items: start;
+}
+.arena-detail-fish-grid .arena-fish-card {
+  width: 100%;
+}
+.arena-card-grey .fish-img,
+.arena-card-grey .img-fallback {
+  filter: grayscale(100%);
+  opacity: 0.6;
+}
+.arena-map-card.locked .arena-fish-card,
+.arena-fish-card.locked .fish-img,
+.arena-fish-card.locked .img-fallback {
+  filter: grayscale(100%);
+  opacity: 0.6;
+}
+.arena-map-meta-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 .arena-modal-close {
   font-size: 1.3rem; background: none; border: none; color: rgba(255,255,255,0.4);
   cursor: pointer; touch-action: manipulation; padding: 0.25rem; line-height: 1;
@@ -1743,6 +1860,9 @@ body.modal-open .section.active { overflow: hidden; }
   .arena-fish-card { width: 68px; padding: 0.3rem 0.15rem 0.25rem; }
   .arena-card-img { width: 40px; height: 40px; }
   .arena-card-img .img-fallback { font-size: 1.4rem; }
+  .arena-detail-meta-grid { grid-template-columns: 1fr; }
+  .arena-map-meta-grid { grid-template-columns: 1fr; }
+  .arena-detail-fish-grid { grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); }
   .arena-card-name { font-size: 0.5rem; }
   .arena-card-level { font-size: 0.45rem; }
   .arena-card-lock { font-size: 0.65rem; }

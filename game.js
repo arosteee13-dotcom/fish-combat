@@ -876,9 +876,9 @@ const ARENA_CUP_CHANGES = {
 
 const ARENA_CONFIG = {
   1: { name: 'La Orilla', icon: '🏖️', minCups: 0, maxCups: 300, cssClass: 'arena-beach', winGold: 50, loseGold: 10, minLevel: 1, maxLevel: 3 },
-  2: { name: 'Arrecife de Coral', icon: '🪸', minCups: 301, maxCups: 600, cssClass: 'arena-coral', winGold: 80, loseGold: 15, minLevel: 3, maxLevel: 6 },
-  3: { name: 'Mar Abierto', icon: '🌊', minCups: 601, maxCups: 900, cssClass: 'arena-temple', winGold: 120, loseGold: 20, minLevel: 6, maxLevel: 9 },
-  4: { name: 'Las Profundidades', icon: '🌌', minCups: 901, maxCups: Infinity, cssClass: 'arena-depths', winGold: 200, loseGold: 30, minLevel: 9, maxLevel: 12 }
+  2: { name: 'Arrecife de Coral', icon: '🪸', minCups: 300, maxCups: 600, cssClass: 'arena-coral', winGold: 80, loseGold: 15, minLevel: 3, maxLevel: 6 },
+  3: { name: 'Mar Abierto', icon: '🌊', minCups: 600, maxCups: 900, cssClass: 'arena-temple', winGold: 120, loseGold: 20, minLevel: 6, maxLevel: 9 },
+  4: { name: 'Las Profundidades', icon: '🌌', minCups: 900, maxCups: Infinity, cssClass: 'arena-depths', winGold: 200, loseGold: 30, minLevel: 9, maxLevel: 12 }
 };
 
 /* ===== GAME STATE ===== */
@@ -2195,56 +2195,78 @@ function renderArenaModal() {
   const body = dom.arenaModalBody;
   if (!body) return;
   let html = `
-    <div class="arena-modal-header">
-      <span class="arena-modal-title">🏟️ Progreso de Arenas</span>
+    <div class="arena-modal-header arena-detail-header">
+      <div>
+        <span class="arena-modal-title">🏟️ Mapa Global de Arenas</span>
+        <div class="arena-detail-subtitle">Desliza para ver las 4 zonas</div>
+      </div>
       <button class="arena-modal-close" id="arena-modal-close-btn">✕</button>
-    </div>`;
-  Object.keys(ARENA_CONFIG).forEach(arenaId => {
+    </div>
+    <div class="arena-map-list">`;
+
+  Object.keys(ARENA_CONFIG).sort((a, b) => Number(a) - Number(b)).forEach(arenaId => {
     const id = Number(arenaId);
     const cfg = ARENA_CONFIG[id];
-    const isUnlocked = state.currentArena >= id;
-    const blockClass = 'arena-block' + (isUnlocked ? '' : ' locked');
+    const isUnlocked = state.cups >= cfg.minCups;
     const statusClass = isUnlocked ? 'unlocked' : 'locked';
-    const statusText = isUnlocked ? '✓ Desbloqueada' : '🔒 Bloqueada';
-    const rangeText = cfg.maxCups === Infinity ? `${cfg.minCups}+` : `${cfg.minCups} - ${cfg.maxCups}`;
-    html += `<div class="${blockClass}">
-      <div class="arena-block-header">
-        <span class="arena-block-name">${cfg.icon} Arena ${id}: ${cfg.name}</span>
-        <span class="arena-block-range">(${rangeText} 🏆)</span>
-        <span class="arena-block-status ${statusClass}">${statusText}</span>
-      </div>
-      <div class="arena-rewards">🪙 ${cfg.winGold} por victoria / ${cfg.loseGold} por derrota</div>
-      <div class="arena-fish-list">`;
-    const arenaFish = (ARENA_FISH[id] || [])
-      .map(entry => getFishById(entry.fishId))
-      .filter(Boolean)
-      .sort(sortByRarity);
-    arenaFish.forEach(fish => {
+    const statusText = isUnlocked ? 'Desbloqueada' : 'Bloqueada';
+    const requirementText = cfg.minCups === 0 ? '0 copas' : `${cfg.minCups} copas`;
+    const arenaFish = (ARENA_FISH[id] || []).map(entry => getFishById(entry.fishId)).filter(Boolean).sort(sortByRarity);
+    const fishGridHtml = arenaFish.map(fish => {
       const playerOwns = state.unlockedFish.includes(fish.id);
-      let itemClass = 'arena-fish-item';
-      if (!isUnlocked) itemClass += ' arena-locked';
-      else if (!playerOwns) itemClass += ' not-owned';
-      html += `<div class="${itemClass}" data-fish-id="${fish.id}">
-        <img src="${fish.imgPath}" alt="${fish.name}" class="arena-fish-img">
-        <span class="fish-name">${fish.name}</span>
-        ${rarityBadgeHtml(fish)}
+      const fishLocked = !playerOwns || !isUnlocked;
+      return `<div class="arena-fish-card ${fishLocked ? 'locked' : ''}" data-fish-id="${fish.id}">
+        <div class="arena-card-img ${fishLocked ? 'arena-card-grey' : ''}">
+          ${imgTag(fish.imgPath, fish.name, fish.emoji)}
+        </div>
+        <div class="arena-card-name">${fish.name}</div>
+        ${playerOwns ? rarityBadgeHtml(fish) : '<div class="arena-card-lock">🔒</div>'}
       </div>`;
-    });
-    html += `</div></div>`;
+    }).join('');
+
+    html += `
+      <section class="arena-map-card ${isUnlocked ? 'unlocked' : 'locked'}">
+        <div class="arena-map-card-head">
+          <div>
+            <div class="arena-map-card-title">${cfg.icon} Arena ${id}: ${cfg.name}</div>
+            <div class="arena-map-card-sub">${statusText}</div>
+          </div>
+          <span class="arena-block-status ${statusClass}">${statusText}</span>
+        </div>
+        <div class="arena-detail-meta-grid arena-map-meta-grid">
+          <div class="arena-detail-meta-item">
+            <span class="arena-detail-meta-k">Copas</span>
+            <span class="arena-detail-meta-v">🏆 ${requirementText}</span>
+          </div>
+          <div class="arena-detail-meta-item">
+            <span class="arena-detail-meta-k">Victoria</span>
+            <span class="arena-detail-meta-v">🪙 +${cfg.winGold}</span>
+          </div>
+          <div class="arena-detail-meta-item">
+            <span class="arena-detail-meta-k">Derrota</span>
+            <span class="arena-detail-meta-v">🪙 +${cfg.loseGold}</span>
+          </div>
+        </div>
+        <div class="arena-map-fish-wrap">
+          <div class="arena-detail-card-head">
+            <span class="arena-detail-label">Peces</span>
+            <span class="arena-detail-count">${arenaFish.length} peces</span>
+          </div>
+          <div class="arena-fish-grid arena-detail-fish-grid">
+            ${fishGridHtml}
+          </div>
+        </div>
+      </section>`;
   });
+
+  html += `</div>`;
   body.innerHTML = html;
 
-  body.querySelectorAll('.arena-fish-item').forEach(el => {
+  body.querySelectorAll('.arena-fish-card').forEach(el => {
     el.addEventListener('pointerdown', e => {
       e.preventDefault();
       const fishId = el.dataset.fishId;
-      if (el.classList.contains('arena-locked')) {
-        const arenaBlock = el.closest('.arena-block');
-        const nameEl = arenaBlock?.querySelector('.arena-block-name');
-        alert(`🔒 Se desbloquea al alcanzar ${nameEl?.textContent || 'una arena superior'}`);
-      } else {
-        showFishDetail(fishId);
-      }
+      showFishDetail(fishId);
     });
   });
 
