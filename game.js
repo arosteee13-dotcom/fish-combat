@@ -1551,6 +1551,27 @@ function renderBank() {
 
   const rarityOrder = { common: 0, rare: 1, epic: 2, legendary: 3 };
   const arenaIds = Object.keys(ARENA_CONFIG).map(Number).sort((a, b) => a - b);
+  const { totalFish, unlockedFish } = getCollectionProgress();
+  const progressPct = totalFish > 0 ? Math.round((unlockedFish / totalFish) * 100) : 0;
+  const isMasterUnlocked = isCollectionMasterUnlocked();
+  const rewardClaimedForCurrentTotal = state.achievements?.collectionMaster?.rewardedForTotal === totalFish;
+
+  const achievementCard = document.createElement('div');
+  achievementCard.className = `collection-achievement ${isMasterUnlocked ? 'unlocked' : 'locked'}`;
+  achievementCard.innerHTML = `
+    <div class="collection-achievement-header">
+      <div class="collection-achievement-title">🏅 Maestro de la Colección</div>
+      <div class="collection-achievement-status">${isMasterUnlocked ? 'DESBLOQUEADO' : 'BLOQUEADO'}</div>
+    </div>
+    <div class="collection-achievement-progress">${unlockedFish}/${totalFish} peces (${progressPct}%)</div>
+    <div class="collection-achievement-bar">
+      <div class="collection-achievement-fill" style="width:${progressPct}%"></div>
+    </div>
+    <div class="collection-achievement-reward">
+      Recompensa: +${COLLECTION_MASTER_REWARD.coins} 🪙 y +${COLLECTION_MASTER_REWARD.diamonds} 💎
+      ${isMasterUnlocked && rewardClaimedForCurrentTotal ? '<span class="collection-achievement-claimed">✅ Reclamada</span>' : ''}
+    </div>`;
+  dom.bankCards.appendChild(achievementCard);
 
   const byArena = {};
   FISH_TYPES.forEach(f => {

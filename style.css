@@ -218,6 +218,76 @@ body.modal-open .section.active { overflow: hidden; }
 
 /* ===== BANCO ===== */
 .bank-cards { padding: 0 1rem; display: flex; flex-direction: column; flex: 1; }
+.collection-achievement {
+  margin-bottom: 0.9rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+}
+.collection-achievement.unlocked {
+  border-color: rgba(255,215,0,0.55);
+  background: linear-gradient(135deg, rgba(255,215,0,0.14), rgba(255,255,255,0.03));
+}
+.collection-achievement.locked {
+  border-color: rgba(79,172,254,0.35);
+}
+.collection-achievement-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.collection-achievement-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+.collection-achievement-status {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 0.16rem 0.45rem;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.85);
+}
+.collection-achievement.unlocked .collection-achievement-status {
+  background: rgba(255,215,0,0.2);
+  color: #ffe082;
+}
+.collection-achievement-progress {
+  font-size: 0.74rem;
+  color: rgba(255,255,255,0.72);
+  margin-top: 0.45rem;
+}
+.collection-achievement-bar {
+  margin-top: 0.4rem;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.12);
+}
+.collection-achievement-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4facfe, #00f2fe);
+  transition: width 0.3s ease;
+}
+.collection-achievement.unlocked .collection-achievement-fill {
+  background: linear-gradient(90deg, #ffd54f, #ffb300);
+}
+.collection-achievement-reward {
+  margin-top: 0.45rem;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.58);
+  line-height: 1.35;
+}
+.collection-achievement-claimed {
+  display: inline-block;
+  margin-left: 0.45rem;
+  font-weight: 700;
+  color: #81c784;
+}
 .bank-section { margin-bottom: 0.75rem; }
 .bank-section:last-child { margin-bottom: 0; }
 .bank-section-title {
@@ -1067,6 +1137,9 @@ body.modal-open .section.active { overflow: hidden; }
 @media (max-width: 380px) {
   .title { font-size: 1rem; }
   .header-coin, .header-diamond { font-size: 0.7rem; padding: 0.15rem 0.4rem; }
+  .collection-achievement { padding: 0.75rem 0.75rem; }
+  .collection-achievement-title { font-size: 0.8rem; }
+  .collection-achievement-status { font-size: 0.55rem; padding: 0.14rem 0.35rem; }
   .bank-section-list { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 0.5rem; }
   .card-grid-img .img-fallback { font-size: 1.4rem; }
   .card-grid-level { font-size: 0.45rem; top: 3px; left: 3px; }
