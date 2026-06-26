@@ -3470,6 +3470,7 @@ function initMuelle(bet) {
     bet: bet,
     round,
     accumulated: 0,
+    lostAmount: 0,
     fishPrize: getMuelleFishPrize(),
     fishAlreadyOwned: false,
     holes: createMuelleBoard(round),
@@ -3528,7 +3529,10 @@ function renderMuelleSection() {
 
   if (m.over) {
     if (m.result === 'bust') {
-      statusHtml = `<div class="muelle-result muelle-result-bust">🥾 ¡Pescaste una bota! Perdiste <strong>${m.bet} 🪙</strong>.</div>`;
+      const lostMsg = m.lostAmount > 0
+        ? `las <strong>${m.lostAmount} 🪙</strong> acumuladas`
+        : `tu apuesta de <strong>${m.bet} 🪙</strong>`;
+      statusHtml = `<div class="muelle-result muelle-result-bust">🥾 ¡Pescaste una bota! Perdiste ${lostMsg}.</div>`;
     } else {
       const fishMsg = (m.result === 'fish' && m.fishPrize)
         ? (m.fishAlreadyOwned
@@ -3581,7 +3585,10 @@ function revealMuelleHole(index) {
   m.lastReveal = index;
 
   if (hole.type === 'boot') {
+    m.lostAmount = m.accumulated;
+    state.coins -= m.accumulated;
     m.accumulated = 0;
+    updateCoinDisplay();
     m.over = true;
     m.result = 'bust';
     renderMuelleSection();
@@ -3589,25 +3596,30 @@ function revealMuelleHole(index) {
   }
 
   if (hole.type === 'x2') {
-    m.accumulated += m.bet * 2;
+    const gain = m.bet * 2;
+    m.accumulated += gain;
+    state.coins += gain;
   } else if (hole.type === 'x5') {
-    m.accumulated += m.bet * 5;
+    const gain = m.bet * 5;
+    m.accumulated += gain;
+    state.coins += gain;
   } else if (hole.type === 'fish') {
     if (!state.unlockedFish.includes(m.fishPrize.id)) {
       state.unlockedFish.push(m.fishPrize.id);
       m.fishAlreadyOwned = false;
     } else {
       m.fishAlreadyOwned = true;
-      m.accumulated += Math.round(m.bet * 1.5);
+      const gain = Math.round(m.bet * 1.5);
+      m.accumulated += gain;
+      state.coins += gain;
     }
   }
+  updateCoinDisplay();
 
   const allPrizesFound = m.holes.filter(h => h.type !== 'boot').every(h => h.revealed);
   if (allPrizesFound) {
     m.over = true;
     m.result = hole.type === 'fish' ? 'fish' : 'win';
-    state.coins += m.accumulated;
-    updateCoinDisplay();
     renderMuelleSection();
     return;
   }
@@ -3623,8 +3635,6 @@ function muelleCashOut() {
   m.over = true;
   m.result = (lastHole && lastHole.type === 'fish') ? 'fish' : 'win';
   m.waiting = false;
-  state.coins += m.accumulated;
-  updateCoinDisplay();
   renderMuelleSection();
 }
 
