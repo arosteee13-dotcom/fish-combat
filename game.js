@@ -583,7 +583,8 @@ const state = {
   isPlayerTurn: true,
   gameOver: false,
   isAnimating: false,
-  turnPhase: 'player_first'
+  turnPhase: 'player_first',
+  muelle: null
 };
 
 /* ===== DOM HELPERS ===== */
@@ -593,11 +594,10 @@ const dom = {
   bottomNav: $('bottom-nav'), coinDisplay: $('coin-display'), diamondDisplay: $('diamond-display'),
   sectionFight: $('section-fight'), sectionBank: $('section-bank'),
   sectionShop: $('section-shop'), sectionInventory: $('section-inventory'),
-  sectionSettings: $('section-settings'),
+  sectionMuelle: $('section-muelle'),
   fightContent: $('fight-content'), bankCards: $('bank-cards'),   shopContent: $('shop-content'),
-  cupsDisplay: $('cups-display'), resultCups: $('result-cups'),
-  fishModal: $('fish-modal'), fishModalBody: $('fish-modal-body'),
-  btnBattle: $('btn-battle'), btnSave: $('btn-save'), btnRestart: $('btn-restart'),
+  cupsDisplay: $('cups-display'), resultCups: $('result-cups'),  fishModal: $('fish-modal'), fishModalBody: $('fish-modal-body'),
+  btnBattle: $('btn-battle'), btnRestart: $('btn-restart'),
   enemyName: $('enemy-name'), enemyHpText: $('enemy-hp-text'), enemyHpFill: $('enemy-hp-fill'),
   enemyEmoji: $('enemy-emoji'), enemyArea: $('enemy-area'), enemySpd: $('enemy-spd'),
   playerName: $('player-name'), playerHpText: $('player-hp-text'), playerHpFill: $('player-hp-fill'),
@@ -605,7 +605,6 @@ const dom = {
   arenaDisplay: $('arena-display'), arenaModal: $('arena-modal'), arenaModalBody: $('arena-modal-body'),
   attackMenu: $('attack-menu'), logMessage: $('log-message'),
   resultTitle: $('result-title'), resultEmoji: $('result-emoji'), resultSub: $('result-sub'),
-  saveTime: $('save-time'),
   chestModal: $('chest-modal'), chestModalBody: $('chest-modal-body'),
   inventoryContent: $('inventory-content'),
   equipModal: $('equip-modal'), equipModalBody: $('equip-modal-body'),
@@ -1256,18 +1255,19 @@ function formatTimestamp(ts) {
 }
 
 function updateSaveTimestampDisplay() {
-  if (!dom.saveTime) return;
+  const el = document.getElementById('profile-save-time');
+  if (!el) return;
   const raw = localStorage.getItem(SAVE_KEY);
-  if (!raw) { dom.saveTime.textContent = 'Nunca guardado'; return; }
+  if (!raw) { el.textContent = 'Nunca guardado'; return; }
   try {
     const data = JSON.parse(raw);
     if (data.timestamp) {
-      dom.saveTime.textContent = `Última vez guardado: ${formatTimestamp(data.timestamp)}`;
+      el.textContent = `Última vez guardado: ${formatTimestamp(data.timestamp)}`;
     } else {
-      dom.saveTime.textContent = 'Nunca guardado';
+      el.textContent = 'Nunca guardado';
     }
   } catch (e) {
-    dom.saveTime.textContent = 'Nunca guardado';
+    el.textContent = 'Nunca guardado';
   }
 }
 
@@ -1526,7 +1526,7 @@ function showScreen(screenName) {
 
 /* ===== NAVEGACIÓN ===== */
 function showSection(sectionId) {
-  ['fight', 'bank', 'shop', 'inventory', 'settings'].forEach(id => {
+  ['fight', 'bank', 'shop', 'inventory', 'muelle'].forEach(id => {
     const el = document.getElementById(`section-${id}`);
     const tab = document.querySelector(`[data-tab="${id}"]`);
     if (el) el.classList.toggle('active', id === sectionId);
@@ -1536,6 +1536,7 @@ function showSection(sectionId) {
   if (sectionId === 'shop') renderShop();
   if (sectionId === 'bank') renderBank();
   if (sectionId === 'inventory') renderInventory();
+  if (sectionId === 'muelle') renderMuelleSection();
 }
 
 /* ===== SECCIÓN: LUCHAR ===== */
@@ -2435,9 +2436,19 @@ function renderProfileModal() {
           </div>
         </div>
       `).join('')}
+    </div>
+    <div class="profile-actions-section">
+      <p id="profile-save-time" class="profile-save-time"></p>
+      <button class="btn-primary" id="profile-save-btn">💾 Guardar Partida</button>
+      <button class="btn-reset" id="profile-reset-btn">🗑️ Nueva Partida</button>
     </div>`;
   const closeBtn = document.getElementById('profile-modal-close-btn');
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeProfileModal(); });
+  const saveBtn = document.getElementById('profile-save-btn');
+  if (saveBtn) saveBtn.addEventListener('pointerdown', e => { e.preventDefault(); saveGame(); updateSaveTimestampDisplay(); });
+  const resetBtn = document.getElementById('profile-reset-btn');
+  if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
+  updateSaveTimestampDisplay();
 }
 
 function openProfileModal() {
@@ -3287,7 +3298,9 @@ function closeResetModal() {
   const modal = document.getElementById('reset-modal');
   if (!modal) return;
   modal.classList.remove('open');
-  document.body.classList.remove('modal-open');
+  if (!dom.profileModal.classList.contains('open')) {
+    document.body.classList.remove('modal-open');
+  }
   if (modal._inputHandler) {
     const input = document.getElementById('reset-confirm-input');
     if (input) input.removeEventListener('input', modal._inputHandler);
@@ -3324,6 +3337,241 @@ function resetAccount() {
   location.reload();
 }
 
+/* ===== EL MUELLE DE LA SUERTE ===== */
+const MUELLE_MIN_BET = 10;
+const MUELLE_BOARD_PRIZES = ['x2', 'x2', 'x2', 'x5', 'x5', 'fish', 'boot', 'boot', 'boot'];
+
+function muelleShuffleBoard(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getMuelleFishPrize() {
+  const locked = FISH_TYPES.filter(f => !state.unlockedFish.includes(f.id));
+  const pool = locked.length > 0 ? locked : FISH_TYPES;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function openMuelleBetModal() {
+  const modal = document.getElementById('muelle-bet-modal');
+  if (!modal) return;
+  const body = document.getElementById('muelle-bet-modal-body');
+  const hasCoins = state.coins >= MUELLE_MIN_BET;
+  const defaultBet = Math.min(25, state.coins);
+  if (body) {
+    body.innerHTML = `
+      <div class="muelle-bet-header">
+        <span class="muelle-bet-title">🎣 El Muelle de la Suerte</span>
+        <button class="muelle-bet-close" id="muelle-bet-close-btn">✕</button>
+      </div>
+      <div class="muelle-bet-coins">Tienes: <strong>${state.coins} 🪙</strong></div>
+      <p class="muelle-bet-hint">¿Cuántas monedas apuestas?</p>
+      <div class="muelle-bet-quick">
+        <button class="muelle-quick-btn" data-amount="10">10</button>
+        <button class="muelle-quick-btn" data-amount="25">25</button>
+        <button class="muelle-quick-btn" data-amount="50">50</button>
+        <button class="muelle-quick-btn" data-amount="100">100</button>
+      </div>
+      <input type="number" id="muelle-bet-input" class="muelle-bet-input"
+        min="${MUELLE_MIN_BET}" max="${state.coins}" value="${hasCoins ? defaultBet : ''}"
+        placeholder="${MUELLE_MIN_BET}–${state.coins}">
+      <button class="btn-primary muelle-confirm-bet-btn" id="muelle-confirm-bet-btn" ${hasCoins ? '' : 'disabled'}>
+        🎣 ¡Lanzar el Sedal!
+      </button>
+      ${!hasCoins ? `<p class="muelle-no-coins">Necesitas al menos ${MUELLE_MIN_BET} 🪙 para jugar.</p>` : ''}
+    `;
+  }
+  modal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeMuelleBetModal() {
+  const modal = document.getElementById('muelle-bet-modal');
+  if (!modal) return;
+  modal.classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
+function initMuelle(bet) {
+  const shuffled = muelleShuffleBoard(MUELLE_BOARD_PRIZES);
+  state.muelle = {
+    active: true,
+    bet: bet,
+    accumulated: 0,
+    fishPrize: getMuelleFishPrize(),
+    fishAlreadyOwned: false,
+    holes: shuffled.map((type, i) => ({ index: i, type, revealed: false })),
+    waiting: false,
+    lastReveal: null,
+    over: false,
+    result: null
+  };
+  state.coins -= bet;
+  updateCoinDisplay();
+  renderMuelleSection();
+}
+
+function renderMuelleSection() {
+  const el = document.getElementById('muelle-content');
+  if (!el) return;
+  const m = state.muelle;
+
+  if (!m || !m.active) {
+    el.innerHTML = `
+      <div class="muelle-idle">
+        <div class="muelle-idle-banner">🎣</div>
+        <p class="muelle-idle-name">El Muelle de la Suerte</p>
+        <p class="muelle-idle-desc">Apuesta monedas y pesca en los 9 agujeros del muelle.<br>¡Multiplica tus ganancias o piérdelo todo con una bota!</p>
+        <div class="muelle-rules-grid">
+          <div class="muelle-rule muelle-rule-x2"><span class="muelle-rule-icon">🪙</span><strong>x2</strong><span>×3 agujeros</span></div>
+          <div class="muelle-rule muelle-rule-x5"><span class="muelle-rule-icon">💰</span><strong>x5</strong><span>×2 agujeros</span></div>
+          <div class="muelle-rule muelle-rule-fish"><span class="muelle-rule-icon">🐟</span><strong>Pez</strong><span>×1 agujero</span></div>
+          <div class="muelle-rule muelle-rule-boot"><span class="muelle-rule-icon">🥾</span><strong>Bota</strong><span>×3 agujeros</span></div>
+        </div>
+        <button class="btn-primary muelle-play-btn" id="muelle-play-btn">¡Ir al Muelle!</button>
+      </div>`;
+    return;
+  }
+
+  const holesHtml = m.holes.map((h, i) => {
+    if (!h.revealed) {
+      const inactive = m.waiting || m.over ? ' muelle-hole-inactive' : '';
+      return `<button class="muelle-hole muelle-hole-hidden${inactive}" data-hole="${i}"><span class="muelle-hole-icon">🌊</span></button>`;
+    }
+    const isLatest = i === m.lastReveal ? ' muelle-hole-latest' : '';
+    if (h.type === 'boot') {
+      return `<button class="muelle-hole muelle-hole-boot muelle-hole-revealed${isLatest}" disabled><span class="muelle-hole-icon">🥾</span><span class="muelle-hole-label">¡Bota!</span></button>`;
+    }
+    if (h.type === 'x5') {
+      return `<button class="muelle-hole muelle-hole-x5 muelle-hole-revealed${isLatest}" disabled><span class="muelle-hole-icon">💰</span><span class="muelle-hole-label">x5</span></button>`;
+    }
+    if (h.type === 'x2') {
+      return `<button class="muelle-hole muelle-hole-x2 muelle-hole-revealed${isLatest}" disabled><span class="muelle-hole-icon">🪙</span><span class="muelle-hole-label">x2</span></button>`;
+    }
+    return `<button class="muelle-hole muelle-hole-fish muelle-hole-revealed${isLatest}" disabled><span class="muelle-hole-icon">🐟</span><span class="muelle-hole-label">${m.fishPrize ? m.fishPrize.name : 'Pez'}</span></button>`;
+  }).join('');
+
+  let statusHtml = '';
+  let actionsHtml = '';
+
+  if (m.over) {
+    if (m.result === 'bust') {
+      statusHtml = `<div class="muelle-result muelle-result-bust">🥾 ¡Pescaste una bota! Perdiste <strong>${m.bet} 🪙</strong>.</div>`;
+    } else {
+      const fishMsg = (m.result === 'fish' && m.fishPrize)
+        ? (m.fishAlreadyOwned
+            ? ` (${m.fishPrize.name} ya era tuyo: +${Math.round(m.bet * 1.5)} 🪙)`
+            : ` + 🐟 ${m.fishPrize.name} añadido`)
+        : '';
+      statusHtml = `<div class="muelle-result muelle-result-win">🎉 ¡Ganaste <strong>${m.accumulated} 🪙</strong>${fishMsg}!</div>`;
+    }
+    actionsHtml = `<button class="btn-primary muelle-newgame-btn" id="muelle-newgame-btn">¡Jugar de Nuevo!</button>`;
+  } else if (m.waiting) {
+    const lastHole = m.holes[m.lastReveal];
+    let prizeMsg = '';
+    if (lastHole) {
+      if (lastHole.type === 'x2') prizeMsg = `¡x2! +<strong>${m.bet * 2} 🪙</strong>`;
+      else if (lastHole.type === 'x5') prizeMsg = `¡x5! +<strong>${m.bet * 5} 🪙</strong>`;
+      else if (lastHole.type === 'fish') {
+        if (m.fishAlreadyOwned) prizeMsg = `${m.fishPrize.name} ya era tuyo: +<strong>${Math.round(m.bet * 1.5)} 🪙</strong>`;
+        else prizeMsg = `¡Pescaste a <strong>${m.fishPrize.name}</strong>! Añadido a tu colección 🐟`;
+      }
+    }
+    statusHtml = `
+      <div class="muelle-status-msg">${prizeMsg}</div>
+      <div class="muelle-accumulated">Acumulado: <strong>${m.accumulated} 🪙</strong></div>`;
+    actionsHtml = `
+      <div class="muelle-decision">
+        <button class="muelle-cashout-btn" id="muelle-cashout-btn">💰 Retirarse (${m.accumulated} 🪙)</button>
+        <button class="muelle-continue-btn" id="muelle-continue-btn">🎣 Seguir Pescando</button>
+      </div>`;
+  } else {
+    statusHtml = `<div class="muelle-accumulated">Acumulado: <strong>${m.accumulated} 🪙</strong></div>
+      <p class="muelle-prompt">Toca un agujero para pescar</p>`;
+  }
+
+  el.innerHTML = `
+    <div class="muelle-game">
+      <div class="muelle-game-stats">Apuesta: <strong>${m.bet} 🪙</strong></div>
+      <div class="muelle-board" id="muelle-board">${holesHtml}</div>
+      ${statusHtml}
+      ${actionsHtml}
+    </div>`;
+}
+
+function revealMuelleHole(index) {
+  const m = state.muelle;
+  if (!m || !m.active || m.over || m.waiting) return;
+  const hole = m.holes[index];
+  if (!hole || hole.revealed) return;
+
+  hole.revealed = true;
+  m.lastReveal = index;
+
+  if (hole.type === 'boot') {
+    m.accumulated = 0;
+    m.over = true;
+    m.result = 'bust';
+    renderMuelleSection();
+    return;
+  }
+
+  if (hole.type === 'x2') {
+    m.accumulated += m.bet * 2;
+  } else if (hole.type === 'x5') {
+    m.accumulated += m.bet * 5;
+  } else if (hole.type === 'fish') {
+    if (!state.unlockedFish.includes(m.fishPrize.id)) {
+      state.unlockedFish.push(m.fishPrize.id);
+      m.fishAlreadyOwned = false;
+    } else {
+      m.fishAlreadyOwned = true;
+      m.accumulated += Math.round(m.bet * 1.5);
+    }
+  }
+
+  const allPrizesFound = m.holes.filter(h => h.type !== 'boot').every(h => h.revealed);
+  if (allPrizesFound) {
+    m.over = true;
+    m.result = hole.type === 'fish' ? 'fish' : 'win';
+    state.coins += m.accumulated;
+    updateCoinDisplay();
+    renderMuelleSection();
+    return;
+  }
+
+  m.waiting = true;
+  renderMuelleSection();
+}
+
+function muelleCashOut() {
+  const m = state.muelle;
+  if (!m || !m.active || m.over || !m.waiting) return;
+  const lastHole = m.holes[m.lastReveal];
+  m.over = true;
+  m.result = (lastHole && lastHole.type === 'fish') ? 'fish' : 'win';
+  m.waiting = false;
+  state.coins += m.accumulated;
+  updateCoinDisplay();
+  renderMuelleSection();
+}
+
+function muelleContinue() {
+  const m = state.muelle;
+  if (!m || !m.active || m.over || !m.waiting) return;
+  m.waiting = false;
+  renderMuelleSection();
+}
+
+function endMuelle() {
+  state.muelle = null;
+  renderMuelleSection();
+}
+
 /* ===== EVENTOS ===== */
 function setupEvents() {
   dom.btnBattle.addEventListener('pointerdown', e => {
@@ -3344,9 +3592,6 @@ function setupEvents() {
     }
   });
   dom.btnRestart.addEventListener('pointerdown', e => { e.preventDefault(); resetGame(); });
-  dom.btnSave.addEventListener('pointerdown', e => { e.preventDefault(); saveGame(); });
-  const resetBtn = document.getElementById('btn-reset');
-  if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
   const resetModal = document.getElementById('reset-modal');
   if (resetModal) {
     resetModal.addEventListener('pointerdown', e => {
@@ -3390,6 +3635,52 @@ function setupEvents() {
     const id = tab.dataset.tab;
     if (id) showSection(id);
   });
+  const muelleContent = document.getElementById('muelle-content');
+  if (muelleContent) {
+    muelleContent.addEventListener('pointerdown', e => {
+      const targetEl = getEventTargetElement(e.target);
+      if (!targetEl) return;
+      if (targetEl.closest('#muelle-play-btn')) { e.preventDefault(); openMuelleBetModal(); return; }
+      const hole = targetEl.closest('.muelle-hole[data-hole]');
+      if (hole && !hole.disabled && !hole.classList.contains('muelle-hole-inactive')) {
+        e.preventDefault(); revealMuelleHole(parseInt(hole.dataset.hole, 10)); return;
+      }
+      if (targetEl.closest('#muelle-cashout-btn')) { e.preventDefault(); muelleCashOut(); return; }
+      if (targetEl.closest('#muelle-continue-btn')) { e.preventDefault(); muelleContinue(); return; }
+      if (targetEl.closest('#muelle-newgame-btn')) { e.preventDefault(); endMuelle(); return; }
+    });
+  }
+  const muelleBetModal = document.getElementById('muelle-bet-modal');
+  if (muelleBetModal) {
+    muelleBetModal.addEventListener('pointerdown', e => {
+      const targetEl = getEventTargetElement(e.target);
+      if (e.target === muelleBetModal || e.target.classList.contains('muelle-bet-modal-backdrop')) {
+        e.preventDefault(); closeMuelleBetModal(); return;
+      }
+      if (!targetEl) return;
+      if (targetEl.closest('#muelle-bet-close-btn')) { e.preventDefault(); closeMuelleBetModal(); return; }
+      const confirmBtn = targetEl.closest('#muelle-confirm-bet-btn');
+      if (confirmBtn) {
+        e.preventDefault();
+        if (confirmBtn.disabled) return;
+        const input = document.getElementById('muelle-bet-input');
+        let bet = input ? parseInt(input.value, 10) : MUELLE_MIN_BET;
+        if (isNaN(bet) || bet < MUELLE_MIN_BET) bet = MUELLE_MIN_BET;
+        bet = Math.min(bet, state.coins);
+        if (bet < MUELLE_MIN_BET) return;
+        closeMuelleBetModal();
+        initMuelle(bet);
+        return;
+      }
+      const quickBtn = targetEl.closest('.muelle-quick-btn[data-amount]');
+      if (quickBtn) {
+        e.preventDefault();
+        const input = document.getElementById('muelle-bet-input');
+        if (input) { input.value = Math.min(parseInt(quickBtn.dataset.amount, 10), state.coins); }
+        return;
+      }
+    });
+  }
 }
 
 /* ===== INIT ===== */
