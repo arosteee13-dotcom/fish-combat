@@ -934,7 +934,7 @@ const dom = {
   sectionShop: $('section-shop'), sectionInventory: $('section-inventory'),
   sectionMuelle: $('section-muelle'),
   fightContent: $('fight-content'), bankCards: $('bank-cards'),   shopContent: $('shop-content'),
-  cupsDisplay: $('cups-display'), resultCups: $('result-cups'),  fishModal: $('fish-modal'), fishModalBody: $('fish-modal-body'),
+  resultCups: $('result-cups'),  fishModal: $('fish-modal'), fishModalBody: $('fish-modal-body'),
   btnBattle: $('btn-battle'), btnRestart: $('btn-restart'),
   enemyName: $('enemy-name'), enemyHpText: $('enemy-hp-text'), enemyHpFill: $('enemy-hp-fill'),
   enemyEmoji: $('enemy-emoji'), enemyArea: $('enemy-area'), enemySpd: $('enemy-spd'),
@@ -2212,7 +2212,8 @@ function updateDiamondDisplay() {
 /* ===== COPAS ===== */
 function updateCupsDisplay() {
   const total = getTotalCups();
-  if (dom.cupsDisplay) dom.cupsDisplay.textContent = `🏆 ${total}`;
+  const trophiesEl = document.getElementById('header-trophies');
+  if (trophiesEl) trophiesEl.textContent = `🏆 ${total}`;
 }
 
 /* ===== SCREEN MANAGEMENT ===== */

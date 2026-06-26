@@ -11,35 +11,39 @@
 
     <div id="screen-main" class="screen active">
       <header class="main-header">
-        <span id="cups-display" class="header-cups">🏆 0</span>
-        <div class="header-right">
-          <div class="header-top-row">
-            <div class="header-currencies">
-              <span id="coin-display" class="header-coin">🪙 100</span>
-              <span id="diamond-display" class="header-diamond">💎 0</span>
-            </div>
-            <div class="header-actions-row">
-              <button id="btn-amigos" class="header-action-btn" aria-label="Amigos">👥</button>
-              <button id="btn-news" class="header-action-btn" aria-label="Noticias">📰</button>
-              <button id="btn-settings" class="header-action-btn" aria-label="Configuración">⚙️</button>
-            </div>
+        <div class="header-left">
+          <div class="header-currencies">
+            <span id="coin-display" class="header-coin">🪙 100</span>
+            <span id="diamond-display" class="header-diamond">💎 0</span>
           </div>
-          <button id="header-bp-btn" class="header-bp-btn">
-            <div class="bp-header-title">Pase de Batalla</div>
-            <div class="bp-header-row">
-              <span id="header-bp-level" class="bp-header-level">Nivel 0</span>
-              <div class="bp-header-xp-bar">
-                <div id="header-bp-xp-fill" class="bp-header-xp-fill" style="width:0%"></div>
-                <span id="header-bp-xp-text" class="bp-header-xp-text">0/100 XP</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions-row">
+            <button id="btn-amigos" class="header-action-btn" aria-label="Amigos">👥</button>
+            <button id="btn-news" class="header-action-btn" aria-label="Noticias">📰</button>
+            <button id="btn-settings" class="header-action-btn" aria-label="Configuración">⚙️</button>
+          </div>
+          <div class="header-bottom-group">
+            <button id="header-bp-btn" class="header-bp-btn">
+              <div class="bp-header-title">Pase de Batalla</div>
+              <div class="bp-header-row">
+                <span id="header-bp-level" class="bp-header-level">Nivel 0</span>
+                <div class="bp-header-xp-bar">
+                  <div id="header-bp-xp-fill" class="bp-header-xp-fill" style="width:0%"></div>
+                  <span id="header-bp-xp-text" class="bp-header-xp-text">0/100 XP</span>
+                </div>
+              </div>
+            </button>
+            <div class="header-trophies-row">
+              <div id="header-trophies" class="header-trophies">🏆 0</div>
+              <div class="header-missions-block">
+                <button id="header-missions-btn" class="header-missions-btn">
+                  <span class="notification-dot" id="dot-missions"></span>
+                  📜
+                </button>
+                <span id="header-missions-countdown" class="header-missions-countdown">--:--:--</span>
               </div>
             </div>
-          </button>
-          <div class="header-missions-block">
-            <button id="header-missions-btn" class="header-missions-btn">
-              <span class="notification-dot" id="dot-missions"></span>
-              📜
-            </button>
-            <span id="header-missions-countdown" class="header-missions-countdown">--:--:--</span>
           </div>
         </div>
       </header>
