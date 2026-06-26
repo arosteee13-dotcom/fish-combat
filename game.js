@@ -611,7 +611,7 @@ const dom = {
   equipModal: $('equip-modal'), equipModalBody: $('equip-modal-body'),
   missionsModal: $('missions-modal'), missionsModalBody: $('missions-modal-body'),
   itemModal: $('item-modal'), itemModalBody: $('item-modal-body'),
-  trophyModal: $('trophy-modal'), trophyModalBody: $('trophy-modal-body')
+  profileModal: $('profile-modal'), profileModalBody: $('profile-modal-body')
 };
 
 /* ===== UTILITY ===== */
@@ -2379,42 +2379,69 @@ function closeMissionsModal() {
   document.body.classList.remove('modal-open');
 }
 
-function renderTrophyModal() {
-  const body = dom.trophyModalBody;
+function renderProfileModal() {
+  const body = dom.profileModalBody;
   if (!body) return;
+  const { totalFish, unlockedFish } = getCollectionProgress();
+  const totalCups = getTotalCups();
+  const totalArenas = Object.keys(ARENA_CONFIG).length;
+  const selectedFish = getFishById(state.selectedFishId);
   const badges = getTrophyBadges();
   body.innerHTML = `
-    <div class="trophy-modal-header">
-      <span class="trophy-modal-title">🏅 Vitrina de Trofeos</span>
-      <button class="trophy-modal-close" id="trophy-modal-close-btn">✕</button>
+    <div class="profile-modal-header">
+      <span class="profile-modal-title">⚙️ Ajustes y Perfil</span>
+      <button class="profile-modal-close" id="profile-modal-close-btn">✕</button>
     </div>
-    <div class="trophy-list">
+    <div class="profile-overview-grid">
+      <div class="profile-stat-card">
+        <span class="profile-stat-label">Pez activo</span>
+        <strong class="profile-stat-value">${selectedFish ? selectedFish.name : 'Sin seleccionar'}</strong>
+      </div>
+      <div class="profile-stat-card">
+        <span class="profile-stat-label">Colección</span>
+        <strong class="profile-stat-value">${unlockedFish}/${totalFish}</strong>
+      </div>
+      <div class="profile-stat-card">
+        <span class="profile-stat-label">Copas totales</span>
+        <strong class="profile-stat-value">🏆 ${totalCups}</strong>
+      </div>
+      <div class="profile-stat-card">
+        <span class="profile-stat-label">Arena máxima</span>
+        <strong class="profile-stat-value">${Math.min(state.arenaMaxReached, totalArenas)}/${totalArenas}</strong>
+      </div>
+    </div>
+    <div class="profile-wallet-row">
+      <span class="profile-wallet-chip">🪙 ${state.coins}</span>
+      <span class="profile-wallet-chip">💎 ${state.diamonds}</span>
+    </div>
+    <div class="profile-trophies-header">
+      <span class="profile-trophies-title">🏅 Vitrina de Trofeos</span>
+    </div>
+    <div class="profile-trophy-grid">
       ${badges.map(badge => `
-        <div class="trophy-card ${badge.unlocked ? 'unlocked' : 'locked'}">
-          <div class="trophy-card-head">
-            <span class="trophy-icon">${badge.icon}</span>
-            <div class="trophy-texts">
-              <div class="trophy-name">${badge.name}</div>
-              <div class="trophy-desc">${badge.desc}</div>
-            </div>
-            <span class="trophy-status">${badge.unlocked ? 'CONSEGUIDA' : 'BLOQUEADA'}</span>
+        <div class="profile-trophy-card ${badge.unlocked ? 'unlocked' : 'locked'}">
+          <span class="profile-trophy-icon">${badge.icon}</span>
+          <div class="profile-trophy-texts">
+            <div class="profile-trophy-name">${badge.name}</div>
+            <div class="profile-trophy-desc">${badge.desc}</div>
+            <div class="profile-trophy-progress">${badge.progress}</div>
+            <span class="profile-trophy-status">${badge.unlocked ? 'CONSEGUIDA' : 'BLOQUEADA'}</span>
           </div>
-          <div class="trophy-progress">${badge.progress}</div>
         </div>
       `).join('')}
     </div>`;
-  const closeBtn = document.getElementById('trophy-modal-close-btn');
-  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeTrophyModal(); });
+  const closeBtn = document.getElementById('profile-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeProfileModal(); });
 }
 
-function openTrophyModal() {
-  renderTrophyModal();
-  dom.trophyModal.classList.add('open');
+function openProfileModal() {
+  renderProfileModal();
+  dom.profileModal.classList.add('open');
   document.body.classList.add('modal-open');
 }
 
-function closeTrophyModal() {
-  dom.trophyModal.classList.remove('open');
+function closeProfileModal() {
+  dom.profileModal.classList.remove('open');
   document.body.classList.remove('modal-open');
 }
 
@@ -3331,16 +3358,16 @@ function setupEvents() {
   }
   const missionsBtn = document.getElementById('missions-btn');
   if (missionsBtn) missionsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openMissionsModal(); });
-  const trophyBtn = document.getElementById('trophy-btn');
-  if (trophyBtn) trophyBtn.addEventListener('pointerdown', e => { e.preventDefault(); openTrophyModal(); });
+  const profileBtn = document.getElementById('profile-btn');
+  if (profileBtn) profileBtn.addEventListener('pointerdown', e => { e.preventDefault(); openProfileModal(); });
   dom.missionsModal.addEventListener('pointerdown', e => {
     if (e.target === dom.missionsModal || e.target.classList.contains('missions-modal-backdrop')) {
       e.preventDefault(); closeMissionsModal();
     }
   });
-  dom.trophyModal.addEventListener('pointerdown', e => {
-    if (e.target === dom.trophyModal || e.target.classList.contains('trophy-modal-backdrop')) {
-      e.preventDefault(); closeTrophyModal();
+  dom.profileModal.addEventListener('pointerdown', e => {
+    if (e.target === dom.profileModal || e.target.classList.contains('profile-modal-backdrop')) {
+      e.preventDefault(); closeProfileModal();
     }
   });
   dom.itemModal.addEventListener('pointerdown', e => {
