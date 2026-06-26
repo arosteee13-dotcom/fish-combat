@@ -2708,6 +2708,13 @@ function getBattlePassRewardUiState(level, track) {
   return { text: 'Reclamar', className: 'claim', disabled: false };
 }
 
+function comprarPasePremium() {
+  if (state.tiene_premium) return;
+  state.tiene_premium = true;
+  alert('¡Gracias por tu compra! Pase Premium activado 🌊');
+  renderBattlePassModal();
+}
+
 function renderBattlePassModal() {
   checkBattlePassSeasonExpiration();
   const body = dom.battlePassModalBody;
@@ -2718,6 +2725,11 @@ function renderBattlePassModal() {
     <div class="battle-pass-modal-header">
       <span class="battle-pass-modal-title">🎟️ Pase de Batalla</span>
       <button class="battle-pass-modal-close" id="battle-pass-close-btn">✕</button>
+    </div>
+    <div class="battle-pass-premium-cta">
+      ${state.tiene_premium
+        ? '<span class="battle-pass-premium-active">👑 Premium Activo</span>'
+        : '<button class="battle-pass-buy-btn" id="battle-pass-buy-btn">¡Hacerse Premium! 👑</button>'}
     </div>
     <div class="battle-pass-summary">
       <strong class="battle-pass-summary-main">Nivel ${state.nivel_pase}/${BATTLE_PASS_TOTAL_LEVELS} · XP ${battlePassXpCurrentLevel}/${BATTLE_PASS_XP_PER_LEVEL}</strong>
@@ -2747,6 +2759,13 @@ function renderBattlePassModal() {
   `;
   const closeBtn = document.getElementById('battle-pass-close-btn');
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeBattlePassModal(); });
+  const buyPremiumBtn = document.getElementById('battle-pass-buy-btn');
+  if (buyPremiumBtn) {
+    buyPremiumBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      comprarPasePremium();
+    });
+  }
   body.querySelectorAll('[data-bp-claim]').forEach(btn => {
     btn.addEventListener('pointerdown', e => {
       e.preventDefault();
