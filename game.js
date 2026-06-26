@@ -501,6 +501,23 @@ const FISH_TYPES = [
       name: 'Estocada Veloz',
       description: 'Al inicio del combate, si su velocidad es mayor que la del rival, su primer ataque físico tiene un +20% de daño crítico.'
     }
+  },
+  {
+    id: 'atun_rojo',
+    name: 'Atún Rojo',
+    rarity: 'common',
+    imgPath: 'img/atun_rojo.png',
+    emoji: '🐟',
+    maxHp: 15, atk: 9, def: 12, spa: 4, spd: 11, spe: 6,
+    growth: { maxHp: 1.5, atk: 0.9, def: 1.2, spa: 0.4, spd: 1.1, spe: 0.6 },
+    attacks: [
+      { name: 'Coletazo Sísmico', power: 60, emoji: '🌊', categoria: 'Fisico', efecto: { probabilidad: 0.15, estado: 'spe_reduction', turns: 2, amount: 1 } },
+      { name: 'Corriente de Recuperación', power: 0, emoji: '💧', categoria: 'Efecto', selfHeal: { pct: 0.25, maxUses: 1 } }
+    ],
+    passive: {
+      name: 'Resistencia Marina',
+      description: 'Cuando su vida baja del 50%, su Defensa Física aumenta un +20% automáticamente el resto del combate.'
+    }
   }
 ];
 
@@ -1052,8 +1069,18 @@ function checkPrecision(attacker) {
   return false;
 }
 
+function checkResistenciaMarina(fighter) {
+  if (fighter.resistenciaMarinaActivo) return;
+  const base = getFishById(fighter.type.id);
+  if (base?.passive?.name !== 'Resistencia Marina') return;
+  if (fighter.currentHp <= fighter.maxHp * 0.5) {
+    fighter.resistenciaMarinaActivo = true;
+    fighter.type.def = Math.round(fighter.type.def * 1.2);
+    setLogMessage(`¡Resistencia Marina de ${fighter.type.name}! DEF +20%`, true);
+  }
+}
+
 function decrementDebuff(fighter) {
-  if (!fighter.debuff) return;
   fighter.debuff.turns--;
   if (fighter.debuff.turns <= 0) {
     const type = fighter.debuff.type;
@@ -1064,6 +1091,19 @@ function decrementDebuff(fighter) {
 }
 
 function applyBuff(atk, user) {
+  if (atk.selfHeal) {
+    const atkName = atk.name;
+    if (!user.selfHealUsed) user.selfHealUsed = {};
+    if (user.selfHealUsed[atkName]) {
+      setLogMessage(`¡${user.type.name} no puede usar ${atkName} de nuevo!`, true);
+      return;
+    }
+    const heal = Math.max(1, Math.floor(user.maxHp * atk.selfHeal.pct));
+    user.currentHp = Math.min(user.maxHp, user.currentHp + heal);
+    user.selfHealUsed[atkName] = true;
+    setLogMessage(`¡${user.type.name} usa ${atkName}! Recupera +${heal} PS`, true);
+    return;
+  }
   if (!atk.efecto) return;
   if (atk.efecto.estado === 'def_boost') {
     const existing = user.buffs?.defBoost || 0;
@@ -1688,7 +1728,8 @@ const ARENA_FISH = {
     { fishId: 'pez_piedra' }
   ],
   3: [
-    { fishId: 'pez_espada' }
+    { fishId: 'pez_espada' },
+    { fishId: 'atun_rojo' }
   ]
 };
 
@@ -1950,6 +1991,12 @@ function getAttackEffectDescriptions(atk) {
   if (atk.drain) {
     const pct = Math.round(atk.drain * 100);
     parts.push({ text: `Absorbe ${pct}% del daño infligido como PS`, type: 'buff' });
+  }
+
+  if (atk.selfHeal) {
+    const pct = Math.round(atk.selfHeal.pct * 100);
+    const usesLabel = atk.selfHeal.maxUses === 1 ? ' (1 uso por combate)' : '';
+    parts.push({ text: `Recupera ${pct}% de los PS máximos${usesLabel}`, type: 'buff' });
   }
 
   if (atk.selfBuff) {
@@ -3236,8 +3283,8 @@ function initCombat() {
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
   if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
-  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false };
-  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false };
+  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, selfHealUsed: {} };
+  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, selfHealUsed: {} };
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.isAnimating = false;
@@ -3459,6 +3506,7 @@ function playerAttack(index) {
   }
   dmg = applyDefensivePassives(dmg, state.enemy, atk.categoria);
   state.enemy.currentHp = Math.max(0, state.enemy.currentHp - dmg);
+  checkResistenciaMarina(state.enemy);
   if (atk.categoria === 'Fisico') trackMission('fisico_attacks');
   if (atk.categoria === 'Especial') trackMission('especial_attacks');
   setLogMessage(`¡${state.player.type.name} usa ${atk.name}! -${dmg} HP`, true);
@@ -3503,6 +3551,9 @@ function chooseEnemyAttack() {
     const playerPhysicalAttacks = player.type.attacks.filter(a => a.categoria === 'Fisico').length;
     if (playerPhysicalAttacks > 0) return buffAtk;
   }
+
+  const healAtk = attacks.find(a => a.selfHeal && !enemy.selfHealUsed?.[a.name] && enemy.currentHp <= enemy.maxHp * 0.5);
+  if (healAtk) return healAtk;
 
   const statusAtk = attacks.find(atk => {
     if (!atk.efecto) return false;
@@ -3569,6 +3620,7 @@ function doEnemyAttack() {
     dmg -= absorbed;
   }
   state.player.currentHp = Math.max(0, state.player.currentHp - dmg);
+  checkResistenciaMarina(state.player);
   if (dmg > 0) setLogMessage(`¡${state.enemy.type.name} usa ${atk.name}! -${dmg} HP`, true);
   if (atk.drain) {
     const heal = Math.max(1, Math.floor(dmg * atk.drain));
