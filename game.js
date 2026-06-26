@@ -675,8 +675,10 @@ const dom = {
   inventoryContent: $('inventory-content'),
   equipModal: $('equip-modal'), equipModalBody: $('equip-modal-body'),
   missionsModal: $('missions-modal'), missionsModalBody: $('missions-modal-body'),
+  battlePassModal: $('battle-pass-modal'), battlePassModalBody: $('battle-pass-modal-body'),
   itemModal: $('item-modal'), itemModalBody: $('item-modal-body'),
-  profileModal: $('profile-modal'), profileModalBody: $('profile-modal-body')
+  profileModal: $('profile-modal'), profileModalBody: $('profile-modal-body'),
+  battlePassBtn: $('battle-pass-btn')
 };
 
 function getEventTargetElement(target) {
@@ -1334,9 +1336,34 @@ function ensureBattlePassState() {
   if (typeof state.tiene_premium !== 'boolean') state.tiene_premium = false;
   if (!Number.isFinite(state.paseInicioTemporada) || state.paseInicioTemporada <= 0) state.paseInicioTemporada = Date.now();
   if (!Array.isArray(state.paseRecompensasReclamadas)) state.paseRecompensasReclamadas = [];
+  state.paseRecompensasReclamadas = normalizeBattlePassClaimedRewards(state.paseRecompensasReclamadas);
   if (!Array.isArray(state.paseObjetos)) state.paseObjetos = [];
   if (!Array.isArray(state.titulosDesbloqueados)) state.titulosDesbloqueados = [];
   if (!Array.isArray(state.marcosDesbloqueados)) state.marcosDesbloqueados = [];
+}
+
+function getBattlePassRewardKey(level, track) {
+  return `${level}:${track}`;
+}
+
+function normalizeBattlePassClaimedRewards(claimedRewards) {
+  if (!Array.isArray(claimedRewards)) return [];
+  const normalized = [];
+  claimedRewards.forEach(entry => {
+    if (Number.isInteger(entry) && entry > 0) {
+      normalized.push(getBattlePassRewardKey(entry, 'free'));
+      if (state.tiene_premium) normalized.push(getBattlePassRewardKey(entry, 'premium'));
+      return;
+    }
+    if (typeof entry === 'string' && /^\d+:(free|premium)$/.test(entry)) {
+      normalized.push(entry);
+    }
+  });
+  return [...new Set(normalized)];
+}
+
+function isBattlePassRewardClaimed(level, track) {
+  return state.paseRecompensasReclamadas.includes(getBattlePassRewardKey(level, track));
 }
 
 function getBattlePassEndTimestamp() {
@@ -1413,18 +1440,30 @@ function grantBattlePassReward(reward) {
   return null;
 }
 
-function claimBattlePassLevelRewards(level) {
+function claimBattlePassReward(level, track) {
   checkBattlePassSeasonExpiration();
+  if (track !== 'free' && track !== 'premium') return { ok: false, reason: 'Tipo de recompensa inválido.' };
   if (!Number.isInteger(level)) return { ok: false, reason: 'Nivel inválido.' };
   const tier = BATTLE_PASS_LEVELS.find(l => l.level === level);
   if (!tier) return { ok: false, reason: 'Nivel fuera de rango.' };
   if (state.nivel_pase < level) return { ok: false, reason: 'Nivel aún no desbloqueado.' };
-  if (state.paseRecompensasReclamadas.includes(level)) return { ok: false, reason: 'Nivel ya reclamado.' };
+  if (track === 'premium' && !state.tiene_premium) return { ok: false, reason: 'Requiere Pase Premium.' };
+  if (isBattlePassRewardClaimed(level, track)) return { ok: false, reason: 'Recompensa ya reclamada.' };
+  const reward = grantBattlePassReward(tier[track]);
+  state.paseRecompensasReclamadas.push(getBattlePassRewardKey(level, track));
+  return { ok: true, rewards: reward ? [reward] : [] };
+}
 
-  const granted = [grantBattlePassReward(tier.free)];
-  if (state.tiene_premium) granted.push(grantBattlePassReward(tier.premium));
-  state.paseRecompensasReclamadas.push(level);
-  return { ok: true, rewards: granted.filter(Boolean) };
+function claimBattlePassLevelRewards(level) {
+  const claimed = [];
+  const freeResult = claimBattlePassReward(level, 'free');
+  if (freeResult.ok) claimed.push(...freeResult.rewards);
+  if (state.tiene_premium) {
+    const premiumResult = claimBattlePassReward(level, 'premium');
+    if (premiumResult.ok) claimed.push(...premiumResult.rewards);
+  }
+  if (!claimed.length) return { ok: false, reason: freeResult.reason || 'Nivel ya reclamado.' };
+  return { ok: true, rewards: claimed };
 }
 
 function claimAllAvailableBattlePassRewards() {
@@ -1441,9 +1480,9 @@ let battlePassTicker = null;
 function startBattlePassTicker() {
   if (battlePassTicker) clearInterval(battlePassTicker);
   battlePassTicker = setInterval(() => {
-    if (checkBattlePassSeasonExpiration() && dom.profileModal?.classList.contains('open')) {
-      renderProfileModal();
-    }
+    if (!checkBattlePassSeasonExpiration()) return;
+    if (dom.profileModal?.classList.contains('open')) renderProfileModal();
+    if (dom.battlePassModal?.classList.contains('open')) renderBattlePassModal();
   }, 60000);
 }
 
@@ -2599,8 +2638,6 @@ function renderProfileModal() {
   const totalArenas = Object.keys(ARENA_CONFIG).length;
   const selectedFish = getFishById(state.selectedFishId);
   const badges = getTrophyBadges();
-  const battlePassXpCurrentLevel = state.nivel_pase >= BATTLE_PASS_TOTAL_LEVELS ? BATTLE_PASS_XP_PER_LEVEL : (state.xp_pase % BATTLE_PASS_XP_PER_LEVEL);
-  const battlePassXpToNext = state.nivel_pase >= BATTLE_PASS_TOTAL_LEVELS ? 0 : (BATTLE_PASS_XP_PER_LEVEL - battlePassXpCurrentLevel);
   body.innerHTML = `
     <div class="profile-modal-header">
       <span class="profile-modal-title">⚙️ Ajustes y Perfil</span>
@@ -2627,13 +2664,6 @@ function renderProfileModal() {
     <div class="profile-wallet-row">
       <span class="profile-wallet-chip">🪙 ${state.coins}</span>
       <span class="profile-wallet-chip">💎 ${state.diamonds}</span>
-    </div>
-    <div class="profile-stat-card" style="margin-bottom:0.8rem;">
-      <span class="profile-stat-label">Pase de Batalla Mensual</span>
-      <strong class="profile-stat-value">Nivel ${state.nivel_pase}/${BATTLE_PASS_TOTAL_LEVELS} · XP ${battlePassXpCurrentLevel}/${BATTLE_PASS_XP_PER_LEVEL}</strong>
-      <span class="profile-save-time">${battlePassXpToNext > 0 ? `Faltan ${battlePassXpToNext} XP para el siguiente nivel` : 'Nivel máximo alcanzado'}</span>
-      <span class="profile-save-time">${state.tiene_premium ? 'Premium activo: reclamas Gratis + Premium' : 'Premium inactivo: solo recompensa Gratis'}</span>
-      <span class="profile-save-time">${getBattlePassRemainingText()}</span>
     </div>
     <div class="profile-trophies-header">
       <span class="profile-trophies-title">🏅 Vitrina de Trofeos</span>
@@ -2663,6 +2693,86 @@ function renderProfileModal() {
   const resetBtn = document.getElementById('profile-reset-btn');
   if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
   updateSaveTimestampDisplay();
+}
+
+function getBattlePassRewardUiState(level, track) {
+  if (isBattlePassRewardClaimed(level, track)) {
+    return { text: '✅ Reclamado', className: 'claimed', disabled: true };
+  }
+  if (state.nivel_pase < level) {
+    return { text: '🔒 Bloqueado', className: 'locked', disabled: true };
+  }
+  if (track === 'premium' && !state.tiene_premium) {
+    return { text: '🔒 Requiere Premium', className: 'locked', disabled: true };
+  }
+  return { text: 'Reclamar', className: 'claim', disabled: false };
+}
+
+function renderBattlePassModal() {
+  checkBattlePassSeasonExpiration();
+  const body = dom.battlePassModalBody;
+  if (!body) return;
+  const battlePassXpCurrentLevel = state.nivel_pase >= BATTLE_PASS_TOTAL_LEVELS ? BATTLE_PASS_XP_PER_LEVEL : (state.xp_pase % BATTLE_PASS_XP_PER_LEVEL);
+  const battlePassXpToNext = state.nivel_pase >= BATTLE_PASS_TOTAL_LEVELS ? 0 : (BATTLE_PASS_XP_PER_LEVEL - battlePassXpCurrentLevel);
+  body.innerHTML = `
+    <div class="battle-pass-modal-header">
+      <span class="battle-pass-modal-title">🎟️ Pase de Batalla</span>
+      <button class="battle-pass-modal-close" id="battle-pass-close-btn">✕</button>
+    </div>
+    <div class="battle-pass-summary">
+      <strong class="battle-pass-summary-main">Nivel ${state.nivel_pase}/${BATTLE_PASS_TOTAL_LEVELS} · XP ${battlePassXpCurrentLevel}/${BATTLE_PASS_XP_PER_LEVEL}</strong>
+      <span class="battle-pass-summary-sub">${battlePassXpToNext > 0 ? `Faltan ${battlePassXpToNext} XP para el siguiente nivel` : 'Nivel máximo alcanzado'}</span>
+      <span class="battle-pass-summary-sub">${state.tiene_premium ? 'Premium activo: Gratis + Premium habilitados' : 'Premium inactivo: solo Gratis habilitado'}</span>
+      <span class="battle-pass-summary-sub">${getBattlePassRemainingText()}</span>
+    </div>
+    <div class="battle-pass-level-list">
+      ${BATTLE_PASS_LEVELS.map(tier => {
+        const freeUi = getBattlePassRewardUiState(tier.level, 'free');
+        const premiumUi = getBattlePassRewardUiState(tier.level, 'premium');
+        return `
+          <div class="battle-pass-level-card ${state.nivel_pase >= tier.level ? 'unlocked' : 'locked'}">
+            <div class="battle-pass-level-head">Nivel ${tier.level}</div>
+            <div class="battle-pass-reward-row">
+              <span class="battle-pass-reward-label">Gratis: ${tier.free.label}</span>
+              <button class="battle-pass-claim-btn ${freeUi.className}" data-bp-claim data-level="${tier.level}" data-track="free" ${freeUi.disabled ? 'disabled' : ''}>${freeUi.text}</button>
+            </div>
+            <div class="battle-pass-reward-row">
+              <span class="battle-pass-reward-label">Premium: ${tier.premium.label}</span>
+              <button class="battle-pass-claim-btn ${premiumUi.className}" data-bp-claim data-level="${tier.level}" data-track="premium" ${premiumUi.disabled ? 'disabled' : ''}>${premiumUi.text}</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+  const closeBtn = document.getElementById('battle-pass-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeBattlePassModal(); });
+  body.querySelectorAll('[data-bp-claim]').forEach(btn => {
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (btn.disabled) return;
+      const level = parseInt(btn.dataset.level || '', 10);
+      const track = btn.dataset.track;
+      const result = claimBattlePassReward(level, track);
+      if (!result.ok) {
+        alert(result.reason);
+        return;
+      }
+      renderBattlePassModal();
+      renderProfileModal();
+    });
+  });
+}
+
+function openBattlePassModal() {
+  renderBattlePassModal();
+  dom.battlePassModal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeBattlePassModal() {
+  dom.battlePassModal.classList.remove('open');
+  document.body.classList.remove('modal-open');
 }
 
 function openProfileModal() {
@@ -3917,6 +4027,7 @@ function setupEvents() {
   if (missionsBtn) missionsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openMissionsModal(); });
   const profileBtn = document.getElementById('profile-btn');
   if (profileBtn) profileBtn.addEventListener('pointerdown', e => { e.preventDefault(); openProfileModal(); });
+  if (dom.battlePassBtn) dom.battlePassBtn.addEventListener('pointerdown', e => { e.preventDefault(); openBattlePassModal(); });
   dom.missionsModal.addEventListener('pointerdown', e => {
     if (e.target === dom.missionsModal || e.target.classList.contains('missions-modal-backdrop')) {
       e.preventDefault(); closeMissionsModal();
@@ -3925,6 +4036,11 @@ function setupEvents() {
   dom.profileModal.addEventListener('pointerdown', e => {
     if (e.target === dom.profileModal || e.target.classList.contains('profile-modal-backdrop')) {
       e.preventDefault(); closeProfileModal();
+    }
+  });
+  dom.battlePassModal.addEventListener('pointerdown', e => {
+    if (e.target === dom.battlePassModal || e.target.classList.contains('battle-pass-modal-backdrop')) {
+      e.preventDefault(); closeBattlePassModal();
     }
   });
   dom.itemModal.addEventListener('pointerdown', e => {
