@@ -614,6 +614,12 @@ const dom = {
   profileModal: $('profile-modal'), profileModalBody: $('profile-modal-body')
 };
 
+function getEventTargetElement(target) {
+  if (target instanceof Element) return target;
+  if (target && target.parentElement instanceof Element) return target.parentElement;
+  return null;
+}
+
 /* ===== UTILITY ===== */
 function getFishById(id) { return FISH_TYPES.find(f => f.id === id); }
 function randomFish() { return FISH_TYPES[Math.floor(Math.random() * FISH_TYPES.length)]; }
@@ -2564,7 +2570,8 @@ function showChestReveal(chest, gold, diamonds, fish, compensation) {
       body.querySelector('.chest-reveal-step').after(closeBtn);
     } else {
       body.addEventListener('pointerdown', function handler(e) {
-        if (e.target.closest('.chest-reveal-step')) {
+        const targetEl = getEventTargetElement(e.target);
+        if (targetEl && targetEl.closest('.chest-reveal-step')) {
           e.preventDefault();
           body.removeEventListener('pointerdown', handler);
           currentStep++;
@@ -3376,7 +3383,8 @@ function setupEvents() {
     }
   });
   dom.bottomNav.addEventListener('pointerdown', e => {
-    const tab = e.target.closest('.nav-tab');
+    const targetEl = getEventTargetElement(e.target);
+    const tab = targetEl ? targetEl.closest('.nav-tab') : null;
     if (!tab) return;
     e.preventDefault();
     const id = tab.dataset.tab;
