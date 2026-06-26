@@ -55,6 +55,8 @@ html, body {
 .header-right {
   display: flex; flex-direction: column;
   margin-left: auto; gap: 0.25rem;
+  width: 111.45px;
+  flex-shrink: 0;
 }
 .header-currencies {
   display: flex; gap: 0.35rem;
@@ -82,7 +84,9 @@ html, body {
 }
 .header-action-btn:active { background: rgba(255,255,255,0.08); }
 .header-bp-btn {
-  padding: 0.4rem 0.6rem; border-radius: 8px;
+  width: 111.46px;
+  height: 45.09px;
+  padding: 0.25rem 0.45rem; border-radius: 8px;
   border: 1px solid rgba(255,215,64,0.3);
   background: linear-gradient(135deg, rgba(255,215,64,0.24), rgba(255,152,0,0.2));
   cursor: pointer; touch-action: manipulation;
@@ -91,7 +95,7 @@ html, body {
 }
 .header-bp-btn:active { transform: scale(0.98); }
 .bp-header-title { font-size: 0.72rem; font-weight: 800; color: #ffe082; margin-bottom: 0.3rem; }
-.bp-header-row { display: flex; align-items: center; gap: 0.4rem; }
+.bp-header-row { display: flex; align-items: center; gap: 0.3rem; }
 .bp-header-level { font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.6); white-space: nowrap; flex-shrink: 0; }
 .bp-header-xp-bar {
   flex: 1; position: relative; height: 10px;
@@ -112,26 +116,28 @@ html, body {
 .header-bottom-group {
   align-self: flex-end;
   display: flex; flex-direction: column; gap: 0.25rem;
+  width: 111.45px;
 }
 .header-trophies-row {
-  display: flex; gap: 0.3rem; width: 100%;
+  display: flex; flex-direction: column; gap: 0.25rem; width: 111.45px;
 }
 .header-trophies {
-  width: 64.71px; height: 40px;
+  width: 111.45px; height: 45.09px;
   display: flex; align-items: center; justify-content: center; gap: 0.25rem;
   padding: 0; border-radius: 8px;
   background: rgba(79,172,254,0.08);
   border: 1px solid rgba(79,172,254,0.15);
-  font-size: 0.75rem; font-weight: 700; color: #4facfe;
+  font-size: 0.86rem; font-weight: 700; color: #4facfe;
   white-space: nowrap; flex-shrink: 0;
   box-sizing: border-box;
 }
 .header-missions-block {
   display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
   flex-shrink: 0;
+  width: 111.45px;
 }
 .header-missions-btn {
-  position: relative; width: 40px; height: 40px;
+  position: relative; width: 111.45px; height: 45.09px;
   display: flex; align-items: center; justify-content: center;
   border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
   background: rgba(255,255,255,0.04);
@@ -140,9 +146,29 @@ html, body {
   box-sizing: border-box;
 }
 .header-missions-btn:active { background: rgba(255,255,255,0.08); }
+.header-missions-btn-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  position: relative;
+}
+.header-missions-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+.header-missions-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #B99A73;
+  line-height: 1;
+}
 .header-missions-countdown {
-  font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.3);
+  font-size: 0.63rem; font-weight: 600; color: rgba(255,255,255,0.3);
   font-variant-numeric: tabular-nums;
+  width: 111.45px;
+  text-align: center;
 }
 
 /* ===== SECTIONS ===== */
@@ -1845,7 +1871,9 @@ body.modal-open .section.active { overflow: hidden; }
   .bp-header-level { font-size: 0.58rem; }
   .bp-header-xp-bar { height: 8px; }
   .header-missions-btn { width: 34px; height: 34px; font-size: 0.9rem; }
-  .header-missions-countdown { font-size: 0.48rem; }
+  .header-missions-icon { font-size: 1rem; }
+  .header-missions-text { font-size: 0.65rem; }
+  .header-missions-countdown { font-size: 0.55rem; }
   .collection-achievement { padding: 0.75rem 0.75rem; }
   .collection-achievement-title { font-size: 0.8rem; }
   .collection-achievement-status { font-size: 0.55rem; padding: 0.14rem 0.35rem; }
@@ -1889,7 +1917,7 @@ body.modal-open .section.active { overflow: hidden; }
   .arena-card-name { font-size: 0.45rem; }
   .arena-card-level { font-size: 0.45rem; }
   .arena-card-lock { font-size: 0.65rem; }
-  .header-trophies { padding: 0.2rem 0.4rem; font-size: 0.68rem; }
+  .header-trophies { padding: 0.2rem 0.4rem; font-size: 0.78rem; }
   .header-action-btn { width: 28px; height: 28px; font-size: 0.72rem; }
   .header-actions-row { gap: 0.2rem; }
   .action-footer { padding: 0.3rem 0.75rem; gap: 0.4rem; }
