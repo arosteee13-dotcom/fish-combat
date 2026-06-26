@@ -1536,33 +1536,50 @@ body.modal-open .section.active { overflow: hidden; }
   .shop-item-img { width: 2.6rem; height: 2.6rem; }
 }
 
-/* ── Novedad Modal ────────────────────────────────────────── */
-.novedad-modal { display: none; position: fixed; inset: 0; z-index: 2000; align-items: center; justify-content: center; }
-.novedad-modal.open { display: flex; }
-.novedad-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.65); }
-.novedad-modal-content {
+/* ── Update Modal ─────────────────────────────────────────── */
+.update-modal { display: none; position: fixed; inset: 0; z-index: 2000; align-items: center; justify-content: center; }
+.update-modal.open { display: flex; }
+.update-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.78); }
+.update-modal-content {
   position: relative;
   z-index: 1;
-  background: linear-gradient(160deg, #0d2b4a 0%, #0a1f38 100%);
-  border: 2px solid rgba(0,180,255,0.4);
-  border-radius: 1rem;
-  width: min(90vw, 380px);
+  background: linear-gradient(180deg, #112d52 0%, #0a1930 100%);
+  border: 2px solid rgba(79,172,254,0.5);
+  border-radius: 1.25rem;
+  width: min(92vw, 400px);
   padding: 1.5rem 1.25rem 1.25rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 24px rgba(0,180,255,0.2);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.72);
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
-.novedad-modal-header { text-align: center; }
-.novedad-modal-title {
-  font-size: 1.15rem;
+.update-modal-header { text-align: center; }
+.update-modal-title {
+  font-size: 1.2rem;
   font-weight: 800;
-  color: #00d4ff;
-  text-shadow: 0 0 10px rgba(0,212,255,0.5);
+  color: #8fd3ff;
+  text-shadow: 0 0 14px rgba(79,172,254,0.35);
   line-height: 1.3;
 }
-.novedad-modal-body { display: flex; flex-direction: column; gap: 0.5rem; }
-.novedad-fish-list {
+.update-modal-body { display: flex; flex-direction: column; gap: 0.9rem; }
+.update-modal-section {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 1rem;
+  padding: 0.9rem 1rem;
+}
+.update-modal-section-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffd166;
+  margin-bottom: 0.55rem;
+}
+.update-modal-highlight {
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #eaf6ff;
+}
+.update-fish-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1570,14 +1587,29 @@ body.modal-open .section.active { overflow: hidden; }
   flex-direction: column;
   gap: 0.5rem;
 }
-.novedad-fish-list li {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 0.5rem;
-  padding: 0.6rem 1rem;
-  font-size: 1rem;
+.update-fish-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(7,18,35,0.45);
+  border: 1px solid rgba(143,211,255,0.14);
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: #e0f4ff;
 }
-.novedad-modal-footer { display: flex; justify-content: center; }
-.novedad-modal-footer .btn-primary { min-width: 8rem; }
+.update-fish-list li strong {
+  color: #ffd166;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.update-modal-footer { display: flex; justify-content: center; }
+.update-modal-button {
+  width: 100%;
+  min-height: 3.2rem;
+  font-size: 1rem;
+  font-weight: 800;
+}

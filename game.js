@@ -4236,21 +4236,33 @@ function setupEvents() {
 }
 
 /* ===== INIT ===== */
-const NOVEDAD_KEY = 'anuncio_peces_visto';
+const UPDATE_POPUP_KEY = 'actualizacion_v1_1_vista';
 
-function checkNovedadPopup() {
-  const yaVisto = localStorage.getItem(NOVEDAD_KEY) === 'true';
+function hasVeteranProgressForUpdatePopup() {
+  const legacyCoins = localStorage.getItem('monedas');
+  if (legacyCoins !== null) return true;
+  if (!hasManualSave()) return false;
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    return typeof data.coins === 'number';
+  } catch (e) {
+    return false;
+  }
+}
+
+function checkUpdatePopup() {
+  const yaVisto = localStorage.getItem(UPDATE_POPUP_KEY) === 'true';
   if (yaVisto) return;
 
-  const esVeterano = hasManualSave();
+  const esVeterano = hasVeteranProgressForUpdatePopup();
   if (!esVeterano) {
-    // Jugador nuevo: marcar como visto sin mostrar el pop-up
-    localStorage.setItem(NOVEDAD_KEY, 'true');
+    localStorage.setItem(UPDATE_POPUP_KEY, 'true');
     return;
   }
 
-  // Jugador veterano que aún no ha visto el anuncio
-  const modal = document.getElementById('novedad-modal');
+  const modal = document.getElementById('update-modal');
   if (!modal) return;
   modal.classList.add('open');
   document.body.classList.add('modal-open');
@@ -4258,16 +4270,16 @@ function checkNovedadPopup() {
   function cerrar() {
     modal.classList.remove('open');
     document.body.classList.remove('modal-open');
-    localStorage.setItem(NOVEDAD_KEY, 'true');
+    localStorage.setItem(UPDATE_POPUP_KEY, 'true');
   }
 
-  document.getElementById('novedad-modal-close-btn').addEventListener('click', cerrar, { once: true });
-  modal.querySelector('.novedad-modal-backdrop').addEventListener('click', cerrar, { once: true });
+  document.getElementById('update-modal-close-btn').addEventListener('click', cerrar, { once: true });
+  modal.querySelector('.update-modal-backdrop').addEventListener('click', cerrar, { once: true });
 }
 
 function init() {
   loadGame();
-  checkNovedadPopup();
+  checkUpdatePopup();
   ensureBattlePassState();
   checkBattlePassSeasonExpiration();
   startBattlePassTicker();
