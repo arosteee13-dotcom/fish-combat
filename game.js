@@ -3112,17 +3112,17 @@ function updateMissionsButton() {
 }
 
 function updateBattlePassProgress() {
-  const paseCurrentXp = state.nivel_pase >= BATTLE_PASS_TOTAL_LEVELS ? BATTLE_PASS_XP_PER_LEVEL : (state.xp_pase % BATTLE_PASS_XP_PER_LEVEL);
-  const pasePct = Math.round((paseCurrentXp / BATTLE_PASS_XP_PER_LEVEL) * 100);
+  const completedLevels = Math.max(0, Math.min(BATTLE_PASS_TOTAL_LEVELS, state.nivel_pase));
+  const pasePct = Math.round((completedLevels / BATTLE_PASS_TOTAL_LEVELS) * 100);
 
   const headerLevel = document.getElementById('header-bp-level');
-  if (headerLevel) headerLevel.textContent = `Nivel ${state.nivel_pase}`;
+  if (headerLevel) headerLevel.textContent = `Nivel ${completedLevels}`;
 
   const headerFill = document.getElementById('header-bp-xp-fill');
   if (headerFill) headerFill.style.width = `${pasePct}%`;
 
   const headerXpText = document.getElementById('header-bp-xp-text');
-  if (headerXpText) headerXpText.textContent = `${paseCurrentXp}/${BATTLE_PASS_XP_PER_LEVEL} XP`;
+  if (headerXpText) headerXpText.textContent = `${completedLevels}/${BATTLE_PASS_TOTAL_LEVELS}`;
 }
 
 function renderMissionsModal() {

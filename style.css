@@ -107,6 +107,7 @@ html, body {
   font-size: 0.55rem; font-weight: 700; color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   line-height: 1;
+  pointer-events: none;
 }
 .header-bottom-group {
   align-self: flex-end;
@@ -1708,7 +1709,6 @@ body.modal-open .section.active { overflow: hidden; }
   .bp-header-title { font-size: 0.65rem; }
   .bp-header-level { font-size: 0.58rem; }
   .bp-header-xp-bar { height: 8px; }
-  .bp-header-xp-text { font-size: 0.48rem; }
   .header-missions-btn { width: 34px; height: 34px; font-size: 0.9rem; }
   .header-missions-countdown { font-size: 0.48rem; }
   .collection-achievement { padding: 0.75rem 0.75rem; }
