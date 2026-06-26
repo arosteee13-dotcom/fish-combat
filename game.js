@@ -1385,6 +1385,7 @@ function checkKrakenDesatado(fighter) {
 }
 
 function decrementDebuff(fighter) {
+  if (!fighter.debuff) return;
   fighter.debuff.turns--;
   if (fighter.debuff.turns <= 0) {
     const type = fighter.debuff.type;
