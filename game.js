@@ -2823,7 +2823,7 @@ function renderBattlePassModal() {
     <div class="battle-pass-premium-cta">
       ${state.tiene_premium
         ? '<span class="battle-pass-premium-active">👑 Premium Activo</span>'
-        : `<button class="battle-pass-buy-btn" id="battle-pass-buy-btn">¡Hacerse Premium! 👑 (1000 Gemas)</button>`}
+        : `<button class="battle-pass-buy-btn" id="battle-pass-buy-btn">¡Hacerse Premium! 👑 (1000 💎)</button>`}
     </div>
     <div class="battle-pass-summary">
       <strong class="battle-pass-summary-main">Nivel ${state.nivel_pase}/${BATTLE_PASS_TOTAL_LEVELS} · XP ${battlePassXpCurrentLevel}/${BATTLE_PASS_XP_PER_LEVEL}</strong>
