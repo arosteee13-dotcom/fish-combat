@@ -610,7 +610,8 @@ const dom = {
   inventoryContent: $('inventory-content'),
   equipModal: $('equip-modal'), equipModalBody: $('equip-modal-body'),
   missionsModal: $('missions-modal'), missionsModalBody: $('missions-modal-body'),
-  itemModal: $('item-modal'), itemModalBody: $('item-modal-body')
+  itemModal: $('item-modal'), itemModalBody: $('item-modal-body'),
+  trophyModal: $('trophy-modal'), trophyModalBody: $('trophy-modal-body')
 };
 
 /* ===== UTILITY ===== */
@@ -648,6 +649,39 @@ function checkCollectionMasterAchievement({ notify = true } = {}) {
     alert(`🏅 ¡Logro desbloqueado: Maestro de la Colección!\nRecompensa: +${COLLECTION_MASTER_REWARD.coins} 🪙 y +${COLLECTION_MASTER_REWARD.diamonds} 💎`);
   }
   return true;
+}
+
+function getTrophyBadges() {
+  const { totalFish, unlockedFish } = getCollectionProgress();
+  const totalArenas = Object.keys(ARENA_CONFIG).length;
+  const totalCups = getTotalCups();
+  const cupTarget = 500;
+  return [
+    {
+      id: 'collection_master',
+      icon: '🏅',
+      name: 'Maestro de la Colección',
+      desc: `Desbloquea ${totalFish} peces`,
+      progress: `${unlockedFish}/${totalFish} peces`,
+      unlocked: isCollectionMasterUnlocked()
+    },
+    {
+      id: 'arena_conqueror',
+      icon: '🏟️',
+      name: 'Conquistador de Arenas',
+      desc: `Llega a la Arena ${totalArenas}`,
+      progress: `Arena máxima: ${Math.min(state.arenaMaxReached, totalArenas)}/${totalArenas}`,
+      unlocked: state.arenaMaxReached >= totalArenas
+    },
+    {
+      id: 'cup_hunter',
+      icon: '🏆',
+      name: 'Cazador de Copas',
+      desc: `Alcanza ${cupTarget} copas totales`,
+      progress: `${Math.min(totalCups, cupTarget)}/${cupTarget} copas`,
+      unlocked: totalCups >= cupTarget
+    }
+  ];
 }
 
 function getArenaFishPool(arenaId) {
@@ -2345,6 +2379,45 @@ function closeMissionsModal() {
   document.body.classList.remove('modal-open');
 }
 
+function renderTrophyModal() {
+  const body = dom.trophyModalBody;
+  if (!body) return;
+  const badges = getTrophyBadges();
+  body.innerHTML = `
+    <div class="trophy-modal-header">
+      <span class="trophy-modal-title">🏅 Vitrina de Trofeos</span>
+      <button class="trophy-modal-close" id="trophy-modal-close-btn">✕</button>
+    </div>
+    <div class="trophy-list">
+      ${badges.map(badge => `
+        <div class="trophy-card ${badge.unlocked ? 'unlocked' : 'locked'}">
+          <div class="trophy-card-head">
+            <span class="trophy-icon">${badge.icon}</span>
+            <div class="trophy-texts">
+              <div class="trophy-name">${badge.name}</div>
+              <div class="trophy-desc">${badge.desc}</div>
+            </div>
+            <span class="trophy-status">${badge.unlocked ? 'CONSEGUIDA' : 'BLOQUEADA'}</span>
+          </div>
+          <div class="trophy-progress">${badge.progress}</div>
+        </div>
+      `).join('')}
+    </div>`;
+  const closeBtn = document.getElementById('trophy-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeTrophyModal(); });
+}
+
+function openTrophyModal() {
+  renderTrophyModal();
+  dom.trophyModal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeTrophyModal() {
+  dom.trophyModal.classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
 function buyDailyOfferFish(fishId, price) {
   if (state.unlockedFish.includes(fishId)) { alert('Ya tienes este pez.'); return; }
   if (state.coins < price) { alert('Monedas insuficientes'); return; }
@@ -3258,9 +3331,16 @@ function setupEvents() {
   }
   const missionsBtn = document.getElementById('missions-btn');
   if (missionsBtn) missionsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openMissionsModal(); });
+  const trophyBtn = document.getElementById('trophy-btn');
+  if (trophyBtn) trophyBtn.addEventListener('pointerdown', e => { e.preventDefault(); openTrophyModal(); });
   dom.missionsModal.addEventListener('pointerdown', e => {
     if (e.target === dom.missionsModal || e.target.classList.contains('missions-modal-backdrop')) {
       e.preventDefault(); closeMissionsModal();
+    }
+  });
+  dom.trophyModal.addEventListener('pointerdown', e => {
+    if (e.target === dom.trophyModal || e.target.classList.contains('trophy-modal-backdrop')) {
+      e.preventDefault(); closeTrophyModal();
     }
   });
   dom.itemModal.addEventListener('pointerdown', e => {
