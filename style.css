@@ -320,12 +320,30 @@ body.modal-open .section.active { overflow: hidden; }
 }
 .arena-detail-fish-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
   align-items: start;
 }
 .arena-detail-fish-grid .arena-fish-card {
-  width: 100%;
+  width: min(100%, 62px);
+  max-width: 62px;
+  aspect-ratio: 1 / 1;
+  justify-content: center;
+  justify-self: center;
+  padding: 0.25rem 0.1rem 0.2rem;
+  pointer-events: none;
+  cursor: default;
+}
+.arena-detail-fish-grid .arena-fish-card .arena-card-img {
+  width: 32px;
+  height: 32px;
+}
+.arena-detail-fish-grid .arena-fish-card .arena-card-name {
+  font-size: 0.42rem;
+}
+.arena-detail-fish-grid .arena-fish-card .arena-card-level,
+.arena-detail-fish-grid .arena-fish-card .arena-card-lock {
+  margin-top: auto;
 }
 .arena-card-grey .fish-img,
 .arena-card-grey .img-fallback {
@@ -1862,8 +1880,13 @@ body.modal-open .section.active { overflow: hidden; }
   .arena-card-img .img-fallback { font-size: 1.4rem; }
   .arena-detail-meta-grid { grid-template-columns: 1fr; }
   .arena-map-meta-grid { grid-template-columns: 1fr; }
-  .arena-detail-fish-grid { grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); }
-  .arena-card-name { font-size: 0.5rem; }
+  .arena-detail-fish-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.28rem;
+  }
+  .arena-detail-fish-grid .arena-fish-card { width: min(100%, 56px); max-width: 56px; }
+  .arena-detail-fish-grid .arena-fish-card .arena-card-img { width: 28px; height: 28px; }
+  .arena-card-name { font-size: 0.45rem; }
   .arena-card-level { font-size: 0.45rem; }
   .arena-card-lock { font-size: 0.65rem; }
   .header-trophies { padding: 0.2rem 0.4rem; font-size: 0.68rem; }

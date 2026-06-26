@@ -2262,14 +2262,6 @@ function renderArenaModal() {
   html += `</div>`;
   body.innerHTML = html;
 
-  body.querySelectorAll('.arena-fish-card').forEach(el => {
-    el.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      const fishId = el.dataset.fishId;
-      showFishDetail(fishId);
-    });
-  });
-
   const closeBtn = document.getElementById('arena-modal-close-btn');
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeArenaModal(); });
 }
