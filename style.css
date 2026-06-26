@@ -1158,9 +1158,9 @@ body.modal-open .section.active { overflow: hidden; }
 #bottom-nav { display: flex; flex-shrink: 0; background: rgba(0,0,0,0.45); border-top: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 .nav-tab {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 0.15rem; padding: 0.5rem 0.1rem; min-height: 60px;
+  gap: 0.12rem; padding: 0.5rem 0.05rem; min-height: 60px;
   border: none; background: none;
-  color: rgba(255,255,255,0.35); font-size: 0.6rem; font-weight: 600;
+  color: rgba(255,255,255,0.35); font-size: 0.55rem; font-weight: 600;
   cursor: pointer; touch-action: manipulation;
   transition: color 0.2s, background 0.2s; position: relative;
 }
@@ -1241,6 +1241,108 @@ body.modal-open .section.active { overflow: hidden; }
 @keyframes flash-damage { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .shake { animation: shake 0.4s ease; }
 .flash-damage { animation: flash-damage 0.4s ease; }
+
+/* ===== EL MUELLE DE LA SUERTE ===== */
+.muelle-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 1rem 1rem; }
+
+/* Idle state */
+.muelle-idle { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding-top: 0.5rem; }
+.muelle-idle-banner { font-size: 4rem; line-height: 1; }
+.muelle-idle-name { font-size: 1.05rem; font-weight: 800; color: #4facfe; text-align: center; }
+.muelle-idle-desc { font-size: 0.8rem; color: rgba(255,255,255,0.6); text-align: center; line-height: 1.5; }
+.muelle-rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; width: 100%; margin: 0.25rem 0; }
+.muelle-rule { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.6rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-align: center; }
+.muelle-rule span:last-child { font-size: 0.65rem; font-weight: 500; opacity: 0.8; }
+.muelle-rule-icon { font-size: 1.4rem; line-height: 1; }
+.muelle-rule-x2 { background: rgba(79,172,254,0.12); border: 1px solid rgba(79,172,254,0.25); color: #4facfe; }
+.muelle-rule-x5 { background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; }
+.muelle-rule-fish { background: rgba(0,242,254,0.1); border: 1px solid rgba(0,242,254,0.25); color: #00f2fe; }
+.muelle-rule-boot { background: rgba(244,67,54,0.1); border: 1px solid rgba(244,67,54,0.25); color: #ef9a9a; }
+.muelle-play-btn { width: 100%; margin-top: 0.25rem; }
+
+/* Game board */
+.muelle-game { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding-top: 0.25rem; }
+.muelle-game-stats { font-size: 0.85rem; color: rgba(255,255,255,0.6); font-weight: 600; }
+.muelle-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; width: 100%; }
+.muelle-hole {
+  aspect-ratio: 1; border-radius: 14px; border: 2px solid transparent;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.2rem; cursor: pointer; touch-action: manipulation;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+  font-size: 0.75rem; font-weight: 700;
+}
+.muelle-hole-icon { font-size: 1.8rem; line-height: 1; }
+.muelle-hole-label { font-size: 0.65rem; font-weight: 800; line-height: 1; }
+.muelle-hole-hidden { background: rgba(79,172,254,0.08); border-color: rgba(79,172,254,0.2); color: #4facfe; }
+.muelle-hole-hidden:active { transform: scale(0.94); background: rgba(79,172,254,0.18); border-color: rgba(79,172,254,0.5); }
+.muelle-hole-inactive { opacity: 0.45; cursor: default; pointer-events: none; }
+.muelle-hole-revealed { cursor: default; animation: muelle-reveal 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+.muelle-hole-latest { box-shadow: 0 0 12px rgba(255,255,255,0.25); }
+.muelle-hole-x2 { background: rgba(79,172,254,0.14); border-color: rgba(79,172,254,0.4); color: #4facfe; }
+.muelle-hole-x5 { background: rgba(255,215,0,0.14); border-color: rgba(255,215,0,0.45); color: #ffd700; }
+.muelle-hole-fish { background: rgba(0,242,254,0.12); border-color: rgba(0,242,254,0.4); color: #00f2fe; }
+.muelle-hole-boot { background: rgba(244,67,54,0.14); border-color: rgba(244,67,54,0.45); color: #ef5350; animation: muelle-shake 0.45s ease; }
+@keyframes muelle-reveal {
+  0% { transform: scale(0.7) rotateY(90deg); opacity: 0; }
+  100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+}
+@keyframes muelle-shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-5px) rotate(-3deg); }
+  40% { transform: translateX(5px) rotate(3deg); }
+  60% { transform: translateX(-3px) rotate(-2deg); }
+  80% { transform: translateX(3px) rotate(2deg); }
+}
+.muelle-accumulated { font-size: 0.95rem; font-weight: 700; color: #ffd700; text-align: center; }
+.muelle-status-msg { font-size: 0.85rem; text-align: center; color: rgba(255,255,255,0.85); }
+.muelle-prompt { font-size: 0.75rem; color: rgba(255,255,255,0.4); text-align: center; font-style: italic; }
+
+/* Decision buttons */
+.muelle-decision { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; }
+.muelle-cashout-btn {
+  width: 100%; padding: 0.85rem 1rem; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #4caf50, #81c784); color: #fff;
+  font-size: 0.95rem; font-weight: 800; cursor: pointer; touch-action: manipulation;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.muelle-cashout-btn:active { transform: scale(0.96); opacity: 0.85; }
+.muelle-continue-btn {
+  width: 100%; padding: 0.85rem 1rem; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #ff9800, #ffc107); color: #1a1a1a;
+  font-size: 0.95rem; font-weight: 800; cursor: pointer; touch-action: manipulation;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.muelle-continue-btn:active { transform: scale(0.96); opacity: 0.85; }
+.muelle-newgame-btn { width: 100%; }
+
+/* Result */
+.muelle-result { width: 100%; padding: 0.85rem 1rem; border-radius: 12px; font-size: 0.9rem; font-weight: 700; text-align: center; line-height: 1.4; }
+.muelle-result-win { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.35); color: #a5d6a7; }
+.muelle-result-bust { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.35); color: #ef9a9a; }
+
+/* Bet modal */
+.muelle-bet-modal { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; }
+.muelle-bet-modal.open { display: flex; }
+.muelle-bet-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.65); }
+.muelle-bet-modal-content {
+  position: relative; z-index: 1; width: 92%; max-width: 380px;
+  background: linear-gradient(180deg, #0d1f3c, #0a1628);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.muelle-bet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.muelle-bet-title { font-size: 1.05rem; font-weight: 800; color: #4facfe; }
+.muelle-bet-close { font-size: 1.3rem; background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; touch-action: manipulation; padding: 0.25rem; line-height: 1; }
+.muelle-bet-close:active { color: #fff; }
+.muelle-bet-coins { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 0.5rem; }
+.muelle-bet-hint { font-size: 0.8rem; color: rgba(255,255,255,0.45); margin-bottom: 0.75rem; }
+.muelle-bet-quick { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+.muelle-quick-btn { flex: 1; padding: 0.45rem 0.25rem; border-radius: 8px; border: 1px solid rgba(79,172,254,0.3); background: rgba(79,172,254,0.08); color: #4facfe; font-size: 0.8rem; font-weight: 700; cursor: pointer; touch-action: manipulation; transition: background 0.15s, border-color 0.15s; }
+.muelle-quick-btn:active { background: rgba(79,172,254,0.2); border-color: rgba(79,172,254,0.6); }
+.muelle-bet-input { width: 100%; padding: 0.7rem 0.9rem; margin-bottom: 0.85rem; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; font-size: 1rem; font-weight: 600; text-align: center; outline: none; }
+.muelle-bet-input:focus { border-color: rgba(79,172,254,0.5); background: rgba(79,172,254,0.06); }
+.muelle-confirm-bet-btn { width: 100%; }
+.muelle-no-coins { font-size: 0.75rem; color: #ef9a9a; text-align: center; margin-top: 0.5rem; }
 
 /* ===== RESPONSIVE ===== */
 @media (min-width: 481px) {
