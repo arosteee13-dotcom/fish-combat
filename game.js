@@ -4236,8 +4236,38 @@ function setupEvents() {
 }
 
 /* ===== INIT ===== */
+const NOVEDAD_KEY = 'anuncio_peces_visto';
+
+function checkNovedadPopup() {
+  const yaVisto = localStorage.getItem(NOVEDAD_KEY) === 'true';
+  if (yaVisto) return;
+
+  const esVeterano = hasManualSave();
+  if (!esVeterano) {
+    // Jugador nuevo: marcar como visto sin mostrar el pop-up
+    localStorage.setItem(NOVEDAD_KEY, 'true');
+    return;
+  }
+
+  // Jugador veterano que aún no ha visto el anuncio
+  const modal = document.getElementById('novedad-modal');
+  if (!modal) return;
+  modal.classList.add('open');
+  document.body.classList.add('modal-open');
+
+  function cerrar() {
+    modal.classList.remove('open');
+    document.body.classList.remove('modal-open');
+    localStorage.setItem(NOVEDAD_KEY, 'true');
+  }
+
+  document.getElementById('novedad-modal-close-btn').addEventListener('click', cerrar, { once: true });
+  modal.querySelector('.novedad-modal-backdrop').addEventListener('click', cerrar, { once: true });
+}
+
 function init() {
   loadGame();
+  checkNovedadPopup();
   ensureBattlePassState();
   checkBattlePassSeasonExpiration();
   startBattlePassTicker();
