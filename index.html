@@ -11,46 +11,43 @@
 
     <div id="screen-main" class="screen active">
       <header class="main-header">
-        <h1 class="title">🐟 Fish Battle Arena</h1>
-        <div class="header-currencies">
-          <span id="coin-display" class="header-coin">🪙 100</span>
-          <span id="diamond-display" class="header-diamond">💎 0</span>
+        <span id="cups-display" class="header-cups">🏆 0</span>
+        <div class="header-right">
+          <div class="header-top-row">
+            <div class="header-currencies">
+              <span id="coin-display" class="header-coin">🪙 100</span>
+              <span id="diamond-display" class="header-diamond">💎 0</span>
+            </div>
+            <div class="header-actions-row">
+              <button id="btn-amigos" class="header-action-btn" aria-label="Amigos">👥</button>
+              <button id="btn-news" class="header-action-btn" aria-label="Noticias">📰</button>
+              <button id="btn-settings" class="header-action-btn" aria-label="Configuración">⚙️</button>
+            </div>
+          </div>
+          <button id="header-bp-btn" class="header-bp-btn">
+            <div class="bp-header-title">Pase de Batalla</div>
+            <div class="bp-header-row">
+              <span id="header-bp-level" class="bp-header-level">Nivel 0</span>
+              <div class="bp-header-xp-bar">
+                <div id="header-bp-xp-fill" class="bp-header-xp-fill" style="width:0%"></div>
+                <span id="header-bp-xp-text" class="bp-header-xp-text">0/100 XP</span>
+              </div>
+            </div>
+          </button>
+          <div class="header-missions-block">
+            <button id="header-missions-btn" class="header-missions-btn">
+              <span class="notification-dot" id="dot-missions"></span>
+              📜
+            </button>
+            <span id="header-missions-countdown" class="header-missions-countdown">--:--:--</span>
+          </div>
         </div>
-        <button id="profile-btn" class="header-profile-btn" aria-label="Abrir ajustes y perfil">⚙️</button>
       </header>
 
       <div class="sections-container">
 
         <div id="section-fight" class="section active">
-          <h2 class="section-title">⚔️ Buscar Combate</h2>
-          <div id="arena-display" class="arena-display"></div>
-          <div id="cups-display" class="cups-display">🏆 0 / 300</div>
           <div id="fight-content" class="fight-content"></div>
-          <div id="missions-btn" class="missions-btn">
-            <span class="missions-btn-icon">📋<span class="notification-dot" id="dot-missions"></span></span>
-            <span class="missions-btn-label">Misiones Diarias</span>
-            <span class="missions-btn-progress"></span>
-          </div>
-          <button id="battle-pass-btn" class="battle-pass-btn">🎟️ Pase de Batalla</button>
-          <button id="btn-battle" class="btn-primary" disabled>¡Buscar Combate!</button>
-          <div id="missions-modal" class="missions-modal">
-            <div class="missions-modal-backdrop"></div>
-            <div class="missions-modal-content">
-              <div id="missions-modal-body"></div>
-            </div>
-          </div>
-          <div id="battle-pass-modal" class="battle-pass-modal">
-            <div class="battle-pass-modal-backdrop"></div>
-            <div class="battle-pass-modal-content">
-              <div id="battle-pass-modal-body"></div>
-            </div>
-          </div>
-          <div id="arena-modal" class="arena-modal">
-            <div class="arena-modal-backdrop"></div>
-            <div class="arena-modal-content">
-              <div id="arena-modal-body"></div>
-            </div>
-          </div>
         </div>
 
         <div id="section-inventory" class="section">
@@ -69,12 +66,6 @@
           <h2 class="section-title">🐟 Tu Colección</h2>
           <p class="section-desc">Toca un pez para ver sus detalles</p>
           <div id="bank-cards" class="bank-cards"></div>
-          <div id="fish-modal" class="fish-modal">
-            <div class="fish-modal-backdrop"></div>
-            <div class="fish-modal-content">
-              <div id="fish-modal-body"></div>
-            </div>
-          </div>
         </div>
 
         <div id="section-shop" class="section">
@@ -106,6 +97,45 @@
         </div>
 
 
+      </div>
+
+      <div class="action-footer">
+        <button id="action-fish-btn" class="action-fish-box"></button>
+        <div class="action-center">
+          <button id="btn-battle" class="btn-battle" disabled>Batalla</button>
+        </div>
+        <button id="btn-switch-fish" class="btn-switch-fish" disabled aria-label="Cambiar pez">
+          <span class="btn-switch-fish-lock">🔒</span>
+          ⚔️
+        </button>
+      </div>
+
+      <div id="fish-modal" class="fish-modal">
+        <div class="fish-modal-backdrop"></div>
+        <div class="fish-modal-content">
+          <div id="fish-modal-body"></div>
+        </div>
+      </div>
+
+      <div id="missions-modal" class="missions-modal">
+        <div class="missions-modal-backdrop"></div>
+        <div class="missions-modal-content">
+          <div id="missions-modal-body"></div>
+        </div>
+      </div>
+
+      <div id="battle-pass-modal" class="battle-pass-modal">
+        <div class="battle-pass-modal-backdrop"></div>
+        <div class="battle-pass-modal-content">
+          <div id="battle-pass-modal-body"></div>
+        </div>
+      </div>
+
+      <div id="arena-modal" class="arena-modal">
+        <div class="arena-modal-backdrop"></div>
+        <div class="arena-modal-content">
+          <div id="arena-modal-body"></div>
+        </div>
       </div>
 
       <div id="profile-modal" class="profile-modal">

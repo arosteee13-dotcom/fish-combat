@@ -940,7 +940,7 @@ const dom = {
   enemyEmoji: $('enemy-emoji'), enemyArea: $('enemy-area'), enemySpd: $('enemy-spd'),
   playerName: $('player-name'), playerHpText: $('player-hp-text'), playerHpFill: $('player-hp-fill'),
   playerEmoji: $('player-emoji'), playerArea: $('player-area'), playerSpd: $('player-spd'),
-  arenaDisplay: $('arena-display'), arenaModal: $('arena-modal'), arenaModalBody: $('arena-modal-body'),
+  arenaModal: $('arena-modal'), arenaModalBody: $('arena-modal-body'),
   attackMenu: $('attack-menu'), logMessage: $('log-message'),
   resultTitle: $('result-title'), resultEmoji: $('result-emoji'), resultSub: $('result-sub'),
   chestModal: $('chest-modal'), chestModalBody: $('chest-modal-body'),
@@ -949,8 +949,7 @@ const dom = {
   missionsModal: $('missions-modal'), missionsModalBody: $('missions-modal-body'),
   battlePassModal: $('battle-pass-modal'), battlePassModalBody: $('battle-pass-modal-body'),
   itemModal: $('item-modal'), itemModalBody: $('item-modal-body'),
-  profileModal: $('profile-modal'), profileModalBody: $('profile-modal-body'),
-  battlePassBtn: $('battle-pass-btn')
+  profileModal: $('profile-modal'), profileModalBody: $('profile-modal-body')
 };
 
 function getEventTargetElement(target) {
@@ -1820,6 +1819,7 @@ function resetBattlePassSeason() {
   state.paseInicioTemporada = Date.now();
   state.paseSeasonMonth = getCurrentSeasonMonthStr();
   state.paseRecompensasReclamadas = [];
+  updateBattlePassProgress();
 }
 
 function checkBattlePassSeasonExpiration() {
@@ -1839,6 +1839,7 @@ function addBattlePassXp(amount) {
   const prevLevel = state.nivel_pase;
   state.xp_pase = Math.max(0, state.xp_pase + amount);
   state.nivel_pase = getBattlePassLevelFromXp(state.xp_pase);
+  updateBattlePassProgress();
   return { added: amount, levelUp: state.nivel_pase > prevLevel, level: state.nivel_pase, xp: state.xp_pase };
 }
 
@@ -2011,6 +2012,7 @@ function checkArenaChange() {
     const old = state.currentArena;
     state.currentArena = newArena;
     updateArenaDisplay();
+    if (state.activeSection === 'fight') renderFightContent();
     const oldName = getArenaConfig(old).name;
     const newName = getArenaConfig(newArena).name;
     if (newArena > old) {
@@ -2061,9 +2063,10 @@ function showArenaRewardModal(arenaId, arenaName) {
 }
 
 function updateArenaDisplay() {
-  if (!dom.arenaDisplay) return;
+  const el = document.getElementById('arena-display');
+  if (!el) return;
   const cfg = getArenaConfig(state.currentArena);
-  dom.arenaDisplay.innerHTML = `${cfg.icon} Arena ${state.currentArena}: ${cfg.name}`;
+  el.innerHTML = `${cfg.icon} Arena ${state.currentArena}: ${cfg.name}`;
 }
 
 function updateArenaBackground() {
@@ -2237,35 +2240,54 @@ function showSection(sectionId) {
 
 /* ===== SECCIÓN: LUCHAR ===== */
 function renderFightContent() {
-  const fishId = state.selectedFishId;
-  const base = fishId ? getFishById(fishId) : null;
-  if (!base) {
-    dom.fightContent.innerHTML = `
-      <div class="fight-empty">
-        <p style="font-size:3rem;margin-bottom:0.5rem;">🐟</p>
-        <p>Ve al <strong>Banco</strong> y selecciona un pez para la batalla</p>
-      </div>`;
+  const arenaId = state.currentArena;
+  const arenaConf = ARENA_CONFIG[arenaId];
+  if (!arenaConf) {
+    dom.fightContent.innerHTML = `<div class="fight-empty"><p>Error: Arena no encontrada</p></div>`;
     dom.btnBattle.disabled = true;
     return;
   }
 
-  const level = getFishLevel(fishId);
-  const fish = getLeveledFishType(base, level);
-  const rarity = getRarityConfig(base);
+  const pool = getArenaFishPool(arenaId);
 
-  const attacksHtml = fish.attacks.map(a =>
-    `<span class="fight-card-attack">${a.emoji} ${a.name}${a.categoria === 'Efecto' ? '' : ` (Poder: ${a.power})`}</span>`
-  ).join('');
+  const cardsHtml = pool.map(entry => {
+    const fish = getFishById(entry.fishId);
+    if (!fish) return '';
+    const isUnlocked = state.unlockedFish.includes(fish.id);
+    const level = getFishLevel(fish.id);
+
+    return `
+      <div class="arena-fish-card ${isUnlocked ? '' : 'locked'}" data-fish-id="${fish.id}">
+        <div class="arena-card-img">
+          ${imgTag(fish.imgPath, fish.name, fish.emoji)}
+        </div>
+        <div class="arena-card-name">${fish.name}</div>
+        ${isUnlocked
+          ? `<span class="arena-card-level">Nv${level}</span>`
+          : '<div class="arena-card-lock">🔒</div>'}
+      </div>`;
+  }).join('');
 
   dom.fightContent.innerHTML = `
-    <div class="fight-card">
-      ${imgTag(fish.imgPath, fish.name, fish.emoji)}
-      <div class="fight-card-name">${fish.name}</div>
-      <span class="level-badge">Nivel ${level}</span>
-      ${rarityBadgeHtml(base)}
-      <div class="fight-card-hp" style="margin-top:0.5rem">❤️ ${Math.round(fish.maxHp)} HP</div>
-      <div class="fight-card-attacks">${attacksHtml}</div>
+    <div class="arena-showcase">
+      <div id="arena-display" class="arena-display">${arenaConf.icon} Arena ${arenaId}: ${arenaConf.name}</div>
+      <div class="arena-fish-grid">${cardsHtml}</div>
     </div>`;
+
+  dom.fightContent.querySelectorAll('.arena-fish-card').forEach(card => {
+    card.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      showFishDetail(card.dataset.fishId);
+    });
+  });
+
+  const ad = document.getElementById('arena-display');
+  if (ad) {
+    ad.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      openArenaModal();
+    });
+  }
 
   dom.btnBattle.disabled = false;
 }
@@ -2580,11 +2602,29 @@ function selectFish(fishId) {
   state.selectedFishId = fishId;
   renderFightContent();
   updateBattleButton();
+  updateActionFooter();
 }
 
 function updateBattleButton() {
   const id = state.selectedFishId;
   dom.btnBattle.disabled = !id || !state.unlockedFish.includes(id);
+}
+
+function updateActionFooter() {
+  const btn = document.getElementById('action-fish-btn');
+  if (!btn) return;
+  const fishId = state.selectedFishId;
+  if (!fishId) {
+    btn.innerHTML = `<div class="img-wrap"><span class="img-fallback">🐟</span></div><span class="action-fish-badge">0</span>`;
+    return;
+  }
+  const base = getFishById(fishId);
+  if (!base) {
+    btn.innerHTML = `<div class="img-wrap"><span class="img-fallback">🐟</span></div><span class="action-fish-badge">0</span>`;
+    return;
+  }
+  const level = getFishLevel(fishId);
+  btn.innerHTML = `${imgTag(base.imgPath, base.name, base.emoji)}<span class="action-fish-badge">${level}</span>`;
 }
 
 /* ===== TIENDA ===== */
@@ -2725,6 +2765,9 @@ function updateCountdownDisplays() {
 
   const paseEl = document.getElementById('countdown-pase');
   if (paseEl) paseEl.textContent = getSeasonCountdownText();
+
+  const headerMissionsEl = document.getElementById('header-missions-countdown');
+  if (headerMissionsEl) headerMissionsEl.textContent = midnightStr;
 }
 
 function startGlobalCountdown() {
@@ -2996,16 +3039,21 @@ function getMissionsCountdown() {
 }
 
 function updateMissionsButton() {
-  const btn = document.getElementById('missions-btn');
-  if (!btn) return;
   checkDailyReset();
-  const claimed = state.missionsClaimed.length;
-  const total = state.missionsActive.length;
-  const progress = btn.querySelector('.missions-btn-progress');
-  if (progress) {
-    const countdown = total > 0 ? ` ${getMissionsCountdown()}` : '';
-    progress.textContent = `Progreso: ${claimed}/${total}${countdown}`;
-  }
+}
+
+function updateBattlePassProgress() {
+  const paseCurrentXp = state.nivel_pase >= BATTLE_PASS_TOTAL_LEVELS ? BATTLE_PASS_XP_PER_LEVEL : (state.xp_pase % BATTLE_PASS_XP_PER_LEVEL);
+  const pasePct = Math.round((paseCurrentXp / BATTLE_PASS_XP_PER_LEVEL) * 100);
+
+  const headerLevel = document.getElementById('header-bp-level');
+  if (headerLevel) headerLevel.textContent = `Nivel ${state.nivel_pase}`;
+
+  const headerFill = document.getElementById('header-bp-xp-fill');
+  if (headerFill) headerFill.style.width = `${pasePct}%`;
+
+  const headerXpText = document.getElementById('header-bp-xp-text');
+  if (headerXpText) headerXpText.textContent = `${paseCurrentXp}/${BATTLE_PASS_XP_PER_LEVEL} XP`;
 }
 
 function renderMissionsModal() {
@@ -4375,6 +4423,7 @@ function initMuelle(bet) {
     result: null
   };
   state.coins -= bet;
+  saveGame();
   updateCoinDisplay();
   renderMuelleSection();
 }
@@ -4487,6 +4536,7 @@ function revealMuelleHole(index) {
     state.coins -= m.accumulated;
     m.accumulated = 0;
     updateCoinDisplay();
+    saveGame();
     m.over = true;
     m.result = 'bust';
     renderMuelleSection();
@@ -4516,6 +4566,7 @@ function revealMuelleHole(index) {
 
   const allPrizesFound = m.holes.filter(h => h.type !== 'boot').every(h => h.revealed);
   if (allPrizesFound) {
+    saveGame();
     m.over = true;
     m.result = hole.type === 'fish' ? 'fish' : 'win';
     renderMuelleSection();
@@ -4523,6 +4574,7 @@ function revealMuelleHole(index) {
   }
 
   m.waiting = true;
+  saveGame();
   renderMuelleSection();
 }
 
@@ -4533,6 +4585,7 @@ function muelleCashOut() {
   m.over = true;
   m.result = (lastHole && lastHole.type === 'fish') ? 'fish' : 'win';
   m.waiting = false;
+  saveGame();
   renderMuelleSection();
 }
 
@@ -4560,7 +4613,8 @@ function setupEvents() {
     if (!state.unlockedFish.includes(state.selectedFishId)) return;
     initCombat();
   });
-  dom.arenaDisplay.addEventListener('pointerdown', e => { e.preventDefault(); openArenaModal(); });
+  const actionFishBtn = document.getElementById('action-fish-btn');
+  if (actionFishBtn) actionFishBtn.addEventListener('pointerdown', e => { e.preventDefault(); showFishDetail(state.selectedFishId); });
   dom.equipModal.addEventListener('pointerdown', e => {
     if (e.target === dom.equipModal || e.target.classList.contains('equip-modal-backdrop')) {
       e.preventDefault(); closeEquipModal();
@@ -4588,11 +4642,16 @@ function setupEvents() {
     const resetCloseBtn = document.getElementById('reset-modal-close-btn');
     if (resetCloseBtn) resetCloseBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeResetModal(); });
   }
-  const missionsBtn = document.getElementById('missions-btn');
+  const amigosBtn = document.getElementById('btn-amigos');
+  if (amigosBtn) amigosBtn.addEventListener('pointerdown', e => { e.preventDefault(); /* TODO: abrir amigos */ });
+  const newsBtn = document.getElementById('btn-news');
+  if (newsBtn) newsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openUpdateModal(); });
+  const settingsBtn = document.getElementById('btn-settings');
+  if (settingsBtn) settingsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openProfileModal(); });
+  const headerBpBtn = document.getElementById('header-bp-btn');
+  if (headerBpBtn) headerBpBtn.addEventListener('pointerdown', e => { e.preventDefault(); openBattlePassModal(); });
+  const missionsBtn = document.getElementById('header-missions-btn');
   if (missionsBtn) missionsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openMissionsModal(); });
-  const profileBtn = document.getElementById('profile-btn');
-  if (profileBtn) profileBtn.addEventListener('pointerdown', e => { e.preventDefault(); openProfileModal(); });
-  if (dom.battlePassBtn) dom.battlePassBtn.addEventListener('pointerdown', e => { e.preventDefault(); openBattlePassModal(); });
   dom.missionsModal.addEventListener('pointerdown', e => {
     if (e.target === dom.missionsModal || e.target.classList.contains('missions-modal-backdrop')) {
       e.preventDefault(); closeMissionsModal();
@@ -4711,19 +4770,31 @@ function checkUpdatePopup() {
     return;
   }
 
+  openUpdateModal();
+}
+
+function openUpdateModal() {
   const modal = document.getElementById('update-modal');
   if (!modal) return;
   modal.classList.add('open');
   document.body.classList.add('modal-open');
 
-  function cerrar() {
-    modal.classList.remove('open');
-    document.body.classList.remove('modal-open');
-    localStorage.setItem(UPDATE_POPUP_KEY, 'true');
+  const closeBtn = document.getElementById('update-modal-close-btn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeUpdateModal);
   }
+  const backdrop = modal.querySelector('.update-modal-backdrop');
+  if (backdrop) {
+    backdrop.addEventListener('click', closeUpdateModal);
+  }
+}
 
-  document.getElementById('update-modal-close-btn').addEventListener('click', cerrar, { once: true });
-  modal.querySelector('.update-modal-backdrop').addEventListener('click', cerrar, { once: true });
+function closeUpdateModal() {
+  const modal = document.getElementById('update-modal');
+  if (!modal) return;
+  modal.classList.remove('open');
+  document.body.classList.remove('modal-open');
+  localStorage.setItem(UPDATE_POPUP_KEY, 'true');
 }
 
 function init() {
@@ -4746,8 +4817,13 @@ function init() {
   updateSaveTimestampDisplay();
   updateMissionsButton();
   updateNotificationDots();
+  updateBattlePassProgress();
+  updateActionFooter();
   showSection('fight');
   showScreen('main');
 }
+
+/* Auto‑save on page close to prevent rollback exploits */
+window.addEventListener('beforeunload', saveGame);
 
 document.addEventListener('DOMContentLoaded', init);
