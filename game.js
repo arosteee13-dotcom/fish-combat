@@ -594,11 +594,10 @@ const dom = {
   bottomNav: $('bottom-nav'), coinDisplay: $('coin-display'), diamondDisplay: $('diamond-display'),
   sectionFight: $('section-fight'), sectionBank: $('section-bank'),
   sectionShop: $('section-shop'), sectionInventory: $('section-inventory'),
-  sectionSettings: $('section-settings'), sectionMuelle: $('section-muelle'),
+  sectionMuelle: $('section-muelle'),
   fightContent: $('fight-content'), bankCards: $('bank-cards'),   shopContent: $('shop-content'),
-  cupsDisplay: $('cups-display'), resultCups: $('result-cups'),
-  fishModal: $('fish-modal'), fishModalBody: $('fish-modal-body'),
-  btnBattle: $('btn-battle'), btnSave: $('btn-save'), btnRestart: $('btn-restart'),
+  cupsDisplay: $('cups-display'), resultCups: $('result-cups'),  fishModal: $('fish-modal'), fishModalBody: $('fish-modal-body'),
+  btnBattle: $('btn-battle'), btnRestart: $('btn-restart'),
   enemyName: $('enemy-name'), enemyHpText: $('enemy-hp-text'), enemyHpFill: $('enemy-hp-fill'),
   enemyEmoji: $('enemy-emoji'), enemyArea: $('enemy-area'), enemySpd: $('enemy-spd'),
   playerName: $('player-name'), playerHpText: $('player-hp-text'), playerHpFill: $('player-hp-fill'),
@@ -606,7 +605,6 @@ const dom = {
   arenaDisplay: $('arena-display'), arenaModal: $('arena-modal'), arenaModalBody: $('arena-modal-body'),
   attackMenu: $('attack-menu'), logMessage: $('log-message'),
   resultTitle: $('result-title'), resultEmoji: $('result-emoji'), resultSub: $('result-sub'),
-  saveTime: $('save-time'),
   chestModal: $('chest-modal'), chestModalBody: $('chest-modal-body'),
   inventoryContent: $('inventory-content'),
   equipModal: $('equip-modal'), equipModalBody: $('equip-modal-body'),
@@ -1257,18 +1255,19 @@ function formatTimestamp(ts) {
 }
 
 function updateSaveTimestampDisplay() {
-  if (!dom.saveTime) return;
+  const el = document.getElementById('profile-save-time');
+  if (!el) return;
   const raw = localStorage.getItem(SAVE_KEY);
-  if (!raw) { dom.saveTime.textContent = 'Nunca guardado'; return; }
+  if (!raw) { el.textContent = 'Nunca guardado'; return; }
   try {
     const data = JSON.parse(raw);
     if (data.timestamp) {
-      dom.saveTime.textContent = `Última vez guardado: ${formatTimestamp(data.timestamp)}`;
+      el.textContent = `Última vez guardado: ${formatTimestamp(data.timestamp)}`;
     } else {
-      dom.saveTime.textContent = 'Nunca guardado';
+      el.textContent = 'Nunca guardado';
     }
   } catch (e) {
-    dom.saveTime.textContent = 'Nunca guardado';
+    el.textContent = 'Nunca guardado';
   }
 }
 
@@ -1527,7 +1526,7 @@ function showScreen(screenName) {
 
 /* ===== NAVEGACIÓN ===== */
 function showSection(sectionId) {
-  ['fight', 'bank', 'shop', 'inventory', 'settings', 'muelle'].forEach(id => {
+  ['fight', 'bank', 'shop', 'inventory', 'muelle'].forEach(id => {
     const el = document.getElementById(`section-${id}`);
     const tab = document.querySelector(`[data-tab="${id}"]`);
     if (el) el.classList.toggle('active', id === sectionId);
@@ -2437,9 +2436,19 @@ function renderProfileModal() {
           </div>
         </div>
       `).join('')}
+    </div>
+    <div class="profile-actions-section">
+      <p id="profile-save-time" class="profile-save-time"></p>
+      <button class="btn-primary" id="profile-save-btn">💾 Guardar Partida</button>
+      <button class="btn-reset" id="profile-reset-btn">🗑️ Nueva Partida</button>
     </div>`;
   const closeBtn = document.getElementById('profile-modal-close-btn');
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeProfileModal(); });
+  const saveBtn = document.getElementById('profile-save-btn');
+  if (saveBtn) saveBtn.addEventListener('pointerdown', e => { e.preventDefault(); saveGame(); updateSaveTimestampDisplay(); });
+  const resetBtn = document.getElementById('profile-reset-btn');
+  if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
+  updateSaveTimestampDisplay();
 }
 
 function openProfileModal() {
@@ -3289,7 +3298,9 @@ function closeResetModal() {
   const modal = document.getElementById('reset-modal');
   if (!modal) return;
   modal.classList.remove('open');
-  document.body.classList.remove('modal-open');
+  if (!dom.profileModal.classList.contains('open')) {
+    document.body.classList.remove('modal-open');
+  }
   if (modal._inputHandler) {
     const input = document.getElementById('reset-confirm-input');
     if (input) input.removeEventListener('input', modal._inputHandler);
@@ -3581,9 +3592,6 @@ function setupEvents() {
     }
   });
   dom.btnRestart.addEventListener('pointerdown', e => { e.preventDefault(); resetGame(); });
-  dom.btnSave.addEventListener('pointerdown', e => { e.preventDefault(); saveGame(); });
-  const resetBtn = document.getElementById('btn-reset');
-  if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
   const resetModal = document.getElementById('reset-modal');
   if (resetModal) {
     resetModal.addEventListener('pointerdown', e => {

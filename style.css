@@ -1108,6 +1108,15 @@ body.modal-open .section.active { overflow: hidden; }
   background: rgba(255,255,255,0.12); white-space: nowrap;
 }
 .profile-trophy-card.unlocked .profile-trophy-status { background: rgba(255,215,0,0.25); color: #ffe082; }
+.profile-actions-section {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(79,172,254,0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.profile-save-time { font-size: 0.72rem; color: rgba(255,255,255,0.3); text-align: center; margin: 0; }
 
 /* ===== AJUSTES ===== */
 .settings-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; gap: 1.5rem; }
