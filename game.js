@@ -1870,7 +1870,8 @@ function getSeasonCountdownText() {
   const remaining = getSeasonRemainingMs();
   const days = Math.floor(remaining / 86400000);
   const hours = Math.floor((remaining % 86400000) / 3600000);
-  return `${days} días, ${String(hours).padStart(2, '0')} horas`;
+  const minutes = Math.floor((remaining % 3600000) / 60000);
+  return `${days} días, ${String(hours).padStart(2, '0')} horas, ${String(minutes).padStart(2, '0')} minutos`;
 }
 
 function resetBattlePassSeason() {
