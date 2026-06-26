@@ -534,6 +534,8 @@ const DAILY_MISSIONS = [
   { id: 'earn_cups_fish', name: '🏅 Especialista', desc: 'Gana 15 copas individuales con un mismo pez', target: 15, reward: 200 }
 ];
 
+const COLLECTION_MASTER_REWARD = { coins: 2000, diamonds: 30 };
+
 /* ===== CONSTANTS ===== */
 const MAX_LEVEL = 12;
 
@@ -571,6 +573,11 @@ const state = {
   missionsClaimed: [],
   missionsBonusClaimed: false,
   missionsRefreshTime: null,
+  achievements: {
+    collectionMaster: {
+      rewardedForTotal: 0
+    }
+  },
   player: null,
   enemy: null,
   isPlayerTurn: true,
@@ -609,6 +616,39 @@ const dom = {
 /* ===== UTILITY ===== */
 function getFishById(id) { return FISH_TYPES.find(f => f.id === id); }
 function randomFish() { return FISH_TYPES[Math.floor(Math.random() * FISH_TYPES.length)]; }
+
+function getCollectionProgress() {
+  const totalFish = FISH_TYPES.length;
+  const unlockedFish = new Set(state.unlockedFish.filter(id => !!getFishById(id))).size;
+  return { totalFish, unlockedFish };
+}
+
+function isCollectionMasterUnlocked() {
+  const { totalFish, unlockedFish } = getCollectionProgress();
+  return totalFish > 0 && unlockedFish === totalFish;
+}
+
+function checkCollectionMasterAchievement({ notify = true } = {}) {
+  if (!isCollectionMasterUnlocked()) return false;
+  const totalFish = FISH_TYPES.length;
+  if (!state.achievements?.collectionMaster) {
+    state.achievements = state.achievements || {};
+    state.achievements.collectionMaster = { rewardedForTotal: 0 };
+  }
+  if (state.achievements.collectionMaster.rewardedForTotal === totalFish) return true;
+
+  state.achievements.collectionMaster.rewardedForTotal = totalFish;
+  state.coins += COLLECTION_MASTER_REWARD.coins;
+  state.diamonds += COLLECTION_MASTER_REWARD.diamonds;
+  updateCoinDisplay();
+  updateDiamondDisplay();
+  updateNotificationDots();
+
+  if (notify) {
+    alert(`🏅 ¡Logro desbloqueado: Maestro de la Colección!\nRecompensa: +${COLLECTION_MASTER_REWARD.coins} 🪙 y +${COLLECTION_MASTER_REWARD.diamonds} 💎`);
+  }
+  return true;
+}
 
 function getArenaFishPool(arenaId) {
   let pool = [...(ARENA_FISH[arenaId] || [])];
@@ -1164,6 +1204,7 @@ function getSaveData() {
     missionsClaimed: state.missionsClaimed,
     missionsBonusClaimed: state.missionsBonusClaimed,
     missionsRefreshTime: state.missionsRefreshTime,
+    achievements: state.achievements,
     timestamp: Date.now()
   };
 }
@@ -1227,9 +1268,14 @@ function loadGame() {
     if (Array.isArray(data.missionsClaimed)) state.missionsClaimed = data.missionsClaimed;
     if (typeof data.missionsBonusClaimed === 'boolean') state.missionsBonusClaimed = data.missionsBonusClaimed;
     if (data.missionsRefreshTime) state.missionsRefreshTime = data.missionsRefreshTime;
+    const savedAchievement = data.achievements?.collectionMaster;
+    if (savedAchievement && Number.isFinite(savedAchievement.rewardedForTotal)) {
+      state.achievements.collectionMaster.rewardedForTotal = Math.max(0, savedAchievement.rewardedForTotal);
+    }
     if (data.selectedFish && getFishById(data.selectedFish) && state.unlockedFish.includes(data.selectedFish)) {
       state.selectedFishId = data.selectedFish;
     }
+    checkCollectionMasterAchievement({ notify: false });
   } catch (e) {}
 }
 
@@ -1505,6 +1551,27 @@ function renderBank() {
 
   const rarityOrder = { common: 0, rare: 1, epic: 2, legendary: 3 };
   const arenaIds = Object.keys(ARENA_CONFIG).map(Number).sort((a, b) => a - b);
+  const { totalFish, unlockedFish } = getCollectionProgress();
+  const progressPct = totalFish > 0 ? Math.round((unlockedFish / totalFish) * 100) : 0;
+  const isMasterUnlocked = isCollectionMasterUnlocked();
+  const rewardClaimedForCurrentTotal = state.achievements?.collectionMaster?.rewardedForTotal === totalFish;
+
+  const achievementCard = document.createElement('div');
+  achievementCard.className = `collection-achievement ${isMasterUnlocked ? 'unlocked' : 'locked'}`;
+  achievementCard.innerHTML = `
+    <div class="collection-achievement-header">
+      <div class="collection-achievement-title">🏅 Maestro de la Colección</div>
+      <div class="collection-achievement-status">${isMasterUnlocked ? 'DESBLOQUEADO' : 'BLOQUEADO'}</div>
+    </div>
+    <div class="collection-achievement-progress">${unlockedFish}/${totalFish} peces (${progressPct}%)</div>
+    <div class="collection-achievement-bar">
+      <div class="collection-achievement-fill" style="width:${progressPct}%"></div>
+    </div>
+    <div class="collection-achievement-reward">
+      Recompensa: +${COLLECTION_MASTER_REWARD.coins} 🪙 y +${COLLECTION_MASTER_REWARD.diamonds} 💎
+      ${isMasterUnlocked && rewardClaimedForCurrentTotal ? '<span class="collection-achievement-claimed">✅ Reclamada</span>' : ''}
+    </div>`;
+  dom.bankCards.appendChild(achievementCard);
 
   const byArena = {};
   FISH_TYPES.forEach(f => {
@@ -2286,6 +2353,7 @@ function buyDailyOfferFish(fishId, price) {
   updateCoinDisplay();
   renderBank();
   renderShop();
+  checkCollectionMasterAchievement();
 }
 
 function buyItem(itemId, price) {
@@ -2352,6 +2420,7 @@ function showChestReveal(chest, gold, diamonds, fish, compensation) {
     if (fishData.isNew) {
       state.unlockedFish.push(fish.id);
       renderBank();
+      checkCollectionMasterAchievement();
     } else {
       const lvl = getFishLevel(fish.id);
       if (lvl < 10) state.fishLevels[fish.id] = lvl + 1;
@@ -3138,6 +3207,7 @@ function resetAccount() {
   state.missionsClaimed = [];
   state.missionsBonusClaimed = false;
   state.missionsRefreshTime = null;
+  state.achievements = { collectionMaster: { rewardedForTotal: 0 } };
   state.selectedFishId = 'salmonete';
   state.player = null;
   state.enemy = null;
