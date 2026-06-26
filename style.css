@@ -43,6 +43,11 @@ html, body {
   padding: 0.35rem 0.35rem 0.35rem 0;
   position: relative; z-index: 10; flex-shrink: 0;
 }
+.main-header.is-compact .header-right { display: none; }
+.main-header.is-compact .header-left {
+  flex: 1;
+  min-width: 0;
+}
 .header-left {
   display: flex; align-items: center; gap: 0.35rem;
   padding-left: 0.35rem;
@@ -368,6 +373,7 @@ body.modal-open .section.active { overflow: hidden; }
   background: rgba(0,0,0,0.25);
   border-top: 1px solid rgba(255,255,255,0.05);
 }
+.action-footer.is-hidden { display: none; }
 .action-fish-box {
   position: relative; width: 72px; height: 72px;
   display: flex; align-items: center; justify-content: center;

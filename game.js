@@ -930,6 +930,8 @@ const $ = id => document.getElementById(id);
 const dom = {
   screenMain: $('screen-main'), screenCombat: $('screen-combat'), screenResult: $('screen-result'),
   bottomNav: $('bottom-nav'), coinDisplay: $('coin-display'), diamondDisplay: $('diamond-display'),
+  actionFooter: document.querySelector('.action-footer'),
+  mainHeader: document.querySelector('.main-header'),
   sectionFight: $('section-fight'), sectionBank: $('section-bank'),
   sectionShop: $('section-shop'), sectionInventory: $('section-inventory'),
   sectionMuelle: $('section-muelle'),
@@ -2233,6 +2235,8 @@ function showSection(sectionId) {
     if (tab) tab.classList.toggle('active', id === sectionId);
   });
   state.activeSection = sectionId;
+  if (dom.actionFooter) dom.actionFooter.classList.toggle('is-hidden', sectionId !== 'fight');
+  if (dom.mainHeader) dom.mainHeader.classList.toggle('is-compact', sectionId !== 'fight');
   if (sectionId === 'shop') renderShop();
   if (sectionId === 'bank') renderBank();
   if (sectionId === 'inventory') renderInventory();
