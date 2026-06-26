@@ -493,7 +493,12 @@ const ITEMS = [
   { id: 'diente_tiburon', name: 'Diente de Tiburón', rarity: 'rare', imgPath: 'img/objetos/diente_tiburon.png', emoji: '🦈', description: '+15% al daño físico infligido.' },
   { id: 'caparazon_tortuga', name: 'Caparazón de Tortuga', rarity: 'rare', imgPath: 'img/objetos/caparazon_tortuga.png', emoji: '🐢', description: 'Aumenta la Defensa Física del portador en un 15%.' },
   { id: 'tinta_concentrada', name: 'Tinta Concentrada', rarity: 'epic', imgPath: 'img/objetos/tinta_concentrada.png', emoji: '🐙', description: 'Reduce la precisión del rival un 20% los 2 primeros turnos.' },
-  { id: 'aleta_voladora', name: 'Aleta de Pez Volador', rarity: 'epic', imgPath: 'img/objetos/aleta_pez.png', emoji: '⚡', description: '+10% a la Velocidad base del portador.' }
+  { id: 'aleta_voladora', name: 'Aleta de Pez Volador', rarity: 'epic', imgPath: 'img/objetos/aleta_pez.png', emoji: '⚡', description: '+10% a la Velocidad base del portador.' },
+  { id: 'obj_concha_reforzada', name: 'Concha Reforzada', rarity: 'common', imgPath: 'img/objetos/concha_reforzada.png', emoji: '🐚', description: 'Un fragmento de concha gruesa que absorbe los impactos. Aumenta la Defensa Física un +10%.' },
+  { id: 'obj_escama_brillante', name: 'Escama Brillante', rarity: 'common', imgPath: 'img/objetos/escama_brillante.png', emoji: '✨', description: 'Una escama pulida que refleja la luz. Aumenta la Velocidad un +10% y otorga +5% de Esquiva.' },
+  { id: 'obj_coral_fuego', name: 'Coral de Fuego', rarity: 'rare', imgPath: 'img/objetos/coral_fuego.png', emoji: '🪸', description: 'Coral urticante. Los ataques Especiales ganan un 15% de probabilidad de infligir Veneno por 2 turnos.' },
+  { id: 'obj_toxina_concentrada', name: 'Toxina Concentrada', rarity: 'epic', imgPath: 'img/objetos/toxina_concentrada.png', emoji: '🧪', description: 'Veneno puro. Los estados alterados (Veneno/Sangrado/Aturdir) causados por este pez no se pueden mitigar.' },
+  { id: 'obj_perla_arrecife', name: 'Perla del Arrecife', rarity: 'epic', imgPath: 'img/objetos/perla_arrecife.png', emoji: '🔮', description: 'Joya mística. Al iniciar el combate, otorga al portador un Escudo protector equivalente al 20% de sus PS máximos.' }
 ];
 
 const SHOP_ITEMS = [
@@ -501,7 +506,12 @@ const SHOP_ITEMS = [
   { itemId: 'diente_tiburon',    cost: 400, costType: 'coins' },
   { itemId: 'caparazon_tortuga',  cost: 400, costType: 'coins' },
   { itemId: 'tinta_concentrada',  cost: 1000, costType: 'coins' },
-  { itemId: 'aleta_voladora',    cost: 1000, costType: 'coins' }
+  { itemId: 'aleta_voladora',    cost: 1000, costType: 'coins' },
+  { itemId: 'obj_concha_reforzada',   cost: 150, costType: 'coins' },
+  { itemId: 'obj_escama_brillante',   cost: 150, costType: 'coins' },
+  { itemId: 'obj_coral_fuego',        cost: 450, costType: 'coins' },
+  { itemId: 'obj_toxina_concentrada', cost: 1000, costType: 'coins' },
+  { itemId: 'obj_perla_arrecife',     cost: 1200, costType: 'coins' }
 ];
 
 const GEM_PACKS = [
@@ -739,6 +749,16 @@ function checkStatusImmunity(fighter) {
 }
 
 function applySecondaryEffect(atk, defender) {
+  const playerAttacking = defender === state.enemy;
+  const hasToxina = playerAttacking && hasEquippedItem(state.selectedFishId, 'obj_toxina_concentrada');
+
+  if (atk.categoria === 'Especial' && playerAttacking && hasEquippedItem(state.selectedFishId, 'obj_coral_fuego')) {
+    if (defender.status === null && Math.random() < 0.15) {
+      defender.status = 'envenenado';
+      setLogMessage(`¡Coral de Fuego envenena a ${defender.type.name}!`, true);
+    }
+  }
+
   if (!atk.efecto) return;
   if (atk.efecto.estado === 'precision_reducida' || atk.efecto.estado === 'spe_reduction') {
     if (checkStatusImmunity(defender)) return;
@@ -764,18 +784,22 @@ function applySecondaryEffect(atk, defender) {
     return;
   }
   if (atk.efecto.estado === 'sangrado') {
-    if (checkStatusImmunity(defender)) return;
-    const baseFish = getFishById(defender.type?.id || defender.id);
-    if (baseFish?.passive?.name === 'Escamas Majestuosas') {
-      setLogMessage(`¡${defender.type.name} es inmune al sangrado por sus Escamas Majestuosas!`, true);
-      return;
+    if (!hasToxina) {
+      if (checkStatusImmunity(defender)) return;
+      const baseFish = getFishById(defender.type?.id || defender.id);
+      if (baseFish?.passive?.name === 'Escamas Majestuosas') {
+        setLogMessage(`¡${defender.type.name} es inmune al sangrado por sus Escamas Majestuosas!`, true);
+        return;
+      }
     }
     if (defender.sangradoTurns > 0) return;
-    defender.sangradoTurns = atk.efecto.turns || 3;
+    defender.sangradoTurns = (atk.efecto.turns || 3);
     setLogMessage(`¡${defender.type.name} está sangrando! -1 PS/turno`, true);
     return;
   }
-  if (checkStatusImmunity(defender)) return;
+  if (!hasToxina) {
+    if (checkStatusImmunity(defender)) return;
+  }
   if (defender.status !== null) return;
   if (Math.random() < atk.efecto.probabilidad) {
     defender.status = atk.efecto.estado;
@@ -846,6 +870,7 @@ function checkDodge(defenderFighter, categoria) {
       }
     }
   }
+  if (defenderFighter.type.id === state.selectedFishId && hasEquippedItem(state.selectedFishId, 'obj_escama_brillante')) chance += 0.05;
   if (defenderFighter.buffs?.dodgeBoost) chance += defenderFighter.buffs.dodgeBoost;
   if (chance > 0 && Math.random() < chance) {
     const src = base?.passive?.name || 'con evasión aumentada';
@@ -963,6 +988,11 @@ function applyStatusDamage(fighter) {
   if (fighter.status === 'envenenado' || fighter.status === 'quemado') {
     let dmg = 1;
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    if (fighter.shield > 0) {
+      const absorbed = Math.min(fighter.shield, dmg);
+      fighter.shield -= absorbed;
+      dmg -= absorbed;
+    }
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     if (isEnemy) trackMission('poison_bleed_damage');
     const labels = { envenenado: 'ENV', quemado: 'QUE' };
@@ -971,6 +1001,11 @@ function applyStatusDamage(fighter) {
   if (fighter.status === 'veneno_grave') {
     let dmg = 2;
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    if (fighter.shield > 0) {
+      const absorbed = Math.min(fighter.shield, dmg);
+      fighter.shield -= absorbed;
+      dmg -= absorbed;
+    }
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     if (isEnemy) trackMission('poison_bleed_damage');
     setLogMessage(`${fighter.type.name} sufre daño por Veneno Grave (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
@@ -978,6 +1013,11 @@ function applyStatusDamage(fighter) {
   if (fighter.sangradoTurns > 0) {
     let dmg = 1;
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    if (fighter.shield > 0) {
+      const absorbed = Math.min(fighter.shield, dmg);
+      fighter.shield -= absorbed;
+      dmg -= absorbed;
+    }
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     fighter.sangradoTurns--;
     if (isEnemy) trackMission('poison_bleed_damage');
@@ -2428,6 +2468,7 @@ function openEquipModal(itemId) {
       <span class="equip-modal-title"><img class="item-img item-img-inline" src="${item.imgPath}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" style="width:1.3rem;height:1.3rem;vertical-align:middle;display:inline-block"><span class="item-img-fallback" style="display:none">${item.emoji}</span> ${item.name}</span>
       <button class="equip-modal-close" id="equip-modal-close-btn">✕</button>
     </div>
+    <div class="item-preview-desc" style="margin:-0.5rem 0 0.75rem 0;font-size:0.8rem;color:rgba(255,255,255,0.55);">${item.description}</div>
     <p class="equip-modal-desc">Selecciona un pez para equiparle este objeto:</p>
     <div class="equip-fish-list">`;
   ownedFish.forEach(fish => {
@@ -2479,6 +2520,7 @@ function openUnequipModal(itemId, fishId) {
       <span class="equip-modal-title"><img class="item-img item-img-inline" src="${item.imgPath}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" style="width:1.3rem;height:1.3rem;vertical-align:middle;display:inline-block"><span class="item-img-fallback" style="display:none">${item.emoji}</span> ${item.name}</span>
       <button class="equip-modal-close" id="unequip-modal-close-btn">✕</button>
     </div>
+    <div class="item-preview-desc" style="margin-bottom:0.75rem;font-size:0.8rem;color:rgba(255,255,255,0.55);">${item.description}</div>
     <div class="item-preview" style="gap:0.5rem;padding:0.75rem 0;">
       <div class="item-preview-img ${r}" style="width:4.5rem;height:4.5rem;"><img class="item-img" src="${item.imgPath}" alt="${item.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="item-img-fallback">${item.emoji}</span></div>
       <div class="item-preview-name" style="font-size:1rem;">${item.name}</div>
@@ -2624,19 +2666,18 @@ function initCombat() {
   const playerType = roundFishStats(getLeveledFishType(playerBase, playerLevel));
 
   const playerBaseFish = getFishById(playerFishId);
-  // Matchmaking: enemy strength based on selected fish's cups
-  const matchArena = getArenaForCups(getFishCups(playerFishId));
-  const arenaCfg = getArenaConfig(matchArena);
+  // Enemy generation based on current arena (global), not individual fish cups
+  const arenaCfg = getArenaConfig(state.currentArena);
   const enemyLevel = arenaCfg.minLevel + Math.floor(Math.random() * (arenaCfg.maxLevel - arenaCfg.minLevel + 1));
-  const enemyBase = randomArenaFish(matchArena);
+  const enemyBase = randomArenaFish(state.currentArena);
   const enemyType = roundFishStats(getLeveledFishType(enemyBase, enemyLevel));
 
   if (playerBaseFish?.passive?.name === 'Barbillones') playerType.atk += 0.5;
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
   if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
-  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false };
-  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false };
+  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false };
+  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false };
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.isAnimating = false;
@@ -2649,6 +2690,19 @@ function initCombat() {
   if (hasEquippedItem(state.selectedFishId, 'aleta_voladora')) {
     state.player.type.spe = Math.round(state.player.type.spe * 1.1);
     setLogMessage(`¡Aleta de Pez Volador aumenta la velocidad! (+10%)`, true);
+  }
+  if (hasEquippedItem(state.selectedFishId, 'obj_escama_brillante')) {
+    state.player.type.spe = Math.round(state.player.type.spe * 1.1);
+    setLogMessage(`¡Escama Brillante aumenta la velocidad! (+10%)`, true);
+  }
+  if (hasEquippedItem(state.selectedFishId, 'obj_concha_reforzada')) {
+    state.player.type.def = Math.round(state.player.type.def * 1.1);
+    setLogMessage(`¡Concha Reforzada aumenta la defensa! (+10%)`, true);
+  }
+  if (hasEquippedItem(state.selectedFishId, 'obj_perla_arrecife')) {
+    const shield = Math.max(1, Math.round(state.player.maxHp * 0.2));
+    state.player.shield = shield;
+    setLogMessage(`¡Perla del Arrecife otorga ${shield} PS de escudo!`, true);
   }
   if (hasEquippedItem(state.selectedFishId, 'caparazon_tortuga')) {
     state.player.type.def = Math.round(state.player.type.def * 1.15);
@@ -2720,7 +2774,7 @@ function updateHpBars() {
   dom.enemyHpFill.style.width = clamp(ePct, 0, 100) + '%';
   dom.playerHpFill.style.background = hpColor(pPct);
   dom.enemyHpFill.style.background = hpColor(ePct);
-  dom.playerHpText.textContent = `${Math.ceil(state.player.currentHp)}/${state.player.maxHp}`;
+  dom.playerHpText.textContent = `${Math.ceil(state.player.currentHp)}/${state.player.maxHp}${state.player.shield > 0 ? ` 🛡️${state.player.shield}` : ''}`;
   dom.enemyHpText.textContent = `${Math.ceil(state.enemy.currentHp)}/${state.enemy.maxHp}`;
 }
 
@@ -2948,8 +3002,14 @@ function doEnemyAttack() {
   }
   let dmg = calculateDamage(atk.power, state.enemy.type, state.player.type, atk.categoria, state.enemy.status, state.player.buffs, state.enemy.atkReduction, state.player.spdReduction);
   dmg = applyDefensivePassives(dmg, state.player, atk.categoria);
+  if (state.player.shield > 0) {
+    const absorbed = Math.min(state.player.shield, dmg);
+    state.player.shield -= absorbed;
+    if (absorbed > 0) setLogMessage(`¡El escudo de Perla del Arrecife absorbe ${absorbed} PS!`, true);
+    dmg -= absorbed;
+  }
   state.player.currentHp = Math.max(0, state.player.currentHp - dmg);
-  setLogMessage(`¡${state.enemy.type.name} usa ${atk.name}! -${dmg} HP`, true);
+  if (dmg > 0) setLogMessage(`¡${state.enemy.type.name} usa ${atk.name}! -${dmg} HP`, true);
   if (atk.drain) {
     const heal = Math.max(1, Math.floor(dmg * atk.drain));
     state.enemy.currentHp = Math.min(state.enemy.maxHp, state.enemy.currentHp + heal);
