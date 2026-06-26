@@ -535,6 +535,40 @@ const FISH_TYPES = [
       name: 'Sensor Electromagnético',
       description: 'Los ataques del Tiburón Martillo nunca pueden fallar y reduce la probabilidad de evasión del rival a la mitad.'
     }
+  },
+  {
+    id: 'pez_volador',
+    name: 'Pez Volador',
+    rarity: 'common',
+    imgPath: 'img/pez_volador.png',
+    emoji: '🪽',
+    maxHp: 8, atk: 3, def: 3, spa: 4, spd: 4, spe: 8,
+    growth: { maxHp: 0.8, atk: 0.3, def: 0.3, spa: 0.4, spd: 0.4, spe: 0.8 },
+    attacks: [
+      { name: 'Planeo Evasivo', power: 0, emoji: '🪽', categoria: 'Efecto', efecto: { estado: 'dodge_boost', turns: 2, amount: 0.2 } },
+      { name: 'Aletazo Veloz', power: 40, emoji: '💨', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Impulso de Huida',
+      description: 'Si su vida baja del 30%, su velocidad aumenta un +20% extra automáticamente.'
+    }
+  },
+  {
+    id: 'remora',
+    name: 'Rémora',
+    rarity: 'common',
+    imgPath: 'img/remora.png',
+    emoji: '🦈',
+    maxHp: 10, atk: 4, def: 5, spa: 3, spd: 5, spe: 4,
+    growth: { maxHp: 1.0, atk: 0.4, def: 0.5, spa: 0.3, spd: 0.5, spe: 0.4 },
+    attacks: [
+      { name: 'Succión Parásita', power: 35, emoji: '🩸', categoria: 'Fisico', drain: 0.2 },
+      { name: 'Placa Adhesiva', power: 0, emoji: '🦈', categoria: 'Efecto', efecto: { estado: 'spe_reduction', turns: 2, amount: 1 } }
+    ],
+    passive: {
+      name: 'Escudo Remoto',
+      description: 'Si lleva equipado un objeto defensivo, el efecto de ese objeto se duplica.'
+    }
   }
 ];
 
@@ -878,6 +912,21 @@ function hasEquippedItem(fishId, itemId) {
   return state.equippedItems[fishId] === itemId;
 }
 
+const DEFENSIVE_ITEMS = ['fragmento_coral', 'caparazon_tortuga', 'obj_concha_reforzada', 'obj_escama_brillante', 'obj_perla_arrecife'];
+
+function hasEscudoRemotoPassive(fishId) {
+  const base = getFishById(fishId);
+  return base && base.passive && base.passive.name === 'Escudo Remoto';
+}
+
+function hasDefensiveItem(fishId) {
+  return DEFENSIVE_ITEMS.some(id => hasEquippedItem(fishId, id));
+}
+
+function getItemMultiplier(fishId, itemId) {
+  return hasEscudoRemotoPassive(fishId) && hasEquippedItem(fishId, itemId) ? 2 : 1;
+}
+
 /* ===== UPGRADE ===== */
 const UPGRADE_BASE = { common: 50, rare: 100, epic: 250, legendary: 500 };
 
@@ -927,6 +976,7 @@ function getEffectiveSpeed(fighter) {
   if (fighter.status === 'veneno_grave') spe = Math.round(spe * 0.9);
   if (fighter.debuff?.type === 'spe_reduction') spe = Math.max(1, spe - (fighter.debuff.amount || 1));
   if (fighter.buffs?.speBoost) spe += fighter.buffs.speBoost;
+  if (fighter.impulsoHuidaActivo) spe = Math.round(spe * 1.2);
   return spe;
 }
 
@@ -1068,7 +1118,10 @@ function checkDodge(defenderFighter, categoria) {
       }
     }
   }
-  if (defenderFighter.type.id === state.selectedFishId && hasEquippedItem(state.selectedFishId, 'obj_escama_brillante')) chance += 0.05;
+  if (defenderFighter.type.id === state.selectedFishId && hasEquippedItem(state.selectedFishId, 'obj_escama_brillante')) {
+    const mult = hasEscudoRemotoPassive(state.selectedFishId) ? 2 : 1;
+    chance += 0.05 * mult;
+  }
   if (defenderFighter.buffs?.dodgeBoost) chance += defenderFighter.buffs.dodgeBoost;
   if (chance > 0 && Math.random() < chance) {
     const src = base?.passive?.name || 'con evasión aumentada';
@@ -1257,9 +1310,10 @@ function applyPassiveHealing(fighter) {
     }
   }
   if (fighter.type.id === state.selectedFishId && hasEquippedItem(state.selectedFishId, 'fragmento_coral')) {
-    const heal = Math.max(1, Math.round(fighter.maxHp * 0.05));
+    const mult = getItemMultiplier(state.selectedFishId, 'fragmento_coral');
+    const heal = Math.max(1, Math.round(fighter.maxHp * 0.05 * mult));
     fighter.currentHp = Math.min(fighter.maxHp, fighter.currentHp + heal);
-    setLogMessage(`¡${fighter.type.name} recupera +${heal} PS! (Fragmento de Coral)`, true);
+    setLogMessage(`¡${fighter.type.name} recupera +${heal} PS! (Fragmento de Coral${mult > 1 ? ' ×2 Escudo Remoto' : ''})`, true);
   }
 }
 
@@ -1271,6 +1325,16 @@ function checkDestelloAdvertencia(defender, attacker) {
     defender.destelloActivado = true;
     attacker.atkReduction = 0.2;
     setLogMessage(`¡Los anillos de ${defender.type.name} brillan! ATF del rival -20%`, true);
+  }
+}
+
+function checkImpulsoHuida(fighter) {
+  if (fighter.currentHp <= 0 || fighter.impulsoHuidaActivo) return;
+  const base = getFishById(fighter.type.id);
+  if (!base || base.passive?.name !== 'Impulso de Huida') return;
+  if (fighter.currentHp < fighter.maxHp * 0.3) {
+    fighter.impulsoHuidaActivo = true;
+    setLogMessage(`¡${fighter.type.name} activa Impulso de Huida! VEL +20%`, true);
   }
 }
 
@@ -1744,10 +1808,12 @@ const ARENA_FISH = {
     { fishId: 'pez_angel_emperador' },
     { fishId: 'pez_piedra' }
   ],
-  3: [
+   3: [
     { fishId: 'pez_espada' },
     { fishId: 'atun_rojo' },
-    { fishId: 'tiburon_martillo' }
+    { fishId: 'tiburon_martillo' },
+    { fishId: 'pez_volador' },
+    { fishId: 'remora' }
   ]
 };
 
@@ -3301,8 +3367,8 @@ function initCombat() {
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
   if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
-  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, selfHealUsed: {} };
-  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, selfHealUsed: {} };
+  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, selfHealUsed: {} };
+  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, selfHealUsed: {} };
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.isAnimating = false;
@@ -3317,21 +3383,25 @@ function initCombat() {
     setLogMessage(`¡Aleta de Pez Volador aumenta la velocidad! (+10%)`, true);
   }
   if (hasEquippedItem(state.selectedFishId, 'obj_escama_brillante')) {
-    state.player.type.spe = Math.round(state.player.type.spe * 1.1);
-    setLogMessage(`¡Escama Brillante aumenta la velocidad! (+10%)`, true);
+    const mult = getItemMultiplier(state.selectedFishId, 'obj_escama_brillante');
+    state.player.type.spe = Math.round(state.player.type.spe * (1 + 0.1 * mult));
+    setLogMessage(`¡Escama Brillante aumenta la velocidad! (+${10 * mult}%)${mult > 1 ? ' (×2 Escudo Remoto)' : ''}`, true);
   }
   if (hasEquippedItem(state.selectedFishId, 'obj_concha_reforzada')) {
-    state.player.type.def = Math.round(state.player.type.def * 1.1);
-    setLogMessage(`¡Concha Reforzada aumenta la defensa! (+10%)`, true);
+    const mult = getItemMultiplier(state.selectedFishId, 'obj_concha_reforzada');
+    state.player.type.def = Math.round(state.player.type.def * (1 + 0.1 * mult));
+    setLogMessage(`¡Concha Reforzada aumenta la defensa! (+${10 * mult}%)${mult > 1 ? ' (×2 Escudo Remoto)' : ''}`, true);
   }
   if (hasEquippedItem(state.selectedFishId, 'obj_perla_arrecife')) {
-    const shield = Math.max(1, Math.round(state.player.maxHp * 0.2));
+    const mult = getItemMultiplier(state.selectedFishId, 'obj_perla_arrecife');
+    const shield = Math.max(1, Math.round(state.player.maxHp * 0.2 * mult));
     state.player.shield = shield;
-    setLogMessage(`¡Perla del Arrecife otorga ${shield} PS de escudo!`, true);
+    setLogMessage(`¡Perla del Arrecife otorga ${shield} PS de escudo!${mult > 1 ? ' (×2 Escudo Remoto)' : ''}`, true);
   }
   if (hasEquippedItem(state.selectedFishId, 'caparazon_tortuga')) {
-    state.player.type.def = Math.round(state.player.type.def * 1.15);
-    setLogMessage(`¡Caparazón de Tortuga aumenta la defensa! (+15%)`, true);
+    const mult = getItemMultiplier(state.selectedFishId, 'caparazon_tortuga');
+    state.player.type.def = Math.round(state.player.type.def * (1 + 0.15 * mult));
+    setLogMessage(`¡Caparazón de Tortuga aumenta la defensa! (+${15 * mult}%)${mult > 1 ? ' (×2 Escudo Remoto)' : ''}`, true);
   }
   if (hasEquippedItem(state.selectedFishId, 'tinta_concentrada')) {
     state.enemy.debuff = { type: 'precision_reducida', turns: 2 };
@@ -3541,6 +3611,7 @@ function playerAttack(index) {
   if (atk.efecto?.estado === 'precision_reducida') trackMission('reduce_precision');
   applySelfBuff(atk, state.player);
   checkDestelloAdvertencia(state.enemy, state.player);
+  checkImpulsoHuida(state.enemy);
   if (state.enemy.currentHp <= 0) { state.gameOver = true; setTimeout(() => showResult(true), 800); return; }
   applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
   if (checkGameOver()) return;
@@ -3651,6 +3722,7 @@ function doEnemyAttack() {
   applySecondaryEffect(atk, state.player);
   applySelfBuff(atk, state.enemy);
   checkDestelloAdvertencia(state.player, state.enemy);
+  checkImpulsoHuida(state.player);
   if (state.player.currentHp <= 0) { state.gameOver = true; setTimeout(() => showResult(false), 800); return; }
   applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
   if (checkGameOver()) return;
