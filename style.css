@@ -861,6 +861,7 @@ body.modal-open .section.active { overflow: hidden; }
 }
 .missions-modal-close:active { color: #fff; }
 .missions-progress-section { margin-bottom: 1rem; text-align: center; }
+.missions-countdown { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; font-weight: 600; }
 .missions-progress-label { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; }
 .missions-progress-bar {
   width: 100%; height: 0.7rem; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-bottom: 0.75rem;

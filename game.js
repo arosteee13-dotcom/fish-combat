@@ -513,7 +513,15 @@ const GEM_PACKS = [
 const DAILY_MISSIONS = [
   { id: 'win_battles', name: '🏆 Gana 3 Combates', desc: 'Gana combates en la arena', target: 3, reward: 100 },
   { id: 'fisico_attacks', name: '💪 5 Ataques Físicos', desc: 'Realiza ataques físicos en combate', target: 5, reward: 80 },
-  { id: 'especial_attacks', name: '✨ 5 Ataques Especiales', desc: 'Realiza ataques especiales en combate', target: 5, reward: 80 }
+  { id: 'especial_attacks', name: '✨ 5 Ataques Especiales', desc: 'Realiza ataques especiales en combate', target: 5, reward: 80 },
+  { id: 'play_battles', name: '⚔️ Buscando camorra', desc: 'Juega 3 partidas en total (ganadas o perdidas)', target: 3, reward: 80 },
+  { id: 'top_arena_battles', name: '🗺️ Explorador de zonas', desc: 'Juega 2 partidas en la Arena más alta desbloqueada', target: 2, reward: 120 },
+  { id: 'apply_stun', name: '😵 ¡Eso ha tenido que doler!', desc: 'Aplica el estado Aturdido 3 veces', target: 3, reward: 90 },
+  { id: 'poison_bleed_damage', name: '☠️ Peces ponzoñosos', desc: 'Inflige daño por Veneno o Sangrado 5 veces', target: 5, reward: 100 },
+  { id: 'passive_shield', name: '🛡️ ¡No me toques!', desc: 'Activa una habilidad pasiva de escudo o contraataque 2 veces', target: 2, reward: 90 },
+  { id: 'reduce_precision', name: '👁️ Cegado por la luz', desc: 'Reduce la precisión de un rival 3 veces', target: 3, reward: 80 },
+  { id: 'level_up_fish', name: '📈 Entrenamiento intensivo', desc: 'Sube de nivel a cualquier pez 1 vez', target: 1, reward: 150 },
+  { id: 'earn_cups_fish', name: '🏅 Especialista', desc: 'Gana 15 copas individuales con un mismo pez', target: 15, reward: 200 }
 ];
 
 /* ===== CONSTANTS ===== */
@@ -548,10 +556,11 @@ const state = {
   items: [],
   equippedItems: {},
   lastFreeClaim: null,
-  missions: { win_battles: 0, fisico_attacks: 0, especial_attacks: 0 },
+  missions: {},
+  missionsActive: [],
   missionsClaimed: [],
   missionsBonusClaimed: false,
-  missionsDate: null,
+  missionsRefreshTime: null,
   player: null,
   enemy: null,
   isPlayerTurn: true,
@@ -680,6 +689,7 @@ function upgradeFish(fishId) {
   state.coins -= cost;
   state.fishLevels[fishId] = level + 1;
   updateCoinDisplay();
+  trackMission('level_up_fish');
   showFishDetail(fishId);
 }
 
@@ -923,6 +933,7 @@ function applyDefensivePassives(dmg, defender, categoria) {
   if (base?.passive?.name === 'Mimetismo Absoluto' && defender.mimetismoAbsolutoActivo) {
     defender.mimetismoAbsolutoActivo = false;
     setLogMessage(`¡${defender.type.name} se esconde! Es inmune al daño en el primer turno.`, true);
+    trackMission('passive_shield');
     return 0;
   }
   if (categoria !== 'Fisico') return dmg;
@@ -930,12 +941,14 @@ function applyDefensivePassives(dmg, defender, categoria) {
     if ((base.passive.name === 'Mimetismo Rocoso' || base.passive.name === 'Coraza Prestada') && !defender.mimetismoUsado) {
       defender.mimetismoUsado = true;
       setLogMessage(`¡${defender.type.name} activó ${base.passive.name} y redujo el daño a la mitad!`, true);
+      trackMission('passive_shield');
       return Math.max(1, Math.round(dmg / 2));
     }
     if (base.passive.name === 'Quiebro Elegante' && !defender.quiebroUsado) {
       defender.quiebroUsado = true;
       dmg = Math.max(1, Math.round(dmg * 0.8));
       setLogMessage(`¡${defender.type.name} activó Quiebro Elegante! Daño físico -20%`, true);
+      trackMission('passive_shield');
       return dmg;
     }
   }
@@ -944,12 +957,14 @@ function applyDefensivePassives(dmg, defender, categoria) {
 
 function applyStatusDamage(fighter) {
   if (fighter.currentHp <= 0) return;
+  const isEnemy = fighter === state.enemy;
   const base = getFishById(fighter.type.id);
   const pielCuero = base && base.passive && base.passive.name === 'Piel de Cuero';
   if (fighter.status === 'envenenado' || fighter.status === 'quemado') {
     let dmg = 1;
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
+    if (isEnemy) trackMission('poison_bleed_damage');
     const labels = { envenenado: 'ENV', quemado: 'QUE' };
     setLogMessage(`${fighter.type.name} sufre daño por ${labels[fighter.status]} (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
   }
@@ -957,6 +972,7 @@ function applyStatusDamage(fighter) {
     let dmg = 2;
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
+    if (isEnemy) trackMission('poison_bleed_damage');
     setLogMessage(`${fighter.type.name} sufre daño por Veneno Grave (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
   }
   if (fighter.sangradoTurns > 0) {
@@ -964,6 +980,7 @@ function applyStatusDamage(fighter) {
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     fighter.sangradoTurns--;
+    if (isEnemy) trackMission('poison_bleed_damage');
     setLogMessage(`${fighter.type.name} sufre daño por Sangrado (-${dmg} PS, ${fighter.sangradoTurns} turnos restantes)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}`, true);
   }
 }
@@ -1065,10 +1082,10 @@ function checkPendingNotifications() {
   const now = Date.now();
   const canClaimGift = !state.lastFreeClaim || (now - state.lastFreeClaim) > 86400000;
 
-  const completed = DAILY_MISSIONS.filter(m => state.missions[m.id] >= m.target);
+  const completed = DAILY_MISSIONS.filter(m => state.missionsActive.includes(m.id) && state.missions[m.id] >= m.target);
   const hasUnclaimed = completed.some(m => !state.missionsClaimed.includes(m.id));
 
-  const allClaimed = DAILY_MISSIONS.every(m => state.missionsClaimed.includes(m.id));
+  const allClaimed = state.missionsActive.every(id => state.missionsClaimed.includes(id));
   const bonusAvailable = allClaimed && !state.missionsBonusClaimed;
 
   return { dailyGift: canClaimGift, missions: hasUnclaimed || bonusAvailable };
@@ -1080,7 +1097,7 @@ function updateNotificationDots() {
   const dotMissions = document.getElementById('dot-missions');
   if (dotGift) dotGift.classList.toggle('visible', dailyGift);
   if (dotMissions) {
-    const unclaimedCount = DAILY_MISSIONS.filter(m => state.missions[m.id] >= m.target && !state.missionsClaimed.includes(m.id)).length;
+    const unclaimedCount = DAILY_MISSIONS.filter(m => state.missionsActive.includes(m.id) && state.missions[m.id] >= m.target && !state.missionsClaimed.includes(m.id)).length;
     dotMissions.classList.toggle('visible', missions);
     dotMissions.textContent = missions && unclaimedCount > 1 ? unclaimedCount : '';
   }
@@ -1103,9 +1120,10 @@ function getSaveData() {
     equippedItems: state.equippedItems,
     lastFreeClaim: state.lastFreeClaim,
     missions: state.missions,
+    missionsActive: state.missionsActive,
     missionsClaimed: state.missionsClaimed,
     missionsBonusClaimed: state.missionsBonusClaimed,
-    missionsDate: state.missionsDate,
+    missionsRefreshTime: state.missionsRefreshTime,
     timestamp: Date.now()
   };
 }
@@ -1165,9 +1183,10 @@ function loadGame() {
     if (data.equippedItems) state.equippedItems = data.equippedItems;
     if (data.lastFreeClaim) state.lastFreeClaim = data.lastFreeClaim;
     if (data.missions) state.missions = data.missions;
+    if (Array.isArray(data.missionsActive)) state.missionsActive = data.missionsActive;
     if (Array.isArray(data.missionsClaimed)) state.missionsClaimed = data.missionsClaimed;
     if (typeof data.missionsBonusClaimed === 'boolean') state.missionsBonusClaimed = data.missionsBonusClaimed;
-    if (data.missionsDate) state.missionsDate = data.missionsDate;
+    if (data.missionsRefreshTime) state.missionsRefreshTime = data.missionsRefreshTime;
     if (data.selectedFish && getFishById(data.selectedFish) && state.unlockedFish.includes(data.selectedFish)) {
       state.selectedFishId = data.selectedFish;
     }
@@ -2050,28 +2069,45 @@ function formatTimeLeft(ms) {
 }
 
 /* ===== MISIONES DIARIAS ===== */
-function checkDailyReset() {
-  const today = new Date().toDateString();
-  if (state.missionsDate !== today) {
-    state.missions = { win_battles: 0, fisico_attacks: 0, especial_attacks: 0 };
-    state.missionsClaimed = [];
-    state.missionsBonusClaimed = false;
-    state.missionsDate = today;
+function selectDailyMissions() {
+  const pool = [...DAILY_MISSIONS];
+  const selected = [];
+  for (let i = 0; i < 3; i++) {
+    if (pool.length === 0) break;
+    const idx = Math.floor(Math.random() * pool.length);
+    selected.push(pool[idx].id);
+    pool.splice(idx, 1);
+  }
+  state.missionsActive = selected;
+  state.missions = {};
+  selected.forEach(id => { state.missions[id] = 0; });
+  state.missionsClaimed = [];
+  state.missionsBonusClaimed = false;
+  state.missionsRefreshTime = Date.now();
+}
+
+function checkMissionsRefresh() {
+  const now = Date.now();
+  if (!state.missionsRefreshTime || now - state.missionsRefreshTime >= 86400000) {
+    selectDailyMissions();
   }
   updateNotificationDots();
 }
 
 function getCompletedMissions() {
-  return DAILY_MISSIONS.filter(m => state.missions[m.id] >= m.target);
+  return DAILY_MISSIONS.filter(m => state.missionsActive.includes(m.id) && state.missions[m.id] >= m.target);
 }
 
 function getAllClaimed() {
-  return getCompletedMissions().every(m => state.missionsClaimed.includes(m.id));
+  return state.missionsActive.every(id => state.missionsClaimed.includes(id));
 }
 
 function trackMission(id) {
   if (state.missionsClaimed.includes(id)) return;
-  state.missions[id] = Math.min(state.missions[id] + 1, DAILY_MISSIONS.find(m => m.id === id).target);
+  if (state.missions[id] === undefined) return;
+  const mission = DAILY_MISSIONS.find(m => m.id === id);
+  if (!mission) return;
+  state.missions[id] = Math.min(state.missions[id] + 1, mission.target);
   updateMissionsButton();
 }
 
@@ -2087,23 +2123,40 @@ function claimMission(id) {
   updateNotificationDots();
 }
 
+function getMissionsCountdown() {
+  if (!state.missionsRefreshTime) return '';
+  const elapsed = Date.now() - state.missionsRefreshTime;
+  const remaining = Math.max(0, 86400000 - elapsed);
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  return `⏱ ${h}h ${m}m`;
+}
+
 function updateMissionsButton() {
   const btn = document.getElementById('missions-btn');
   if (!btn) return;
-  checkDailyReset();
+  checkMissionsRefresh();
   const claimed = state.missionsClaimed.length;
+  const total = state.missionsActive.length;
   const progress = btn.querySelector('.missions-btn-progress');
-  if (progress) progress.textContent = `Progreso: ${claimed}/${DAILY_MISSIONS.length}`;
+  if (progress) {
+    const countdown = total > 0 ? ` ${getMissionsCountdown()}` : '';
+    progress.textContent = `Progreso: ${claimed}/${total}${countdown}`;
+  }
 }
 
 function renderMissionsModal() {
-  checkDailyReset();
+  checkMissionsRefresh();
   const body = dom.missionsModalBody;
   if (!body) return;
   const completed = getCompletedMissions();
   const claimedCount = state.missionsClaimed.length;
+  const total = state.missionsActive.length;
   const allClaimed = getAllClaimed();
-  const pct = (claimedCount / DAILY_MISSIONS.length) * 100;
+  const pct = total > 0 ? (claimedCount / total) * 100 : 0;
+  const countdown = getMissionsCountdown();
+
+  const activeMissions = DAILY_MISSIONS.filter(m => state.missionsActive.includes(m.id));
 
   body.innerHTML = `
     <div class="missions-modal-header">
@@ -2111,7 +2164,8 @@ function renderMissionsModal() {
       <button class="missions-modal-close" id="missions-modal-close-btn">✕</button>
     </div>
     <div class="missions-progress-section">
-      <div class="missions-progress-label">Progreso: ${claimedCount}/${DAILY_MISSIONS.length}</div>
+      <div class="missions-countdown">${countdown ? `Nuevas misiones en: ${countdown}` : ''}</div>
+      <div class="missions-progress-label">Progreso: ${claimedCount}/${total}</div>
       <div class="missions-progress-bar"><div class="missions-progress-fill" style="width:${pct}%"></div></div>
       <div class="missions-bonus-chest ${allClaimed ? 'ready' : ''}">
         <span class="missions-chest-icon">${allClaimed ? '🎁' : '📦'}</span>
@@ -2122,8 +2176,8 @@ function renderMissionsModal() {
     </div>
     <div class="missions-list">`;
 
-  DAILY_MISSIONS.forEach(m => {
-    const prog = state.missions[m.id];
+  activeMissions.forEach(m => {
+    const prog = state.missions[m.id] || 0;
     const isComplete = prog >= m.target;
     const isClaimed = state.missionsClaimed.includes(m.id);
     const pctInd = (prog / m.target) * 100;
@@ -2803,6 +2857,8 @@ function playerAttack(index) {
   triggerOnHitPassive(state.player, state.enemy, atk);
   triggerPassive(state.enemy, state.player, atk.categoria);
   applySecondaryEffect(atk, state.enemy);
+  if (atk.efecto?.estado === 'aturdido') trackMission('apply_stun');
+  if (atk.efecto?.estado === 'precision_reducida') trackMission('reduce_precision');
   applySelfBuff(atk, state.player);
   checkDestelloAdvertencia(state.enemy, state.player);
   if (state.enemy.currentHp <= 0) { state.gameOver = true; setTimeout(() => showResult(true), 800); return; }
@@ -2933,23 +2989,28 @@ function checkGameOver() {
 function showResult(victory) {
   const arena = getArenaConfig(state.currentArena);
   const reward = victory ? arena.winGold : arena.loseGold;
-  const matchArena = getArenaForCups(getFishCups(state.selectedFishId));
-  const arenaCups = ARENA_CUP_CHANGES[matchArena] || ARENA_CUP_CHANGES[1];
+  const arenaCups = ARENA_CUP_CHANGES[state.currentArena] || ARENA_CUP_CHANGES[1];
   const cupChange = victory ? arenaCups.win : arenaCups.lose;
-  state.coins += reward;
   const fishId = state.selectedFishId;
-  const current = getFishCups(fishId);
-  state.fishCups[fishId] = Math.max(0, current + cupChange);
+  const preCups = getFishCups(fishId);
+  const matchArena = getArenaForCups(preCups);
+  state.coins += reward;
+  state.fishCups[fishId] = Math.max(0, preCups + cupChange);
   state.cups = getTotalCups();
   updateCoinDisplay(); updateCupsDisplay();
   checkArenaChange();
+  trackMission('play_battles');
+  if (victory) trackMission('win_battles');
+  if (matchArena === state.arenaMaxReached) trackMission('top_arena_battles');
+  if (cupChange > 0) {
+    for (let i = 0; i < cupChange; i++) trackMission('earn_cups_fish');
+  }
   showScreen('result');
   dom.resultTitle.textContent = victory ? '¡VICTORIA!' : 'DERROTA';
   dom.resultTitle.className = 'result-title ' + (victory ? 'victory' : 'defeat');
   dom.resultEmoji.textContent = victory ? '🏆' : '💀';
   dom.resultCups.textContent = `${victory ? '+' + arenaCups.win : arenaCups.lose} 🏆`;
   dom.resultCups.style.color = victory ? '#4facfe' : '#f44336';
-  if (victory) trackMission('win_battles');
   dom.resultSub.textContent = victory
     ? `¡${state.player.type.name} ha vencido a ${state.enemy.type.name}! +${reward} 🪙`
     : `${state.enemy.type.name} ha derrotado a ${state.player.type.name}... +${reward} 🪙`;
@@ -3012,10 +3073,11 @@ function resetAccount() {
   state.items = [];
   state.equippedItems = {};
   state.lastFreeClaim = null;
-  state.missions = { win_battles: 0, fisico_attacks: 0, especial_attacks: 0 };
+  state.missions = {};
+  state.missionsActive = [];
   state.missionsClaimed = [];
   state.missionsBonusClaimed = false;
-  state.missionsDate = null;
+  state.missionsRefreshTime = null;
   state.selectedFishId = 'salmonete';
   state.player = null;
   state.enemy = null;
@@ -3088,7 +3150,7 @@ function setupEvents() {
 /* ===== INIT ===== */
 function init() {
   loadGame();
-  checkDailyReset();
+  checkMissionsRefresh();
   setupEvents();
   renderFightContent();
   renderBank();
