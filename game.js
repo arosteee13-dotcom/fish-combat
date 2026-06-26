@@ -484,6 +484,23 @@ const FISH_TYPES = [
       name: 'Mimetismo Absoluto',
       description: 'En el primer turno, es inmune a todo el daño.'
     }
+  },
+  {
+    id: 'pez_espada',
+    name: 'Pez Espada',
+    rarity: 'rare',
+    imgPath: 'img/pez_espada.png',
+    emoji: '🗡️',
+    maxHp: 10, atk: 14, def: 6, spa: 5, spd: 7, spe: 15,
+    growth: { maxHp: 1.0, atk: 1.4, def: 0.6, spa: 0.5, spd: 0.7, spe: 1.5 },
+    attacks: [
+      { name: 'Perforación', power: 50, emoji: '🗡️', categoria: 'Fisico' },
+      { name: 'Danza Acuática', power: 0, emoji: '💃', categoria: 'Efecto', selfBuff: { stat: 'spe', amount: 2, turns: 3 }, efecto: { probabilidad: 0.3, estado: 'precision_reducida', turns: 2 } }
+    ],
+    passive: {
+      name: 'Estocada Veloz',
+      description: 'Al inicio del combate, si su velocidad es mayor que la del rival, su primer ataque físico tiene un +20% de daño crítico.'
+    }
   }
 ];
 
@@ -1669,6 +1686,9 @@ const ARENA_FISH = {
     { fishId: 'pez_leon' },
     { fishId: 'pez_angel_emperador' },
     { fishId: 'pez_piedra' }
+  ],
+  3: [
+    { fishId: 'pez_espada' }
   ]
 };
 
