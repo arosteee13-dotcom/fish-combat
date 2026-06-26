@@ -905,6 +905,8 @@ const state = {
   missionsClaimed: [],
   missionsBonusClaimed: false,
   lastResetDate: null,
+  battlesPlayed: 0,
+  battlesWon: 0,
   nivel_pase: 0,
   xp_pase: 0,
   tiene_premium: false,
@@ -968,6 +970,7 @@ const dom = {
   battlePassModal: $('battle-pass-modal'), battlePassModalBody: $('battle-pass-modal-body'),
   itemModal: $('item-modal'), itemModalBody: $('item-modal-body'),
   profileModal: $('profile-modal'), profileModalBody: $('profile-modal-body'),
+  settingsModal: $('settings-modal'), settingsModalBody: $('settings-modal-body'),
   authModal: $('auth-modal'), authModalBody: $('auth-modal-body'),
   usernameModal: $('username-modal'), usernameModalBody: $('username-modal-body')
 };
@@ -1754,6 +1757,20 @@ function getAccountsRegistry() {
   }
 }
 
+function generateLocalUid() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `fa_${crypto.randomUUID().replace(/-/g, '')}`;
+  }
+  return `fa_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+}
+
+function ensureAccountUid(account) {
+  if (!account) return null;
+  if (typeof account.uid === 'string' && account.uid.trim()) return account.uid.trim();
+  account.uid = generateLocalUid();
+  return account.uid;
+}
+
 function setAccountsRegistry(registry) {
   localStorage.setItem(AUTH_ACCOUNTS_KEY, JSON.stringify(registry || {}));
 }
@@ -1767,7 +1784,7 @@ function getStoredSession() {
 }
 
 function setStoredSession(session) {
-  const next = session && session.email ? { email: normalizeAuthEmail(session.email) } : null;
+  const next = session && session.email ? { email: normalizeAuthEmail(session.email), uid: String(session.uid || '').trim() || null } : null;
   if (next) {
     localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(next));
   } else {
@@ -1779,6 +1796,10 @@ function setStoredSession(session) {
 
 function getCurrentAuthEmail() {
   return normalizeAuthEmail(state.authSession?.email || getStoredSession()?.email || '');
+}
+
+function getCurrentAuthUid() {
+  return String(state.authSession?.uid || getStoredSession()?.uid || '').trim();
 }
 
 function getSaveKey() {
@@ -1842,6 +1863,8 @@ function applySaveData(data) {
   if (Array.isArray(data.missionsClaimed)) state.missionsClaimed = data.missionsClaimed;
   if (typeof data.missionsBonusClaimed === 'boolean') state.missionsBonusClaimed = data.missionsBonusClaimed;
   if (data.lastResetDate) state.lastResetDate = data.lastResetDate;
+  if (Number.isFinite(data.battlesPlayed) && data.battlesPlayed >= 0) state.battlesPlayed = Math.floor(data.battlesPlayed);
+  if (Number.isFinite(data.battlesWon) && data.battlesWon >= 0) state.battlesWon = Math.floor(data.battlesWon);
   if (Number.isFinite(data.nivel_pase) && data.nivel_pase >= 0) state.nivel_pase = Math.floor(data.nivel_pase);
   if (Number.isFinite(data.xp_pase) && data.xp_pase >= 0) state.xp_pase = Math.floor(data.xp_pase);
   if (typeof data.tiene_premium === 'boolean') state.tiene_premium = data.tiene_premium;
@@ -1889,6 +1912,8 @@ function getSaveData() {
     missionsClaimed: state.missionsClaimed,
     missionsBonusClaimed: state.missionsBonusClaimed,
     lastResetDate: state.lastResetDate,
+    battlesPlayed: state.battlesPlayed,
+    battlesWon: state.battlesWon,
     nivel_pase: state.nivel_pase,
     xp_pase: state.xp_pase,
     tiene_premium: state.tiene_premium,
@@ -1937,6 +1962,297 @@ function loadGame() {
   return loaded;
 }
 
+async function syncCurrentSaveToFirebase() {
+  if (!initFirebaseIfNeeded()) return false;
+  const uid = getCurrentAuthUid();
+  if (!uid) return false;
+  const profileRef = await ensureSocialUserProfile();
+  if (!profileRef) return false;
+  await profileRef.set({
+    username: state.playerUsername,
+    usernameLower: normalizeFriendSearch(state.playerUsername),
+    saveData: getSaveData(),
+    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  return true;
+}
+
+/* ===== FIRESTORE SOCIAL ===== */
+const SOCIAL_COLLECTION = 'users';
+let socialDb = null;
+let socialDbReady = false;
+let friendsModalUnsub = null;
+let friendsModalUserUnsub = null;
+let friendsModalUserCache = null;
+let friendsModalState = { loading: false, error: '', success: '' };
+
+function isFirebaseAvailable() {
+  return !!(window.firebase && window.firebase.firestore && window.__FIREBASE_CONFIG__ && window.__FIREBASE_CONFIG__.projectId);
+}
+
+function initFirebaseIfNeeded() {
+  if (!isFirebaseAvailable()) return false;
+  if (!window.firebase.apps.length) {
+    window.firebase.initializeApp(window.__FIREBASE_CONFIG__);
+  }
+  if (!socialDb) socialDb = window.firebase.firestore();
+  if (!socialDbReady && socialDb?.settings) {
+    try { socialDb.settings({ ignoreUndefinedProperties: true }); } catch (e) {}
+    socialDbReady = true;
+  }
+  return true;
+}
+
+function firebaseUserDoc(uid) {
+  if (!socialDb) return null;
+  return socialDb.collection(SOCIAL_COLLECTION).doc(uid);
+}
+
+function normalizeFriendSearch(value) {
+  return normalizeAuthUsername(value).toLowerCase();
+}
+
+function setFriendsFeedback(message = '', kind = 'info') {
+  friendsModalState = { ...friendsModalState, error: kind === 'error' ? message : '', success: kind === 'success' ? message : '' };
+  const el = document.getElementById('friends-feedback');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.toggle('is-error', kind === 'error');
+  el.classList.toggle('is-success', kind === 'success');
+}
+
+async function ensureSocialUserProfile() {
+  if (!initFirebaseIfNeeded()) return null;
+  const uid = getCurrentAuthUid();
+  const email = getCurrentAuthEmail();
+  if (!uid || !email) return null;
+  const account = getAccountRecord(email);
+  const username = normalizeAuthUsername(state.playerUsername || account?.username || '');
+  const profileRef = firebaseUserDoc(uid);
+  if (!profileRef) return null;
+  try {
+    const snapshot = await profileRef.get();
+    if (!snapshot.exists) {
+      await profileRef.set({
+        uid,
+        email,
+        username,
+        usernameLower: normalizeFriendSearch(username),
+        pendingRequests: [],
+        friends: [],
+        createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } else {
+      await profileRef.set({
+        email,
+        username,
+        usernameLower: normalizeFriendSearch(username),
+        updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
+    return profileRef;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function fetchUsersByUids(uids = []) {
+  if (!initFirebaseIfNeeded()) return [];
+  const cleanUids = [...new Set((uids || []).map(id => String(id || '').trim()).filter(Boolean))];
+  if (!cleanUids.length) return [];
+  const docs = await Promise.all(cleanUids.map(uid => firebaseUserDoc(uid)?.get()));
+  return docs.filter(Boolean).filter(doc => doc.exists).map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+async function queryUserByUsername(username) {
+  if (!initFirebaseIfNeeded()) return null;
+  const normalized = normalizeFriendSearch(username);
+  if (!normalized) return null;
+  const snapshot = await socialDb.collection(SOCIAL_COLLECTION).where('usernameLower', '==', normalized).limit(1).get();
+  if (snapshot.empty) return null;
+  const doc = snapshot.docs[0];
+  return { id: doc.id, ...doc.data() };
+}
+
+async function sendFriendRequestByUsername(username) {
+  const senderUid = getCurrentAuthUid();
+  const senderEmail = getCurrentAuthEmail();
+  if (!senderUid || !senderEmail) {
+    setFriendsFeedback('Debes iniciar sesión para enviar solicitudes.', 'error');
+    return;
+  }
+  if (!initFirebaseIfNeeded()) {
+    setFriendsFeedback('Firebase no está configurado en este entorno.', 'error');
+    return;
+  }
+  const target = await queryUserByUsername(username);
+  if (!target) {
+    setFriendsFeedback('No se ha encontrado ningún usuario con ese nombre.', 'error');
+    return;
+  }
+  if (target.id === senderUid) {
+    setFriendsFeedback('No puedes enviarte una solicitud a ti mismo.', 'error');
+    return;
+  }
+  await ensureSocialUserProfile();
+  await firebaseUserDoc(target.id).set({
+    pendingRequests: window.firebase.firestore.FieldValue.arrayUnion(senderUid),
+    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  setFriendsFeedback('¡Solicitud de amistad enviada!', 'success');
+  return true;
+}
+
+async function acceptFriendRequest(requesterUid) {
+  const currentUid = getCurrentAuthUid();
+  if (!currentUid || !requesterUid || !initFirebaseIfNeeded()) return;
+  const currentRef = firebaseUserDoc(currentUid);
+  const requesterRef = firebaseUserDoc(requesterUid);
+  if (!currentRef || !requesterRef) return;
+  await currentRef.set({
+    pendingRequests: window.firebase.firestore.FieldValue.arrayRemove(requesterUid),
+    friends: window.firebase.firestore.FieldValue.arrayUnion(requesterUid),
+    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  await requesterRef.set({
+    friends: window.firebase.firestore.FieldValue.arrayUnion(currentUid),
+    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  setFriendsFeedback('Solicitud aceptada.', 'success');
+}
+
+async function rejectFriendRequest(requesterUid) {
+  const currentUid = getCurrentAuthUid();
+  if (!currentUid || !requesterUid || !initFirebaseIfNeeded()) return;
+  const currentRef = firebaseUserDoc(currentUid);
+  if (!currentRef) return;
+  await currentRef.set({
+    pendingRequests: window.firebase.firestore.FieldValue.arrayRemove(requesterUid),
+    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  setFriendsFeedback('Solicitud rechazada.', 'info');
+}
+
+function stopFriendsRealtime() {
+  if (friendsModalUnsub) { friendsModalUnsub(); friendsModalUnsub = null; }
+  if (friendsModalUserUnsub) { friendsModalUserUnsub(); friendsModalUserUnsub = null; }
+  friendsModalUserCache = null;
+}
+
+function renderFriendsModalContent({ friends = [], pendingRequests = [] } = {}) {
+  const body = document.getElementById('friends-modal-body');
+  if (!body) return;
+  const feedbackText = friendsModalState.error || friendsModalState.success || (friendsModalState.loading ? 'Cargando solicitudes...' : '');
+  const friendsRows = friends.length
+    ? friends.map(friend => `
+      <div class="friend-row">
+        <div class="friend-user">
+          <span class="friend-status-dot online"></span>
+          <span class="friend-name">${escapeHtml(friend.username || 'Sin nombre')}</span>
+        </div>
+        <div class="friend-cups">UID ${escapeHtml(friend.id)}</div>
+        <button class="friend-invite-btn" disabled>Amigo</button>
+      </div>`).join('')
+    : '<div class="friends-empty">Aún no tienes amigos agregados.</div>';
+  const requestsRows = pendingRequests.length
+    ? pendingRequests.map(req => `
+      <div class="friend-row friend-request-row">
+        <div class="friend-user">
+          <span class="friend-status-dot online"></span>
+          <span class="friend-name">${escapeHtml(req.username || req.id)}</span>
+        </div>
+        <div class="friend-cups">Solicitud</div>
+        <div class="friend-request-actions">
+          <button class="friend-accept-btn" data-uid="${escapeHtml(req.id)}">Aceptar</button>
+          <button class="friend-reject-btn" data-uid="${escapeHtml(req.id)}">Rechazar</button>
+        </div>
+      </div>`).join('')
+    : '<div class="friends-empty">Sin solicitudes pendientes.</div>';
+  body.innerHTML = `
+    <div class="friends-modal-header">
+      <span class="friends-modal-title">👥 Amigos</span>
+      <button class="friends-modal-close" id="friends-modal-close-btn">✕</button>
+    </div>
+    <div class="friends-search-row">
+      <input id="friends-search-input" class="friends-search-input" type="text" placeholder="Buscar por Username exacto">
+      <button id="friends-add-btn" class="friends-add-btn" aria-label="Añadir amigo">+</button>
+    </div>
+    <div id="friends-feedback" class="friends-feedback ${friendsModalState.error ? 'is-error' : friendsModalState.success ? 'is-success' : ''}">${escapeHtml(feedbackText)}</div>
+    <div class="friends-section-title">Solicitudes</div>
+    <div class="friends-list">${requestsRows}</div>
+    <div class="friends-section-title">Amigos</div>
+    <div class="friends-list">${friendsRows}</div>
+    <div class="friends-hint">La búsqueda es exacta y no distingue mayúsculas/minúsculas.</div>
+  `;
+  const addBtn = document.getElementById('friends-add-btn');
+  const searchInput = document.getElementById('friends-search-input');
+  if (addBtn && searchInput) {
+    addBtn.addEventListener('pointerdown', async e => {
+      e.preventDefault();
+      const value = searchInput.value.trim();
+      if (!value) {
+        setFriendsFeedback('Nombre de usuario erróneo.', 'error');
+        return;
+      }
+      try {
+        await sendFriendRequestByUsername(value);
+        searchInput.value = '';
+      } catch (err) {
+        setFriendsFeedback('No se ha encontrado ningún usuario con ese nombre.', 'error');
+      }
+    });
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+      }
+    });
+  }
+  body.querySelectorAll('.friend-accept-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', async e => {
+      e.preventDefault();
+      await acceptFriendRequest(btn.dataset.uid || '');
+    });
+  });
+  body.querySelectorAll('.friend-reject-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', async e => {
+      e.preventDefault();
+      await rejectFriendRequest(btn.dataset.uid || '');
+    });
+  });
+  const closeBtn = document.getElementById('friends-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeFriendsModal(); });
+}
+
+async function refreshFriendsModalRealtime() {
+  const uid = getCurrentAuthUid();
+  if (!uid || !initFirebaseIfNeeded()) {
+    friendsModalState = { loading: false, error: 'Firebase no está configurado en este entorno.', success: '' };
+    renderFriendsModalContent();
+    setFriendsFeedback('Firebase no está configurado en este entorno.', 'error');
+    return;
+  }
+  friendsModalState = { loading: true, error: '', success: '' };
+  renderFriendsModalContent();
+  await ensureSocialUserProfile();
+  stopFriendsRealtime();
+  const profileRef = firebaseUserDoc(uid);
+  friendsModalUserUnsub = profileRef.onSnapshot(async snap => {
+    if (!snap.exists) {
+      friendsModalState = { loading: false, error: '', success: '' };
+      renderFriendsModalContent();
+      return;
+    }
+    const data = snap.data() || {};
+    const pending = await fetchUsersByUids(Array.isArray(data.pendingRequests) ? data.pendingRequests : []);
+    const friends = await fetchUsersByUids(Array.isArray(data.friends) ? data.friends : []);
+    friendsModalUserCache = data;
+    friendsModalState = { loading: false, error: '', success: friendsModalState.success || '' };
+    renderFriendsModalContent({ friends, pendingRequests: pending });
+  });
+}
+
 function getAccountRecord(email) {
   const registry = getAccountsRegistry();
   return registry[normalizeAuthEmail(email)] || null;
@@ -1970,7 +2286,9 @@ function syncSessionAccount() {
     setStoredSession(null);
     return false;
   }
-  state.authSession = { email: normalizeAuthEmail(session.email) };
+  const uid = ensureAccountUid(account);
+  updateAccountRecord(session.email, { uid });
+  state.authSession = { email: normalizeAuthEmail(session.email), uid };
   state.playerUsername = normalizeAuthUsername(account.username) || 'Jugador123';
   updateHeaderUsernameDisplay();
   return true;
@@ -2007,7 +2325,7 @@ function renderAuthModal(mode = 'login', error = '') {
     });
   });
   if (form) {
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
       e.preventDefault();
       const email = normalizeAuthEmail(emailInput?.value);
       const password = String(passwordInput?.value || '').trim();
@@ -2031,11 +2349,12 @@ function renderAuthModal(mode = 'login', error = '') {
           if (errorEl) errorEl.textContent = 'Ese nombre de usuario ya existe.';
           return;
         }
-        registry[email] = { email, password, username };
+        registry[email] = { email, password, username, uid: generateLocalUid() };
         setAccountsRegistry(registry);
-        setStoredSession({ email });
+        setStoredSession({ email, uid: registry[email].uid });
         state.playerUsername = username;
         updateHeaderUsernameDisplay();
+        await ensureSocialUserProfile();
         saveGame();
         closeAuthModal();
         return;
@@ -2044,9 +2363,13 @@ function renderAuthModal(mode = 'login', error = '') {
         if (errorEl) errorEl.textContent = 'Correo o contraseña incorrectos.';
         return;
       }
-      setStoredSession({ email });
+      const uid = ensureAccountUid(existing);
+      registry[email] = existing;
+      setAccountsRegistry(registry);
+      setStoredSession({ email, uid });
       state.playerUsername = normalizeAuthUsername(existing.username) || 'Jugador123';
       updateHeaderUsernameDisplay();
+      await ensureSocialUserProfile();
       if (!loadGame()) saveGame();
       closeAuthModal();
       if (!normalizeAuthUsername(existing.username)) openUsernameModal();
@@ -2085,7 +2408,7 @@ function renderUsernameModal(error = '') {
   const errorEl = document.getElementById('username-error');
   const saveBtn = document.getElementById('username-save-btn');
   if (saveBtn) {
-    saveBtn.addEventListener('pointerdown', e => {
+    saveBtn.addEventListener('pointerdown', async e => {
       e.preventDefault();
       const nextName = normalizeAuthUsername(input?.value || '');
       if (!nextName) {
@@ -2098,6 +2421,17 @@ function renderUsernameModal(error = '') {
       }
       state.playerUsername = nextName;
       updateAccountRecord(getCurrentAuthEmail(), { username: nextName });
+      if (initFirebaseIfNeeded()) {
+        const uid = getCurrentAuthUid();
+        const profileRef = uid ? firebaseUserDoc(uid) : null;
+        if (profileRef) {
+          await profileRef.set({
+            username: nextName,
+            usernameLower: normalizeFriendSearch(nextName),
+            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        }
+      }
       updateHeaderUsernameDisplay();
       saveGame();
       closeUsernameModal();
@@ -3537,36 +3871,74 @@ function renderProfileModal() {
   const totalCups = getTotalCups();
   const totalArenas = Object.keys(ARENA_CONFIG).length;
   const selectedFish = getFishById(state.selectedFishId);
+  const battlesPlayed = Math.max(0, state.battlesPlayed || 0);
+  const battlesWon = Math.max(0, state.battlesWon || 0);
+  const battlesLost = Math.max(0, battlesPlayed - battlesWon);
+  const winRate = battlesPlayed > 0 ? Math.round((battlesWon / battlesPlayed) * 100) : 0;
   const badges = getTrophyBadges();
   body.innerHTML = `
     <div class="profile-modal-header">
-      <span class="profile-modal-title">⚙️ Ajustes y Perfil</span>
+      <span class="profile-modal-title">👤 Perfil del Jugador</span>
       <button class="profile-modal-close" id="profile-modal-close-btn">✕</button>
+    </div>
+    <div class="profile-hero-card">
+      <div class="profile-hero-avatar">👤</div>
+      <div class="profile-hero-meta">
+        <div class="profile-hero-name-row">
+          <strong class="profile-hero-name">${escapeHtml(state.playerUsername || 'Jugador')}</strong>
+          <span class="profile-hero-tag">UID ${escapeHtml(getCurrentAuthUid() || 'local')}</span>
+        </div>
+        <div class="profile-hero-sub">${selectedFish ? `Pez activo: ${selectedFish.name}` : 'Pez activo: Sin seleccionar'}</div>
+        <button type="button" class="profile-rename-btn" id="profile-rename-btn">Cambiar nombre gratis</button>
+      </div>
     </div>
     <div class="profile-overview-grid">
       <div class="profile-stat-card">
-        <span class="profile-stat-label">Pez activo</span>
-        <strong class="profile-stat-value">${selectedFish ? selectedFish.name : 'Sin seleccionar'}</strong>
-      </div>
-      <div class="profile-stat-card">
-        <span class="profile-stat-label">Colección</span>
-        <strong class="profile-stat-value">${unlockedFish}/${totalFish}</strong>
-      </div>
-      <div class="profile-stat-card">
-        <span class="profile-stat-label">Copas totales</span>
+        <span class="profile-stat-label">Copas actuales</span>
         <strong class="profile-stat-value">🏆 ${totalCups}</strong>
       </div>
       <div class="profile-stat-card">
         <span class="profile-stat-label">Arena máxima</span>
         <strong class="profile-stat-value">${Math.min(state.arenaMaxReached, totalArenas)}/${totalArenas}</strong>
       </div>
+      <div class="profile-stat-card">
+        <span class="profile-stat-label">Combates jugados</span>
+        <strong class="profile-stat-value">${battlesPlayed}</strong>
+      </div>
+      <div class="profile-stat-card">
+        <span class="profile-stat-label">Combates ganados</span>
+        <strong class="profile-stat-value">${battlesWon} · ${winRate}%</strong>
+      </div>
     </div>
     <div class="profile-wallet-row">
       <span class="profile-wallet-chip">🪙 ${state.coins}</span>
       <span class="profile-wallet-chip">💎 ${state.diamonds}</span>
     </div>
+    <div class="profile-highlight-grid">
+      <div class="profile-highlight-card">
+        <span class="profile-highlight-label">Pez activo seleccionado</span>
+        <div class="profile-highlight-value">${selectedFish ? selectedFish.name : 'Sin seleccionar'}</div>
+        <div class="profile-highlight-sub">${selectedFish ? `${selectedFish.rarity.toUpperCase()} · ${selectedFish.emoji}` : 'Elige un pez desde el mazo'}</div>
+      </div>
+      <div class="profile-highlight-card">
+        <span class="profile-highlight-label">Colección de peces</span>
+        <div class="profile-highlight-value">${unlockedFish}/${totalFish}</div>
+        <div class="profile-collection-bar"><div class="profile-collection-fill" style="width:${totalFish > 0 ? Math.round((unlockedFish / totalFish) * 100) : 0}%"></div></div>
+        <div class="profile-highlight-sub">${totalFish > 0 ? Math.round((unlockedFish / totalFish) * 100) : 0}% completado</div>
+      </div>
+      <div class="profile-highlight-card">
+        <span class="profile-highlight-label">Estadísticas totales</span>
+        <div class="profile-highlight-value">${battlesWon}V · ${battlesLost}D</div>
+        <div class="profile-highlight-sub">Win rate ${winRate}%</div>
+      </div>
+      <div class="profile-highlight-card">
+        <span class="profile-highlight-label">Vitrina de trofeos</span>
+        <div class="profile-highlight-value">🏆 ${totalCups}</div>
+        <div class="profile-highlight-sub">Copas acumuladas en tu cuenta</div>
+      </div>
+    </div>
     <div class="profile-trophies-header">
-      <span class="profile-trophies-title">🏅 Vitrina de Trofeos</span>
+      <span class="profile-trophies-title">🏅 Logros y trofeos</span>
     </div>
     <div class="profile-trophy-grid">
       ${badges.map(badge => `
@@ -3582,17 +3954,58 @@ function renderProfileModal() {
       `).join('')}
     </div>
     <div class="profile-actions-section">
-      <p id="profile-save-time" class="profile-save-time"></p>
-      <button class="btn-primary" id="profile-save-btn">💾 Guardar Partida</button>
-      <button class="btn-reset" id="profile-reset-btn">🗑️ Nueva Partida</button>
+      <button type="button" class="btn-primary" id="profile-sync-btn">🔄 Sincronizar Perfil</button>
     </div>`;
   const closeBtn = document.getElementById('profile-modal-close-btn');
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeProfileModal(); });
-  const saveBtn = document.getElementById('profile-save-btn');
-  if (saveBtn) saveBtn.addEventListener('pointerdown', e => { e.preventDefault(); saveGame(); updateSaveTimestampDisplay(); });
-  const resetBtn = document.getElementById('profile-reset-btn');
+  const renameBtn = document.getElementById('profile-rename-btn');
+  if (renameBtn) renameBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeProfileModal(); openUsernameModal(); });
+  const syncBtn = document.getElementById('profile-sync-btn');
+  if (syncBtn) syncBtn.addEventListener('pointerdown', async e => {
+    e.preventDefault();
+    saveGame();
+    const synced = await syncCurrentSaveToFirebase();
+    alert(synced ? 'Perfil sincronizado.' : 'Partida guardada en este dispositivo.');
+  });
+}
+
+function renderSettingsModal() {
+  const body = dom.settingsModalBody;
+  if (!body) return;
+  body.innerHTML = `
+    <div class="settings-modal-header">
+      <span class="settings-modal-title">⚙️ Ajustes</span>
+      <button class="settings-modal-close" id="settings-modal-close-btn">✕</button>
+    </div>
+    <div class="settings-action-list">
+      <button type="button" class="settings-action-btn primary" id="settings-save-btn">💾 Guardar Partida</button>
+      <button type="button" class="settings-action-btn danger" id="settings-reset-btn">🗑️ Nueva Partida</button>
+    </div>
+    <p class="settings-note">Solo opciones técnicas. Tu perfil y estadísticas están en el panel del jugador.</p>
+  `;
+  const closeBtn = document.getElementById('settings-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeSettingsModal(); });
+  const saveBtn = document.getElementById('settings-save-btn');
+  if (saveBtn) saveBtn.addEventListener('pointerdown', async e => {
+    e.preventDefault();
+    saveGame();
+    const synced = await syncCurrentSaveToFirebase();
+    alert(synced ? 'Partida guardada y sincronizada.' : 'Partida guardada en este dispositivo.');
+  });
+  const resetBtn = document.getElementById('settings-reset-btn');
   if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
-  updateSaveTimestampDisplay();
+}
+
+function openSettingsModal() {
+  closeProfileModal();
+  renderSettingsModal();
+  dom.settingsModal.classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeSettingsModal() {
+  dom.settingsModal.classList.remove('open');
+  document.body.classList.remove('modal-open');
 }
 
 function getBattlePassRewardUiState(level, track) {
@@ -3706,6 +4119,7 @@ function closeBattlePassModal() {
 }
 
 function openProfileModal() {
+  closeSettingsModal();
   renderProfileModal();
   dom.profileModal.classList.add('open');
   document.body.classList.add('modal-open');
@@ -4544,6 +4958,8 @@ function showResult(victory) {
   state.coins += reward;
   state.fishCups[fishId] = Math.max(0, preCups + cupChange);
   state.cups = getTotalCups();
+  state.battlesPlayed += 1;
+  if (victory) state.battlesWon += 1;
   updateCoinDisplay(); updateCupsDisplay();
   checkArenaChange();
   trackMission('play_battles');
@@ -4640,6 +5056,8 @@ function resetAccount() {
   state.marcosDesbloqueados = [];
   state.shopRotation = null;
   state.achievements = { collectionMaster: { rewardedForTotal: 0 } };
+  state.battlesPlayed = 0;
+  state.battlesWon = 0;
   state.tickets_muelle = 3;
   state.selectedFishId = 'salmonete';
   state.player = null;
@@ -5029,8 +5447,8 @@ function setupEvents() {
   const newsBtn = document.getElementById('btn-news');
   if (newsBtn) newsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openUpdateModal(); });
   const settingsBtn = document.getElementById('btn-settings');
-  if (settingsBtn) settingsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openProfileModal(); });
-  if (dom.headerUserBox) dom.headerUserBox.addEventListener('pointerdown', e => { e.preventDefault(); if (!getCurrentAuthEmail()) openAuthModal(); else openUsernameModal(); });
+  if (settingsBtn) settingsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openSettingsModal(); });
+  if (dom.headerUserBox) dom.headerUserBox.addEventListener('pointerdown', e => { e.preventDefault(); if (!getCurrentAuthEmail()) openAuthModal(); else openProfileModal(); });
   const headerBpBtn = document.getElementById('header-bp-btn');
   if (headerBpBtn) headerBpBtn.addEventListener('pointerdown', e => { e.preventDefault(); openBattlePassModal(); });
   const missionsBtn = document.getElementById('header-missions-btn');
@@ -5045,6 +5463,13 @@ function setupEvents() {
       e.preventDefault(); closeProfileModal();
     }
   });
+  if (dom.settingsModal) {
+    dom.settingsModal.addEventListener('pointerdown', e => {
+      if (e.target === dom.settingsModal || e.target.classList.contains('settings-modal-backdrop')) {
+        e.preventDefault(); closeSettingsModal();
+      }
+    });
+  }
   dom.battlePassModal.addEventListener('pointerdown', e => {
     if (e.target === dom.battlePassModal || e.target.classList.contains('battle-pass-modal-backdrop')) {
       e.preventDefault(); closeBattlePassModal();
@@ -5199,82 +5624,21 @@ function closeUpdateModal() {
 }
 
 function renderFriendsModal() {
-  const body = document.getElementById('friends-modal-body');
-  if (!body) return;
-
-  const friendsHtml = FRIENDS_DEMO.map(friend => {
-    const statusClass = friend.online ? 'online' : 'offline';
-    const inviteDisabled = !friend.online;
-    return `
-      <div class="friend-row">
-        <div class="friend-user">
-          <span class="friend-status-dot ${statusClass}"></span>
-          <span class="friend-name">${friend.username}</span>
-        </div>
-        <div class="friend-cups">🏆 ${Number(friend.cups).toLocaleString('en-US')}</div>
-        <button class="friend-invite-btn" data-friend-id="${friend.id}" ${inviteDisabled ? 'disabled' : ''}>Invitar</button>
-      </div>`;
-  }).join('');
-
-  body.innerHTML = `
-    <div class="friends-modal-header">
-      <span class="friends-modal-title">👥 Amigos</span>
-      <button class="friends-modal-close" id="friends-modal-close-btn">✕</button>
-    </div>
-    <div class="friends-search-row">
-      <input id="friends-search-input" class="friends-search-input" type="text" placeholder="Nombre o ID de jugador">
-      <button id="friends-add-btn" class="friends-add-btn" aria-label="Añadir amigo">+</button>
-    </div>
-    <div class="friends-list">
-      ${friendsHtml}
-    </div>
-    <div class="friends-hint">Invita a un amigo online para una batalla amistosa. Los jugadores offline aparecen deshabilitados.</div>
-  `;
-
-  body.querySelectorAll('.friend-invite-btn').forEach(btn => {
-    btn.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      if (btn.disabled) return;
-      const friend = FRIENDS_DEMO.find(f => f.id === btn.dataset.friendId);
-      if (!friend) return;
-      alert(`Invitación amistosa enviada a ${friend.username}`);
-    });
-  });
-
-  const addBtn = document.getElementById('friends-add-btn');
-  const searchInput = document.getElementById('friends-search-input');
-  if (addBtn && searchInput) {
-    addBtn.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      const value = searchInput.value.trim();
-      if (!value) {
-        alert('Escribe un nombre o ID de jugador.');
-        return;
-      }
-      alert(`Solicitud de amistad enviada a ${value}`);
-      searchInput.value = '';
-    });
-    searchInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        addBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
-      }
-    });
-  }
-
-  const closeBtn = document.getElementById('friends-modal-close-btn');
-  if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeFriendsModal(); });
+  renderFriendsModalContent();
 }
 
 function openFriendsModal() {
+  friendsModalState = { loading: true, error: '', success: '' };
   renderFriendsModal();
   const modal = document.getElementById('friends-modal');
   if (!modal) return;
   modal.classList.add('open');
   document.body.classList.add('modal-open');
+  refreshFriendsModalRealtime();
 }
 
 function closeFriendsModal() {
+  stopFriendsRealtime();
   const modal = document.getElementById('friends-modal');
   if (!modal) return;
   modal.classList.remove('open');
@@ -5285,6 +5649,7 @@ function init() {
   const hasSession = syncSessionAccount();
   if (hasSession) loadGame();
   else updateHeaderUsernameDisplay();
+  if (hasSession) ensureSocialUserProfile();
   checkUpdatePopup();
   ensureBattlePassState();
   checkBattlePassSeasonExpiration();

@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Fish Battle Arena</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 </head>
 <body>
   <div id="app">
@@ -156,6 +159,13 @@
         </div>
       </div>
 
+      <div id="settings-modal" class="settings-modal">
+        <div class="settings-modal-backdrop"></div>
+        <div class="settings-modal-content">
+          <div id="settings-modal-body"></div>
+        </div>
+      </div>
+
       <div id="reset-modal" class="reset-modal">
         <div class="reset-modal-backdrop"></div>
         <div class="reset-modal-content">
@@ -183,6 +193,23 @@
           </div>
           <div class="update-modal-body">
             <section class="update-news-list" aria-label="Novedades del juego">
+              <article class="update-news-item">
+                <div class="update-news-head">
+                  <h3 class="update-news-title">👥 ¡EL APARTADO DE AMIGOS YA ESTÁ DISPONIBLE!</h3>
+                  <span class="update-news-time">26/06/2026</span>
+                </div>
+                <p class="update-news-desc">¡Por fin está aquí una de las funciones más esperadas por la comunidad! A partir de hoy, ya puedes registrar tu nombre de usuario único en la nube y empezar a conectar con tus amigos de verdad.</p>
+                <div class="update-news-desc">
+                  <p style="margin:0 0 0.5rem;">¿Qué incluye esta actualización?</p>
+                  <ul style="margin:0; padding-left:1.1rem; display:flex; flex-direction:column; gap:0.35rem;">
+                    <li><strong>Registro Seguro:</strong> Crea tu cuenta con usuario y contraseña para no perder nunca tu progreso (¡compatible entre PC y móvil!).</li>
+                    <li><strong>Buscador Real:</strong> Añade a tus amigos introduciendo su nombre exacto.</li>
+                    <li><strong>Gestión de Solicitudes:</strong> Acepta o rechaza peticiones en tiempo real desde tu nueva lista.</li>
+                  </ul>
+                </div>
+                <p class="update-news-desc">¡Regístrate ya, personaliza tu nombre gratis y prepárate... porque las batallas amistosas están cada vez más cerca! 🌊🐟</p>
+              </article>
+
               <article class="update-news-item">
                 <div class="update-news-head">
                   <h3 class="update-news-title">¡Llega la Tienda Rotativa de Objetos!</h3>
