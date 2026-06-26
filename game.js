@@ -3340,7 +3340,6 @@ function resetAccount() {
 
 /* ===== EL MUELLE DE LA SUERTE ===== */
 const MUELLE_MIN_BET = 10;
-const MUELLE_BOARD_PRIZES = ['x2', 'x2', 'x2', 'x5', 'x5', 'fish', 'boot', 'boot', 'boot'];
 
 function muelleShuffleBoard(arr) {
   const a = [...arr];
@@ -3357,12 +3356,83 @@ function getMuelleFishPrize() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+function getMuelleBootCount(round) {
+  return Math.min(5 + Math.max(0, round - 1), 8);
+}
+
+function getMuelleRewardLayout(round) {
+  const rewardsByRound = [
+    ['x2', 'x2', 'x5', 'fish'],
+    ['x2', 'x5', 'fish'],
+    ['x2', 'x5'],
+    ['x5']
+  ];
+  return rewardsByRound[Math.min(Math.max(0, round - 1), rewardsByRound.length - 1)];
+}
+
+function createMuelleBoard(round) {
+  const rewards = getMuelleRewardLayout(round);
+  const boots = Array.from({ length: getMuelleBootCount(round) }, () => 'boot');
+  return muelleShuffleBoard([...rewards, ...boots]).map((type, index) => ({ index, type, revealed: false }));
+}
+
+function getMuelleBetValidation(rawValue) {
+  const cleanValue = String(rawValue ?? '').replace(/\D/g, '');
+  if (!cleanValue) {
+    return {
+      cleanValue,
+      bet: null,
+      isValid: false,
+      message: `Introduce una apuesta entre ${MUELLE_MIN_BET} y ${state.coins} 🪙.`
+    };
+  }
+
+  const bet = parseInt(cleanValue, 10);
+  if (!Number.isFinite(bet) || bet < MUELLE_MIN_BET) {
+    return {
+      cleanValue,
+      bet,
+      isValid: false,
+      message: `La apuesta mínima es de ${MUELLE_MIN_BET} 🪙.`
+    };
+  }
+
+  if (bet > state.coins) {
+    return {
+      cleanValue,
+      bet,
+      isValid: false,
+      message: `No puedes apostar más de ${state.coins} 🪙.`
+    };
+  }
+
+  return {
+    cleanValue,
+    bet,
+    isValid: true,
+    message: `Apuesta válida: ${bet} 🪙.`
+  };
+}
+
+function syncMuelleBetForm() {
+  const input = document.getElementById('muelle-bet-input');
+  const confirmBtn = document.getElementById('muelle-confirm-bet-btn');
+  const error = document.getElementById('muelle-bet-error');
+  if (!input || !confirmBtn || !error) return;
+
+  const validation = getMuelleBetValidation(input.value);
+  if (input.value !== validation.cleanValue) input.value = validation.cleanValue;
+  confirmBtn.disabled = !validation.isValid;
+  error.textContent = validation.message;
+  error.classList.toggle('valid', validation.isValid);
+}
+
 function openMuelleBetModal() {
   const modal = document.getElementById('muelle-bet-modal');
   if (!modal) return;
   const body = document.getElementById('muelle-bet-modal-body');
   const hasCoins = state.coins >= MUELLE_MIN_BET;
-  const defaultBet = Math.min(25, state.coins);
+  const defaultBet = hasCoins ? String(Math.min(25, state.coins)) : '';
   if (body) {
     body.innerHTML = `
       <div class="muelle-bet-header">
@@ -3370,16 +3440,11 @@ function openMuelleBetModal() {
         <button class="muelle-bet-close" id="muelle-bet-close-btn">✕</button>
       </div>
       <div class="muelle-bet-coins">Tienes: <strong>${state.coins} 🪙</strong></div>
-      <p class="muelle-bet-hint">¿Cuántas monedas apuestas?</p>
-      <div class="muelle-bet-quick">
-        <button class="muelle-quick-btn" data-amount="10">10</button>
-        <button class="muelle-quick-btn" data-amount="25">25</button>
-        <button class="muelle-quick-btn" data-amount="50">50</button>
-        <button class="muelle-quick-btn" data-amount="100">100</button>
-      </div>
-      <input type="number" id="muelle-bet-input" class="muelle-bet-input"
-        min="${MUELLE_MIN_BET}" max="${state.coins}" value="${hasCoins ? defaultBet : ''}"
-        placeholder="${MUELLE_MIN_BET}–${state.coins}">
+      <p class="muelle-bet-hint">Escribe la cantidad exacta que quieres apostar.</p>
+      <input type="text" id="muelle-bet-input" class="muelle-bet-input"
+        inputmode="numeric" autocomplete="off" spellcheck="false"
+        value="${defaultBet}" placeholder="${MUELLE_MIN_BET}–${state.coins}">
+      <p class="muelle-bet-error" id="muelle-bet-error"></p>
       <button class="btn-primary muelle-confirm-bet-btn" id="muelle-confirm-bet-btn" ${hasCoins ? '' : 'disabled'}>
         🎣 ¡Lanzar el Sedal!
       </button>
@@ -3388,6 +3453,7 @@ function openMuelleBetModal() {
   }
   modal.classList.add('open');
   document.body.classList.add('modal-open');
+  if (hasCoins) syncMuelleBetForm();
 }
 
 function closeMuelleBetModal() {
@@ -3398,14 +3464,15 @@ function closeMuelleBetModal() {
 }
 
 function initMuelle(bet) {
-  const shuffled = muelleShuffleBoard(MUELLE_BOARD_PRIZES);
+  const round = 1;
   state.muelle = {
     active: true,
     bet: bet,
+    round,
     accumulated: 0,
     fishPrize: getMuelleFishPrize(),
     fishAlreadyOwned: false,
-    holes: shuffled.map((type, i) => ({ index: i, type, revealed: false })),
+    holes: createMuelleBoard(round),
     waiting: false,
     lastReveal: null,
     over: false,
@@ -3426,12 +3493,12 @@ function renderMuelleSection() {
       <div class="muelle-idle">
         <div class="muelle-idle-banner">🎣</div>
         <p class="muelle-idle-name">El Muelle de la Suerte</p>
-        <p class="muelle-idle-desc">Apuesta monedas y pesca en los 9 agujeros del muelle.<br>¡Multiplica tus ganancias o piérdelo todo con una bota!</p>
+        <p class="muelle-idle-desc">Apuesta monedas y pesca en los 9 agujeros del muelle.<br>Más de la mitad son botas y, si sigues pescando, la siguiente ronda se llena aún más de basura.</p>
         <div class="muelle-rules-grid">
-          <div class="muelle-rule muelle-rule-x2"><span class="muelle-rule-icon">🪙</span><strong>x2</strong><span>×3 agujeros</span></div>
-          <div class="muelle-rule muelle-rule-x5"><span class="muelle-rule-icon">💰</span><strong>x5</strong><span>×2 agujeros</span></div>
+          <div class="muelle-rule muelle-rule-x2"><span class="muelle-rule-icon">🪙</span><strong>x2</strong><span>Solo 2 agujeros al inicio</span></div>
+          <div class="muelle-rule muelle-rule-x5"><span class="muelle-rule-icon">💰</span><strong>x5</strong><span>Premio grande en muy pocos huecos</span></div>
           <div class="muelle-rule muelle-rule-fish"><span class="muelle-rule-icon">🐟</span><strong>Pez</strong><span>×1 agujero</span></div>
-          <div class="muelle-rule muelle-rule-boot"><span class="muelle-rule-icon">🥾</span><strong>Bota</strong><span>×3 agujeros</span></div>
+          <div class="muelle-rule muelle-rule-boot"><span class="muelle-rule-icon">🥾</span><strong>Bota</strong><span>5 agujeros o más</span></div>
         </div>
         <button class="btn-primary muelle-play-btn" id="muelle-play-btn">¡Ir al Muelle!</button>
       </div>`;
@@ -3497,7 +3564,7 @@ function renderMuelleSection() {
 
   el.innerHTML = `
     <div class="muelle-game">
-      <div class="muelle-game-stats">Apuesta: <strong>${m.bet} 🪙</strong></div>
+      <div class="muelle-game-stats">Ronda <strong>${m.round}</strong> · Apuesta: <strong>${m.bet} 🪙</strong> · Botas: <strong>${m.holes.filter(h => h.type === 'boot').length}/9</strong></div>
       <div class="muelle-board" id="muelle-board">${holesHtml}</div>
       ${statusHtml}
       ${actionsHtml}
@@ -3564,7 +3631,11 @@ function muelleCashOut() {
 function muelleContinue() {
   const m = state.muelle;
   if (!m || !m.active || m.over || !m.waiting) return;
+  m.round += 1;
+  m.holes = createMuelleBoard(m.round);
   m.waiting = false;
+  m.lastReveal = null;
+  m.fishAlreadyOwned = false;
   renderMuelleSection();
 }
 
@@ -3665,21 +3736,34 @@ function setupEvents() {
         e.preventDefault();
         if (confirmBtn.disabled) return;
         const input = document.getElementById('muelle-bet-input');
-        let bet = input ? parseInt(input.value, 10) : MUELLE_MIN_BET;
-        if (isNaN(bet) || bet < MUELLE_MIN_BET) bet = MUELLE_MIN_BET;
-        bet = Math.min(bet, state.coins);
-        if (bet < MUELLE_MIN_BET) return;
+        const validation = getMuelleBetValidation(input ? input.value : '');
+        if (input && input.value !== validation.cleanValue) input.value = validation.cleanValue;
+        if (!validation.isValid || validation.bet === null) {
+          syncMuelleBetForm();
+          return;
+        }
         closeMuelleBetModal();
-        initMuelle(bet);
+        initMuelle(validation.bet);
         return;
       }
-      const quickBtn = targetEl.closest('.muelle-quick-btn[data-amount]');
-      if (quickBtn) {
-        e.preventDefault();
-        const input = document.getElementById('muelle-bet-input');
-        if (input) { input.value = Math.min(parseInt(quickBtn.dataset.amount, 10), state.coins); }
+    });
+    muelleBetModal.addEventListener('input', e => {
+      const targetEl = getEventTargetElement(e.target);
+      if (!targetEl || targetEl.id !== 'muelle-bet-input') return;
+      syncMuelleBetForm();
+    });
+    muelleBetModal.addEventListener('keydown', e => {
+      const targetEl = getEventTargetElement(e.target);
+      if (!targetEl || targetEl.id !== 'muelle-bet-input' || e.key !== 'Enter') return;
+      e.preventDefault();
+      const validation = getMuelleBetValidation(targetEl.value);
+      if (targetEl.value !== validation.cleanValue) targetEl.value = validation.cleanValue;
+      if (!validation.isValid || validation.bet === null) {
+        syncMuelleBetForm();
         return;
       }
+      closeMuelleBetModal();
+      initMuelle(validation.bet);
     });
   }
 }
