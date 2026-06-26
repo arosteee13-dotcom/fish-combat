@@ -2103,7 +2103,7 @@ const ARENA_FISH = {
     { fishId: 'pez_vibora' },
     { fishId: 'tiburon_duende' },
     { fishId: 'engullidor_negro' },
-    { fishId: 'calamar_gigante' }
+    { fishId: 'kraken' }
   ]
 };
 
