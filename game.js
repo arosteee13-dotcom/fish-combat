@@ -2306,30 +2306,12 @@ function renderMissionsModal() {
 
   const activeMissions = DAILY_MISSIONS.filter(m => state.missionsActive.includes(m.id));
 
-  body.innerHTML = `
-    <div class="missions-modal-header">
-      <span class="missions-modal-title">📋 Misiones Diarias</span>
-      <button class="missions-modal-close" id="missions-modal-close-btn">✕</button>
-    </div>
-    <div class="missions-progress-section">
-      <div class="missions-countdown">${countdown ? `Nuevas misiones en: ${countdown}` : ''}</div>
-      <div class="missions-progress-label">Progreso: ${claimedCount}/${total}</div>
-      <div class="missions-progress-bar"><div class="missions-progress-fill" style="width:${pct}%"></div></div>
-      <div class="missions-bonus-chest ${allClaimed ? 'ready' : ''}">
-        <span class="missions-chest-icon">${allClaimed ? '🎁' : '📦'}</span>
-        <span class="missions-chest-label">${allClaimed ? '¡Bono Diario Listo!' : 'Completa las 3 misiones'}</span>
-        ${allClaimed && !state.missionsBonusClaimed ? '<button class="missions-chest-btn" id="missions-claim-bonus">Reclamar</button>' : ''}
-        ${state.missionsBonusClaimed ? '<span class="missions-chest-done">✅ Reclamado</span>' : ''}
-      </div>
-    </div>
-    <div class="missions-list">`;
-
-  activeMissions.forEach(m => {
+  const missionCardsHtml = activeMissions.map(m => {
     const prog = state.missions[m.id] || 0;
     const isComplete = prog >= m.target;
     const isClaimed = state.missionsClaimed.includes(m.id);
     const pctInd = (prog / m.target) * 100;
-    body.innerHTML += `
+    return `
       <div class="mission-card ${isComplete ? 'complete' : ''} ${isClaimed ? 'claimed' : ''}">
         <div class="mission-info">
           <div class="mission-name">${m.name}</div>
@@ -2346,9 +2328,27 @@ function renderMissionsModal() {
             '<button class="mission-claim-btn disabled" disabled>⏳</button>'}
         </div>
       </div>`;
-  });
+  }).join('');
 
-  body.innerHTML += `</div>`;
+  body.innerHTML = `
+    <div class="missions-modal-header">
+      <span class="missions-modal-title">📋 Misiones Diarias</span>
+      <button class="missions-modal-close" id="missions-modal-close-btn">✕</button>
+    </div>
+    <div class="missions-progress-section">
+      <div class="missions-countdown">${countdown ? `Nuevas misiones en: ${countdown}` : ''}</div>
+      <div class="missions-progress-label">Progreso: ${claimedCount}/${total}</div>
+      <div class="missions-progress-bar"><div class="missions-progress-fill" style="width:${pct}%"></div></div>
+      <div class="missions-bonus-chest ${allClaimed ? 'ready' : ''}">
+        <span class="missions-chest-icon">${allClaimed ? '🎁' : '📦'}</span>
+        <span class="missions-chest-label">${allClaimed ? '¡Bono Diario Listo!' : 'Completa las 3 misiones'}</span>
+        ${allClaimed && !state.missionsBonusClaimed ? '<button class="missions-chest-btn" id="missions-claim-bonus">Reclamar</button>' : ''}
+        ${state.missionsBonusClaimed ? '<span class="missions-chest-done">✅ Reclamado</span>' : ''}
+      </div>
+    </div>
+    <div class="missions-list">
+      ${missionCardsHtml}
+    </div>`;
 
   body.querySelectorAll('.mission-claim-btn:not(.disabled)').forEach(btn => {
     btn.addEventListener('pointerdown', e => {
@@ -2650,19 +2650,11 @@ function openEquipModal(itemId) {
     alert('No tienes peces para equipar este objeto.');
     return;
   }
-  dom.equipModalBody.innerHTML = `
-    <div class="equip-modal-header">
-      <span class="equip-modal-title"><img class="item-img item-img-inline" src="${item.imgPath}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" style="width:1.3rem;height:1.3rem;vertical-align:middle;display:inline-block"><span class="item-img-fallback" style="display:none">${item.emoji}</span> ${item.name}</span>
-      <button class="equip-modal-close" id="equip-modal-close-btn">✕</button>
-    </div>
-    <div class="item-preview-desc" style="margin:-0.5rem 0 0.75rem 0;font-size:0.8rem;color:rgba(255,255,255,0.55);">${item.description}</div>
-    <p class="equip-modal-desc">Selecciona un pez para equiparle este objeto:</p>
-    <div class="equip-fish-list">`;
-  ownedFish.forEach(fish => {
+  const fishItemsHtml = ownedFish.map(fish => {
     const alreadyEquipped = state.equippedItems[fish.id];
     const fishItem = alreadyEquipped ? ITEMS.find(it => it.id === alreadyEquipped) : null;
     const r = getRarityConfig(fish);
-    dom.equipModalBody.innerHTML += `
+    return `
       <div class="equip-fish-item" data-fish-id="${fish.id}">
         <div class="equip-fish-img">${imgTagSmall(fish.imgPath, fish.name, fish.emoji)}</div>
         <div class="equip-fish-info">
@@ -2671,8 +2663,17 @@ function openEquipModal(itemId) {
         </div>
         <div class="equip-fish-current">${fishItem ? `🔗 ${fishItem.emoji} ${fishItem.name}` : '— Vacío'}</div>
       </div>`;
-  });
-  dom.equipModalBody.innerHTML += `</div>`;
+  }).join('');
+  dom.equipModalBody.innerHTML = `
+    <div class="equip-modal-header">
+      <span class="equip-modal-title"><img class="item-img item-img-inline" src="${item.imgPath}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" style="width:1.3rem;height:1.3rem;vertical-align:middle;display:inline-block"><span class="item-img-fallback" style="display:none">${item.emoji}</span> ${item.name}</span>
+      <button class="equip-modal-close" id="equip-modal-close-btn">✕</button>
+    </div>
+    <div class="item-preview-desc" style="margin:-0.5rem 0 0.75rem 0;font-size:0.8rem;color:rgba(255,255,255,0.55);">${item.description}</div>
+    <p class="equip-modal-desc">Selecciona un pez para equiparle este objeto:</p>
+    <div class="equip-fish-list">
+      ${fishItemsHtml}
+    </div>`;
   dom.equipModal.classList.add('open');
   document.body.classList.add('modal-open');
 
