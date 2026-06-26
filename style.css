@@ -159,7 +159,7 @@ body.modal-open .section.active { overflow: hidden; }
   padding: 0.85rem 1rem; margin-bottom: 0.75rem;
   border: 1px solid rgba(255,255,255,0.06);
 }
-.arena-block.locked { opacity: 0.55; }
+.arena-block.locked { opacity: 0.85; }
 .arena-block-header {
   display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;
 }
@@ -186,9 +186,9 @@ body.modal-open .section.active { overflow: hidden; }
 .arena-fish-item.not-owned .arena-fish-img { filter: grayscale(100%); opacity: 0.6; }
 .arena-fish-item.not-owned .fish-name { color: rgba(255,255,255,0.3); }
 .arena-fish-item.not-owned .rarity-badge { filter: grayscale(100%); opacity: 0.5; }
-.arena-fish-item.arena-locked .arena-fish-img { filter: grayscale(100%) brightness(0.5); opacity: 0.35; }
-.arena-fish-item.arena-locked .fish-name { color: rgba(255,255,255,0.2); }
-.arena-fish-item.arena-locked .rarity-badge { filter: grayscale(100%); opacity: 0.25; }
+.arena-fish-item.arena-locked .arena-fish-img { filter: grayscale(100%); opacity: 0.6; }
+.arena-fish-item.arena-locked .fish-name { color: rgba(255,255,255,0.6); }
+.arena-fish-item.arena-locked .rarity-badge { filter: grayscale(100%); opacity: 0.5; }
 .arena-rewards { font-size: 0.7rem; color: rgba(255,255,255,0.5); margin: 0.25rem 0 0.5rem 0; padding-left: 0.25rem; }
 
 /* ===== ARENA BACKGROUNDS ===== */
