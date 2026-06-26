@@ -910,6 +910,7 @@ const state = {
   paseObjetos: [],
   titulosDesbloqueados: [],
   marcosDesbloqueados: [],
+  shopRotation: null,
   achievements: {
     collectionMaster: {
       rewardedForTotal: 0
@@ -1031,12 +1032,15 @@ function getTrophyBadges() {
 }
 
 function getArenaFishPool(arenaId) {
-  let pool = [...(ARENA_FISH[arenaId] || [])];
-  if (arenaId === 2) {
-    const prev = ARENA_FISH[1] || [];
-    pool = [...prev, ...pool];
+  const pool = [];
+  for (let id = 1; id <= arenaId; id++) {
+    pool.push(...(ARENA_FISH[id] || []));
   }
   return pool;
+}
+
+function getArenaShowcasePool(arenaId) {
+  return [...(ARENA_FISH[arenaId] || [])];
 }
 
 function randomArenaFish(arenaId) {
@@ -1737,6 +1741,7 @@ function getSaveData() {
     paseObjetos: state.paseObjetos,
     titulosDesbloqueados: state.titulosDesbloqueados,
     marcosDesbloqueados: state.marcosDesbloqueados,
+    shopRotation: state.shopRotation,
     achievements: state.achievements,
     tickets_muelle: state.tickets_muelle,
     timestamp: Date.now()
@@ -1789,6 +1794,60 @@ function isBattlePassRewardClaimed(level, track) {
 function getCurrentSeasonMonthStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getUtcDayKey(ts = Date.now()) {
+  const d = new Date(ts);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
+function getUtcNextMidnightMs(ts = Date.now()) {
+  const d = new Date(ts);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 0, 0, 0);
+}
+
+function hashStringToSeed(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function getDailyShopRotation() {
+  const dayKey = getUtcDayKey();
+  const expiresAt = getUtcNextMidnightMs();
+  const expectedCount = Math.min(3, SHOP_ITEMS.length);
+  const validRotation = state.shopRotation
+    && state.shopRotation.dayKey === dayKey
+    && Array.isArray(state.shopRotation.itemIds)
+    && state.shopRotation.itemIds.length === expectedCount;
+
+  if (!validRotation) {
+    const rng = createSeededRandom(hashStringToSeed(`shop:${dayKey}`));
+    const shuffled = [...SHOP_ITEMS];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    state.shopRotation = {
+      dayKey,
+      itemIds: shuffled.slice(0, expectedCount).map(entry => entry.itemId),
+      expiresAt
+    };
+  } else if (!Number.isFinite(state.shopRotation.expiresAt) || state.shopRotation.expiresAt <= Date.now()) {
+    state.shopRotation.expiresAt = expiresAt;
+  }
+
+  return state.shopRotation.itemIds
+    .map(itemId => SHOP_ITEMS.find(entry => entry.itemId === itemId))
+    .filter(Boolean);
+}
+
+function getShopRotationRemainingMs() {
+  getDailyShopRotation();
+  return Math.max(0, (state.shopRotation?.expiresAt || getUtcNextMidnightMs()) - Date.now());
 }
 
 function getSeasonEndDate() {
@@ -1984,6 +2043,7 @@ function loadGame() {
     if (Array.isArray(data.paseObjetos)) state.paseObjetos = data.paseObjetos;
     if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
     if (Array.isArray(data.marcosDesbloqueados)) state.marcosDesbloqueados = data.marcosDesbloqueados;
+    if (data.shopRotation && typeof data.shopRotation === 'object') state.shopRotation = data.shopRotation;
     if (typeof data.tickets_muelle === 'number' && data.tickets_muelle >= 0) state.tickets_muelle = data.tickets_muelle;
     ensureBattlePassState();
     checkBattlePassSeasonExpiration();
@@ -2253,7 +2313,7 @@ function renderFightContent() {
     return;
   }
 
-  const pool = getArenaFishPool(arenaId);
+  const pool = getArenaShowcasePool(arenaId);
 
   const cardsHtml = pool.map(entry => {
     const fish = getFishById(entry.fishId);
@@ -2768,6 +2828,9 @@ function updateCountdownDisplays() {
   const shopEl = document.getElementById('offers-countdown');
   if (shopEl) shopEl.textContent = `Rotación en: ${midnightStr}`;
 
+  const shopRotationEl = document.getElementById('shop-rotation-countdown');
+  if (shopRotationEl) shopRotationEl.textContent = `Siguiente rotación en: ${formatTimeLeft(getShopRotationRemainingMs())}`;
+
   const paseEl = document.getElementById('countdown-pase');
   if (paseEl) paseEl.textContent = getSeasonCountdownText();
 
@@ -2850,15 +2913,14 @@ function renderShop() {
     dom.shopContent.appendChild(emptyMsg);
   }
 
-  startGlobalCountdown();
-
   /* ===== 3. OBJETOS EQUIPABLES ===== */
   const itemsTitle = document.createElement('h3');
   itemsTitle.className = 'shop-section-title';
-  itemsTitle.textContent = '🎒 Objetos Equipables';
+  itemsTitle.innerHTML = '🎒 Objetos Equipables <span class="shop-rotation-countdown" id="shop-rotation-countdown"></span>';
   dom.shopContent.appendChild(itemsTitle);
 
-  SHOP_ITEMS.forEach(entry => {
+  const dailyShopItems = getDailyShopRotation();
+  dailyShopItems.forEach(entry => {
     const item = ITEMS.find(it => it.id === entry.itemId);
     if (!item) return;
     const alreadyOwned = state.items.includes(item.id);
@@ -2960,6 +3022,8 @@ function renderShop() {
     card.addEventListener('pointercancel', () => { tMoved = true; tStartX = tStartY = undefined; });
     dom.shopContent.appendChild(card);
   });
+
+  startGlobalCountdown();
 }
 
 function claimFreeGift(amount) {
@@ -4262,6 +4326,7 @@ function resetAccount() {
   state.paseObjetos = [];
   state.titulosDesbloqueados = [];
   state.marcosDesbloqueados = [];
+  state.shopRotation = null;
   state.achievements = { collectionMaster: { rewardedForTotal: 0 } };
   state.tickets_muelle = 3;
   state.selectedFishId = 'salmonete';
