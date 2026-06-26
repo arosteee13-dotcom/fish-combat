@@ -1753,6 +1753,7 @@ body.modal-open .section.active { overflow: hidden; }
 }
 .settings-action-btn.primary { background: linear-gradient(135deg, #4facfe, #00f2fe); }
 .settings-action-btn.danger { background: linear-gradient(135deg, #ff5f6d, #d7263d); }
+.settings-action-btn.logout { background: linear-gradient(135deg, #8a8f98, #5f6672); }
 .settings-note { margin-top: 0.9rem; font-size: 0.72rem; color: rgba(255,255,255,0.45); line-height: 1.4; text-align: center; }
 
 /* ===== AJUSTES ===== */
@@ -2360,6 +2361,70 @@ body.modal-open .section.active { overflow: hidden; }
 }
 .auth-submit:active, .username-submit:active { transform: scale(0.97); }
 .username-hint, .auth-hint { font-size: 0.75rem; color: rgba(255,255,255,0.45); line-height: 1.4; margin-bottom: 0.85rem; }
+
+/* ===== START MENU ===== */
+.start-modal-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #8fd3ff;
+  text-align: center;
+  margin-bottom: 0.35rem;
+}
+.start-modal-subtitle {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  margin-bottom: 0.95rem;
+}
+.start-mode-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.95rem;
+}
+.start-mode-btn {
+  min-height: 2.9rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.start-mode-btn.active {
+  background: rgba(79,172,254,0.18);
+  border-color: rgba(79,172,254,0.4);
+  box-shadow: 0 0 0 1px rgba(79,172,254,0.15) inset;
+}
+.start-panel {
+  padding: 0.95rem;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.start-panel-label {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+.start-panel-copy {
+  font-size: 0.74rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.35;
+  margin-bottom: 0.8rem;
+}
+.start-panel-note {
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.4;
+}
+#start-form { display: flex; flex-direction: column; gap: 0.7rem; }
 
 @media (max-width: 380px) {
   .friends-modal-content { width: 94vw; padding: 1rem; }

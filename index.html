@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Fish Battle Arena</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 </head>
 <body>
   <div id="app">
@@ -248,20 +245,6 @@
         </div>
       </div>
 
-      <div id="auth-modal" class="auth-modal">
-        <div class="auth-modal-backdrop"></div>
-        <div class="auth-modal-content">
-          <div id="auth-modal-body"></div>
-        </div>
-      </div>
-
-      <div id="username-modal" class="username-modal">
-        <div class="username-modal-backdrop"></div>
-        <div class="username-modal-content">
-          <div id="username-modal-body"></div>
-        </div>
-      </div>
-
       <nav id="bottom-nav">
         <button class="nav-tab" data-tab="shop">
           <span class="nav-icon">🛒<span class="notification-dot" id="dot-daily-gift"></span></span>
@@ -324,6 +307,20 @@
         <p id="result-cups" class="result-cups"></p>
         <p id="result-sub" class="result-sub"></p>
         <button id="btn-restart" class="btn-primary">Volver al Mazo</button>
+      </div>
+    </div>
+
+    <div id="auth-modal" class="auth-modal">
+      <div class="auth-modal-backdrop"></div>
+      <div class="auth-modal-content">
+        <div id="auth-modal-body"></div>
+      </div>
+    </div>
+
+    <div id="username-modal" class="username-modal">
+      <div class="username-modal-backdrop"></div>
+      <div class="username-modal-content">
+        <div id="username-modal-body"></div>
       </div>
     </div>
 

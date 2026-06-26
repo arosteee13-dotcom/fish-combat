@@ -1795,16 +1795,18 @@ function setStoredSession(session) {
 }
 
 function getCurrentAuthEmail() {
-  return normalizeAuthEmail(state.authSession?.email || getStoredSession()?.email || '');
+  return getCurrentAuthUid();
 }
 
 function getCurrentAuthUid() {
-  return String(state.authSession?.uid || getStoredSession()?.uid || '').trim();
+  if (state.authSession?.uid) return String(state.authSession.uid).trim();
+  if (isLocalSessionActive()) return getLocalAuthUid();
+  return '';
 }
 
 function getSaveKey() {
-  const email = getCurrentAuthEmail();
-  return email ? `${SAVE_KEY_PREFIX}${email}` : LEGACY_SAVE_KEY;
+  const uid = getCurrentAuthUid();
+  return uid ? `${SAVE_KEY_PREFIX}${uid}` : LEGACY_SAVE_KEY;
 }
 
 function getCurrentSaveRaw() {
@@ -1832,9 +1834,10 @@ function updateHeaderUsernameDisplay() {
 }
 
 function saveGame() {
-  const email = getCurrentAuthEmail();
-  if (!email) return;
-  if (normalizeAuthUsername(state.playerUsername)) updateAccountRecord(email, { username: normalizeAuthUsername(state.playerUsername) });
+  const uid = getCurrentAuthUid();
+  if (!uid) return;
+  const username = normalizeAuthUsername(state.playerUsername);
+  if (username) localStorage.setItem(LOCAL_AUTH_USERNAME_KEY, username);
   const data = getSaveData();
   localStorage.setItem(getSaveKey(), JSON.stringify(data));
   updateSaveTimestampDisplay();
@@ -1951,10 +1954,9 @@ function loadGame() {
   const data = getCurrentSaveData();
   if (!data) return false;
   const loaded = applySaveData(data);
-  const email = getCurrentAuthEmail();
-  const account = email ? getAccountRecord(email) : null;
-  if (loaded && email && account && !normalizeAuthUsername(account.username) && normalizeAuthUsername(state.playerUsername)) {
-    updateAccountRecord(email, { username: state.playerUsername });
+  const uid = getCurrentAuthUid();
+  if (loaded && uid && normalizeAuthUsername(state.playerUsername)) {
+    localStorage.setItem(LOCAL_AUTH_USERNAME_KEY, normalizeAuthUsername(state.playerUsername));
   }
   if (loaded && getCurrentAuthEmail() && localStorage.getItem(getSaveKey()) === null && localStorage.getItem(LEGACY_SAVE_KEY)) {
     saveGame();
@@ -2294,95 +2296,156 @@ function syncSessionAccount() {
   return true;
 }
 
-function renderAuthModal(mode = 'login', error = '') {
+const LOCAL_AUTH_USERNAME_KEY = 'localUser';
+const LOCAL_AUTH_PASSWORD_KEY = 'localPass';
+const LOCAL_AUTH_SESSION_KEY = 'localSessionActive';
+const LOCAL_AUTH_UID_KEY = 'localUid';
+
+function getLocalAuthUsername() {
+  return String(localStorage.getItem(LOCAL_AUTH_USERNAME_KEY) || '').trim();
+}
+
+function getLocalAuthPassword() {
+  return String(localStorage.getItem(LOCAL_AUTH_PASSWORD_KEY) || '');
+}
+
+function getLocalAuthUid() {
+  return String(localStorage.getItem(LOCAL_AUTH_UID_KEY) || '').trim();
+}
+
+function ensureLocalAuthUid() {
+  const existing = getLocalAuthUid();
+  if (existing) return existing;
+  const uid = generateLocalUid();
+  localStorage.setItem(LOCAL_AUTH_UID_KEY, uid);
+  return uid;
+}
+
+function isLocalSessionActive() {
+  return localStorage.getItem(LOCAL_AUTH_SESSION_KEY) === 'true';
+}
+
+function setLocalSessionActive(active) {
+  if (active) localStorage.setItem(LOCAL_AUTH_SESSION_KEY, 'true');
+  else localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
+}
+
+function syncLocalAuthSession(username = getLocalAuthUsername()) {
+  const cleanUsername = normalizeAuthUsername(username);
+  const uid = ensureLocalAuthUid();
+  state.authSession = cleanUsername ? { email: uid, uid } : null;
+  if (cleanUsername) {
+    state.playerUsername = cleanUsername;
+    localStorage.setItem(LOCAL_AUTH_USERNAME_KEY, cleanUsername);
+  }
+  updateHeaderUsernameDisplay();
+  return uid;
+}
+
+function activateLocalAccess(username, password = null) {
+  const cleanUsername = normalizeAuthUsername(username);
+  if (!cleanUsername) return false;
+  localStorage.setItem(LOCAL_AUTH_USERNAME_KEY, cleanUsername);
+  if (password === null) localStorage.removeItem(LOCAL_AUTH_PASSWORD_KEY);
+  else localStorage.setItem(LOCAL_AUTH_PASSWORD_KEY, String(password));
+  setLocalSessionActive(true);
+  syncLocalAuthSession(cleanUsername);
+  return true;
+}
+
+function openFightScreen() {
+  showSection('fight');
+  showScreen('main');
+}
+
+function renderStartModal(mode = 'menu', error = '') {
   if (!dom.authModalBody) return;
+  const isGuest = mode === 'guest';
   const isRegister = mode === 'register';
+  const isLogin = mode === 'login';
+  const selectedLabel = isGuest ? 'Jugar como invitado' : isRegister ? 'Registrarse' : isLogin ? 'Iniciar sesión' : 'Elige una opción';
+  const fieldTitle = isGuest ? 'Solo se pedirá tu nombre de usuario' : 'Introduce tus datos para continuar';
   dom.authModalBody.innerHTML = `
-    <div class="auth-modal-title">${isRegister ? 'Crear cuenta' : 'Iniciar sesión'}</div>
-    <div class="auth-mode-row">
-      <button type="button" class="auth-mode-btn ${!isRegister ? 'active' : ''}" data-auth-mode="login">Entrar</button>
-      <button type="button" class="auth-mode-btn ${isRegister ? 'active' : ''}" data-auth-mode="register">Registro</button>
+    <div class="start-modal-title">Fish Arena</div>
+    <div class="start-modal-subtitle">Elige cómo quieres entrar</div>
+    <div class="start-mode-row">
+      <button type="button" class="start-mode-btn ${isGuest ? 'active' : ''}" data-start-mode="guest">🕵️‍♂️ JUGAR COMO INVITADO</button>
+      <button type="button" class="start-mode-btn ${isRegister ? 'active' : ''}" data-start-mode="register">📝 REGISTRARSE</button>
+      <button type="button" class="start-mode-btn ${isLogin ? 'active' : ''}" data-start-mode="login">🔑 INICIAR SESIÓN</button>
     </div>
-    <form id="auth-form">
-      <input class="auth-field" id="auth-email" type="email" placeholder="Correo" autocomplete="email" required>
-      <input class="auth-field" id="auth-password" type="password" placeholder="Contraseña" autocomplete="current-password" required>
-      ${isRegister ? '<input class="auth-field" id="auth-username" type="text" placeholder="Nombre de usuario" autocomplete="nickname" maxlength="24" required>' : ''}
-      <div class="auth-error" id="auth-error">${error || ''}</div>
-      <div class="auth-hint">${isRegister ? 'El nombre de usuario debe ser único.' : 'Usa tu correo y contraseña para entrar.'}</div>
-      <button type="submit" class="auth-submit">${isRegister ? 'Crear cuenta' : 'Entrar'}</button>
-    </form>
+    <div class="start-panel">
+      <div class="start-panel-label">${selectedLabel}</div>
+      <div class="start-panel-copy">${fieldTitle}</div>
+      ${mode === 'menu' ? '<div class="start-panel-note">Selecciona una opción para continuar.</div>' : `
+        <form id="start-form">
+          <input class="auth-field" id="start-username" type="text" placeholder="Nombre de usuario" autocomplete="nickname" maxlength="24" required>
+          ${isGuest ? '' : '<input class="auth-field" id="start-password" type="password" placeholder="Contraseña" autocomplete="current-password" required>'}
+          <div class="auth-error" id="start-error">${error || ''}</div>
+          <button type="submit" class="auth-submit">Aceptar</button>
+        </form>
+      `}
+    </div>
   `;
-  const form = document.getElementById('auth-form');
-  const modeButtons = dom.authModalBody.querySelectorAll('[data-auth-mode]');
-  const emailInput = document.getElementById('auth-email');
-  const passwordInput = document.getElementById('auth-password');
-  const usernameInput = document.getElementById('auth-username');
-  const errorEl = document.getElementById('auth-error');
+  const modeButtons = dom.authModalBody.querySelectorAll('[data-start-mode]');
+  const form = document.getElementById('start-form');
+  const usernameInput = document.getElementById('start-username');
+  const passwordInput = document.getElementById('start-password');
+  const errorEl = document.getElementById('start-error');
   modeButtons.forEach(btn => {
     btn.addEventListener('pointerdown', e => {
       e.preventDefault();
-      renderAuthModal(btn.dataset.authMode || 'login');
+      renderStartModal(btn.dataset.startMode || 'menu');
     });
   });
   if (form) {
     form.addEventListener('submit', async e => {
       e.preventDefault();
-      const email = normalizeAuthEmail(emailInput?.value);
-      const password = String(passwordInput?.value || '').trim();
       const username = normalizeAuthUsername(usernameInput?.value || '');
-      if (!email || !password) {
-        if (errorEl) errorEl.textContent = 'Completa correo y contraseña.';
+      const password = String(passwordInput?.value || '').trim();
+      if (!username) {
+        if (errorEl) errorEl.textContent = 'Escribe un nombre de usuario.';
         return;
       }
-      const registry = getAccountsRegistry();
-      const existing = registry[email];
-      if (isRegister) {
-        if (!username) {
-          if (errorEl) errorEl.textContent = 'Escribe un nombre de usuario.';
-          return;
-        }
-        if (existing) {
-          if (errorEl) errorEl.textContent = 'Ese correo ya está registrado.';
-          return;
-        }
-        if (isUsernameTaken(username)) {
-          if (errorEl) errorEl.textContent = 'Ese nombre de usuario ya existe.';
-          return;
-        }
-        registry[email] = { email, password, username, uid: generateLocalUid() };
-        setAccountsRegistry(registry);
-        setStoredSession({ email, uid: registry[email].uid });
-        state.playerUsername = username;
-        updateHeaderUsernameDisplay();
-        await ensureSocialUserProfile();
+      if (isGuest) {
+        activateLocalAccess(username, null);
+        loadGame();
         saveGame();
         closeAuthModal();
+        openFightScreen();
         return;
       }
-      if (!existing || existing.password !== password) {
-        if (errorEl) errorEl.textContent = 'Correo o contraseña incorrectos.';
+      if (!password) {
+        if (errorEl) errorEl.textContent = 'Completa usuario y contraseña.';
         return;
       }
-      const uid = ensureAccountUid(existing);
-      registry[email] = existing;
-      setAccountsRegistry(registry);
-      setStoredSession({ email, uid });
-      state.playerUsername = normalizeAuthUsername(existing.username) || 'Jugador123';
-      updateHeaderUsernameDisplay();
-      await ensureSocialUserProfile();
-      if (!loadGame()) saveGame();
+      if (isRegister) {
+        activateLocalAccess(username, password);
+        loadGame();
+        saveGame();
+        closeAuthModal();
+        openFightScreen();
+        return;
+      }
+      const savedUser = normalizeAuthUsername(getLocalAuthUsername());
+      const savedPass = String(getLocalAuthPassword() || '');
+      if (savedUser !== username || savedPass !== password) {
+        if (errorEl) errorEl.textContent = 'Usuario o contraseña incorrectos';
+        return;
+      }
+      activateLocalAccess(savedUser, savedPass);
+      loadGame();
+      saveGame();
       closeAuthModal();
-      if (!normalizeAuthUsername(existing.username)) openUsernameModal();
+      openFightScreen();
     });
   }
-  if (emailInput) emailInput.value = '';
+  if (usernameInput) usernameInput.value = normalizeAuthUsername(getLocalAuthUsername() || '');
   if (passwordInput) passwordInput.value = '';
-  if (usernameInput) usernameInput.value = '';
-  setTimeout(() => emailInput?.focus(), 50);
+  setTimeout(() => usernameInput?.focus(), 50);
 }
 
-function openAuthModal(mode = 'login', error = '') {
-  renderAuthModal(mode, error);
+function openStartModal(mode = 'menu', error = '') {
+  renderStartModal(mode, error);
   if (dom.authModal) dom.authModal.classList.add('open');
   document.body.classList.add('modal-open');
 }
@@ -2447,7 +2510,7 @@ function renderUsernameModal(error = '') {
 
 function openUsernameModal() {
   if (!getCurrentAuthEmail()) {
-    openAuthModal();
+    openStartModal('menu');
     return;
   }
   renderUsernameModal();
@@ -2928,7 +2991,7 @@ function showScreen(screenName) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const map = { main: dom.screenMain, combat: dom.screenCombat, result: dom.screenResult };
   if (map[screenName]) map[screenName].classList.add('active');
-  state.screen = screenName;
+  state.screen = screenName || '';
 }
 
 /* ===== NAVEGACIÓN ===== */
@@ -3980,6 +4043,7 @@ function renderSettingsModal() {
     <div class="settings-action-list">
       <button type="button" class="settings-action-btn primary" id="settings-save-btn">💾 Guardar Partida</button>
       <button type="button" class="settings-action-btn danger" id="settings-reset-btn">🗑️ Nueva Partida</button>
+      <button type="button" class="settings-action-btn logout" id="settings-logout-btn">🚪 Cerrar Sesión</button>
     </div>
     <p class="settings-note">Solo opciones técnicas. Tu perfil y estadísticas están en el panel del jugador.</p>
   `;
@@ -3994,6 +4058,11 @@ function renderSettingsModal() {
   });
   const resetBtn = document.getElementById('settings-reset-btn');
   if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
+  const logoutBtn = document.getElementById('settings-logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('pointerdown', alPulsarCerrarSesion);
+    logoutBtn.addEventListener('click', alPulsarCerrarSesion);
+  }
 }
 
 function openSettingsModal() {
@@ -4006,6 +4075,34 @@ function openSettingsModal() {
 function closeSettingsModal() {
   dom.settingsModal.classList.remove('open');
   document.body.classList.remove('modal-open');
+}
+
+function goToAuthStart() {
+  showScreen('main');
+  closeSettingsModal();
+  closeProfileModal();
+  closeUsernameModal();
+  openStartModal('menu');
+}
+
+async function logoutCurrentAccount() {
+  console.log('Cerrando sesión...');
+  setLocalSessionActive(false);
+  state.authSession = null;
+  state.playerUsername = 'Jugador123';
+  state.coins = 0;
+  state.diamonds = 0;
+  state.cups = 0;
+  updateHeaderUsernameDisplay();
+  updateCoinDisplay();
+  updateDiamondDisplay();
+  updateCupsDisplay();
+  goToAuthStart();
+}
+
+async function alPulsarCerrarSesion(e) {
+  if (e) e.preventDefault();
+  await logoutCurrentAccount();
 }
 
 function getBattlePassRewardUiState(level, track) {
@@ -5448,7 +5545,7 @@ function setupEvents() {
   if (newsBtn) newsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openUpdateModal(); });
   const settingsBtn = document.getElementById('btn-settings');
   if (settingsBtn) settingsBtn.addEventListener('pointerdown', e => { e.preventDefault(); openSettingsModal(); });
-  if (dom.headerUserBox) dom.headerUserBox.addEventListener('pointerdown', e => { e.preventDefault(); if (!getCurrentAuthEmail()) openAuthModal(); else openProfileModal(); });
+  if (dom.headerUserBox) dom.headerUserBox.addEventListener('pointerdown', e => { e.preventDefault(); if (!getCurrentAuthEmail()) openStartModal('menu'); else openProfileModal(); });
   const headerBpBtn = document.getElementById('header-bp-btn');
   if (headerBpBtn) headerBpBtn.addEventListener('pointerdown', e => { e.preventDefault(); openBattlePassModal(); });
   const missionsBtn = document.getElementById('header-missions-btn');
@@ -5646,11 +5743,17 @@ function closeFriendsModal() {
 }
 
 function init() {
-  const hasSession = syncSessionAccount();
-  if (hasSession) loadGame();
-  else updateHeaderUsernameDisplay();
-  if (hasSession) ensureSocialUserProfile();
-  checkUpdatePopup();
+  const hasSession = isLocalSessionActive() && !!getLocalAuthUsername();
+  if (hasSession) {
+    syncLocalAuthSession(getLocalAuthUsername());
+    state.playerUsername = getLocalAuthUsername();
+    updateHeaderUsernameDisplay();
+    loadGame();
+    checkUpdatePopup();
+  } else {
+    state.playerUsername = 'Jugador123';
+    updateHeaderUsernameDisplay();
+  }
   ensureBattlePassState();
   checkBattlePassSeasonExpiration();
   startBattlePassTicker();
@@ -5670,9 +5773,13 @@ function init() {
   updateNotificationDots();
   updateBattlePassProgress();
   updateActionFooter();
-  showSection('fight');
-  showScreen('main');
-  if (!hasSession) openAuthModal('login');
+  if (hasSession) {
+    showSection('fight');
+    showScreen('main');
+  } else {
+    showScreen('main');
+    openStartModal('menu');
+  }
 }
 
 /* Auto‑save on page close to prevent rollback exploits */
