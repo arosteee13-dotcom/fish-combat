@@ -902,7 +902,7 @@ const state = {
   missionsActive: [],
   missionsClaimed: [],
   missionsBonusClaimed: false,
-  missionsRefreshTime: null,
+  lastResetDate: null,
   nivel_pase: 0,
   xp_pase: 0,
   tiene_premium: false,
@@ -1727,7 +1727,7 @@ function getSaveData() {
     missionsActive: state.missionsActive,
     missionsClaimed: state.missionsClaimed,
     missionsBonusClaimed: state.missionsBonusClaimed,
-    missionsRefreshTime: state.missionsRefreshTime,
+    lastResetDate: state.lastResetDate,
     nivel_pase: state.nivel_pase,
     xp_pase: state.xp_pase,
     tiene_premium: state.tiene_premium,
@@ -1957,7 +1957,7 @@ function loadGame() {
     if (Array.isArray(data.missionsActive)) state.missionsActive = data.missionsActive;
     if (Array.isArray(data.missionsClaimed)) state.missionsClaimed = data.missionsClaimed;
     if (typeof data.missionsBonusClaimed === 'boolean') state.missionsBonusClaimed = data.missionsBonusClaimed;
-    if (data.missionsRefreshTime) state.missionsRefreshTime = data.missionsRefreshTime;
+    if (data.lastResetDate) state.lastResetDate = data.lastResetDate;
     if (Number.isFinite(data.nivel_pase) && data.nivel_pase >= 0) state.nivel_pase = Math.floor(data.nivel_pase);
     if (Number.isFinite(data.xp_pase) && data.xp_pase >= 0) state.xp_pase = Math.floor(data.xp_pase);
     if (typeof data.tiene_premium === 'boolean') state.tiene_premium = data.tiene_premium;
@@ -2693,19 +2693,26 @@ function formatCountdown(ms) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-let offersCountdownInterval = null;
+let globalCountdownInterval = null;
 
-function updateOffersCountdown() {
-  const el = document.getElementById('offers-countdown');
-  if (!el) return;
+function updateCountdownDisplays() {
   const ms = getTimeToMidnight();
-  el.textContent = `⏳ ${formatCountdown(ms)}`;
+  const str = formatCountdown(ms);
+
+  const muelleEl = document.getElementById('countdown-muelle');
+  if (muelleEl) muelleEl.textContent = str;
+
+  const missionsEl = document.getElementById('countdown-misiones');
+  if (missionsEl) missionsEl.textContent = str;
+
+  const shopEl = document.getElementById('offers-countdown');
+  if (shopEl) shopEl.textContent = `Rotación en: ${str}`;
 }
 
-function startOffersCountdown() {
-  if (offersCountdownInterval) clearInterval(offersCountdownInterval);
-  updateOffersCountdown();
-  offersCountdownInterval = setInterval(updateOffersCountdown, 1000);
+function startGlobalCountdown() {
+  if (globalCountdownInterval) clearInterval(globalCountdownInterval);
+  updateCountdownDisplays();
+  globalCountdownInterval = setInterval(updateCountdownDisplays, 1000);
 }
 
 function renderShop() {
@@ -2777,7 +2784,7 @@ function renderShop() {
     dom.shopContent.appendChild(emptyMsg);
   }
 
-  startOffersCountdown();
+  startGlobalCountdown();
 
   /* ===== 3. OBJETOS EQUIPABLES ===== */
   const itemsTitle = document.createElement('h3');
@@ -2919,12 +2926,17 @@ function selectDailyMissions() {
   state.missionsClaimed = [];
   state.missionsBonusClaimed = false;
   state.tickets_muelle = 3;
-  state.missionsRefreshTime = Date.now();
 }
 
-function checkMissionsRefresh() {
-  const now = Date.now();
-  if (!state.missionsRefreshTime || now - state.missionsRefreshTime >= 86400000) {
+function getTodayDateStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function checkDailyReset() {
+  const today = getTodayDateStr();
+  if (state.lastResetDate !== today) {
+    state.lastResetDate = today;
     selectDailyMissions();
   }
   updateNotificationDots();
@@ -2961,18 +2973,13 @@ function claimMission(id) {
 }
 
 function getMissionsCountdown() {
-  if (!state.missionsRefreshTime) return '';
-  const elapsed = Date.now() - state.missionsRefreshTime;
-  const remaining = Math.max(0, 86400000 - elapsed);
-  const h = Math.floor(remaining / 3600000);
-  const m = Math.floor((remaining % 3600000) / 60000);
-  return `⏱ ${h}h ${m}m`;
+  return formatCountdown(getTimeToMidnight());
 }
 
 function updateMissionsButton() {
   const btn = document.getElementById('missions-btn');
   if (!btn) return;
-  checkMissionsRefresh();
+  checkDailyReset();
   const claimed = state.missionsClaimed.length;
   const total = state.missionsActive.length;
   const progress = btn.querySelector('.missions-btn-progress');
@@ -2983,7 +2990,7 @@ function updateMissionsButton() {
 }
 
 function renderMissionsModal() {
-  checkMissionsRefresh();
+  checkDailyReset();
   const body = dom.missionsModalBody;
   if (!body) return;
   const completed = getCompletedMissions();
@@ -3025,7 +3032,7 @@ function renderMissionsModal() {
       <button class="missions-modal-close" id="missions-modal-close-btn">✕</button>
     </div>
     <div class="missions-progress-section">
-      <div class="missions-countdown">${countdown ? `Nuevas misiones en: ${countdown}` : ''}</div>
+      <div class="missions-countdown">⏳ Nuevas misiones en: <span id="countdown-misiones">${countdown}</span></div>
       <div class="missions-progress-label">Progreso: ${claimedCount}/${total}</div>
       <div class="missions-progress-bar"><div class="missions-progress-fill" style="width:${pct}%"></div></div>
       <div class="missions-bonus-chest ${allClaimed ? 'ready' : ''}">
@@ -4171,7 +4178,7 @@ function resetAccount() {
   state.missionsActive = [];
   state.missionsClaimed = [];
   state.missionsBonusClaimed = false;
-  state.missionsRefreshTime = null;
+  state.lastResetDate = null;
   state.nivel_pase = 0;
   state.xp_pase = 0;
   state.tiene_premium = false;
@@ -4368,6 +4375,7 @@ function renderMuelleSection() {
           <div class="muelle-rule muelle-rule-boot"><span class="muelle-rule-icon">🥾</span><strong>Bota</strong><span>5 agujeros o más</span></div>
         </div>
         <div class="muelle-tickets">Tickets de acceso: <strong>${'🎟️'.repeat(state.tickets_muelle)}${'<span class="muelle-ticket-gastado">🎟️</span>'.repeat(3 - state.tickets_muelle)}</strong> (${state.tickets_muelle}/3)</div>
+        <div class="muelle-countdown">⏳ Nuevos tickets en: <span id="countdown-muelle">00:00:00</span></div>
         ${state.tickets_muelle <= 0 ? '<p class="muelle-no-coins">Muelle cerrado. Espera a la recarga diaria.</p>' : ''}
         <button class="btn-primary muelle-play-btn" id="muelle-play-btn" ${state.tickets_muelle <= 0 ? 'disabled' : ''}>¡Ir al Muelle!</button>
       </div>`;
@@ -4702,8 +4710,9 @@ function init() {
   ensureBattlePassState();
   checkBattlePassSeasonExpiration();
   startBattlePassTicker();
-  checkMissionsRefresh();
+  checkDailyReset();
   setupEvents();
+  startGlobalCountdown();
   renderFightContent();
   renderBank();
   renderInventory();
