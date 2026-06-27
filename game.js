@@ -899,18 +899,18 @@ const FISH_TYPES = [
 const ITEMS = [
   { id: 'fragmento_coral', name: 'Fragmento de Coral', rarity: 'common', imgPath: 'img/objetos/fragmento_coral.png', emoji: '🪸', description: 'Recupera 5% de los PS Máximos por turno.' },
   { id: 'diente_tiburon', name: 'Diente de Tiburón', rarity: 'rare', imgPath: 'img/objetos/diente_tiburon.png', emoji: '🦈', description: '+15% al daño físico infligido.' },
-  { id: 'caparazon_tortuga', name: 'Caparazón de Tortuga', rarity: 'rare', imgPath: 'img/objetos/caparazon_tortuga.png', emoji: '🐢', description: 'Aumenta la Defensa Física del portador en un 15%.' },
-  { id: 'tinta_concentrada', name: 'Tinta Concentrada', rarity: 'epic', imgPath: 'img/objetos/tinta_concentrada.png', emoji: '🐙', description: 'Reduce la precisión del rival un 20% los 2 primeros turnos.' },
-  { id: 'aleta_voladora', name: 'Aleta de Pez Volador', rarity: 'epic', imgPath: 'img/objetos/aleta_pez.png', emoji: '⚡', description: '+10% a la Velocidad base del portador.' },
+  { id: 'caparazon_tortuga', name: 'Caparazón de Tortuga', rarity: 'rare', imgPath: 'img/objetos/caparazon_tortuga.png', emoji: '🐢', description: 'Aumenta la Defensa Física del portador en un 20%.' },
+  { id: 'tinta_concentrada', name: 'Tinta Concentrada', rarity: 'epic', imgPath: 'img/objetos/tinta_concentrada.png', emoji: '🐙', description: 'Reduce la precisión del rival un 40% los 2 primeros turnos.' },
+  { id: 'aleta_voladora', name: 'Aleta de Pez Volador', rarity: 'epic', imgPath: 'img/objetos/aleta_pez.png', emoji: '⚡', description: '+30% a la Velocidad base del portador.' },
   { id: 'obj_concha_reforzada', name: 'Concha Reforzada', rarity: 'common', imgPath: 'img/objetos/concha_reforzada.png', emoji: '🐚', description: 'Un fragmento de concha gruesa que absorbe los impactos. Aumenta la Defensa Física un +10%.' },
   { id: 'obj_escama_brillante', name: 'Escama Brillante', rarity: 'common', imgPath: 'img/objetos/escama_brillante.png', emoji: '✨', description: 'Una escama pulida que refleja la luz. Aumenta la Velocidad un +10% y otorga +5% de Esquiva.' },
   { id: 'obj_coral_fuego', name: 'Coral de Fuego', rarity: 'rare', imgPath: 'img/objetos/coral_fuego.png', emoji: '🪸', description: 'Coral urticante. Los ataques Especiales ganan un 15% de probabilidad de infligir Veneno por 2 turnos.' },
-  { id: 'obj_toxina_concentrada', name: 'Toxina Concentrada', rarity: 'epic', imgPath: 'img/objetos/toxina_concentrada.png', emoji: '🧪', description: 'Veneno puro. Los estados alterados (Veneno/Sangrado/Aturdir) causados por este pez no se pueden mitigar.' },
+  { id: 'obj_toxina_concentrada', name: 'Toxina Concentrada', rarity: 'epic', imgPath: 'img/objetos/toxina_concentrada.png', emoji: '🧪', description: 'Veneno puro y letal. Al equiparlo, todos los estados alterados que cause este pez (Veneno, Sangrado o Aturdimiento) ignoran por completo las defensas, inmunidades o curaciones del rival.' },
   { id: 'obj_perla_arrecife', name: 'Perla del Arrecife', rarity: 'epic', imgPath: 'img/objetos/perla_arrecife.png', emoji: '🔮', description: 'Joya mística. Al iniciar el combate, otorga al portador un Escudo protector equivalente al 20% de sus PS máximos.' },
   { id: 'concha_comun', name: 'Concha Común', rarity: 'common', imgPath: 'img/objetos/concha_comun.png', emoji: '🐚', description: 'Una concha resistente que ofrece protección básica. Reduce el daño físico recibido un 5%.' },
-  { id: 'anzuelo_suerte', name: 'Anzuelo de la Suerte', rarity: 'rare', imgPath: 'img/objetos/anzuelo_suerte.png', emoji: '🎣', description: 'Un anzuelo bañado en buena fortuna. Aumenta la probabilidad de golpe crítico un 10%.' },
+  { id: 'anzuelo_suerte', name: 'Anzuelo de la Suerte', rarity: 'rare', imgPath: 'img/objetos/anzuelo_suerte.png', emoji: '🎣', description: 'Un anzuelo bañado en buena fortuna. Aumenta la probabilidad de golpe crítico un 15%.' },
   { id: 'coral_defensivo', name: 'Coral Defensivo', rarity: 'common', imgPath: 'img/objetos/coral_defensivo.png', emoji: '🪸', description: 'Un coral duro como la piedra. Otorga un escudo del 10% de los PS máximos al iniciar el combate.' },
-  { id: 'perla_abismo', name: 'Perla del Abismo', rarity: 'epic', imgPath: 'img/objetos/perla_abismo.png', emoji: '🌑', description: 'Una perla oscura nacida en las fosas más profundas. Aumenta la Defensa Especial un 20%.' },
+  { id: 'perla_abismo', name: 'Perla del Abismo', rarity: 'epic', imgPath: 'img/objetos/perla_abismo.png', emoji: '🌑', description: 'Una perla oscura nacida en las fosas más profundas. Aumenta la Defensa Especial un 30%.' },
   { id: 'tridente_roto', name: 'Tridente Roto', rarity: 'rare', imgPath: 'img/objetos/tridente_roto.png', emoji: '🔱', description: 'Un tridente astillado pero aún letal. Aumenta el Ataque Físico un 15%.' }
 ];
 
