@@ -1343,12 +1343,17 @@ function getItemMultiplier(fishId, itemId) {
 }
 
 /* ===== UPGRADE ===== */
-const UPGRADE_BASE = { common: 50, rare: 100, epic: 250, legendary: 500 };
+const UPGRADE_COST_TABLE = {
+  common:   [0, 50, 150, 400, 1000, 2000, 4000, 8000, 15000, 30000, 60000, 120000],
+  rare:     [0, 150, 350, 750, 1500, 3000, 6000, 12000, 22000, 45000, 90000, 180000],
+  epic:     [0, 400, 900, 2000, 4500, 8000, 15000, 25000, 45000, 80000, 160000, 320000],
+  legendary:[0, 1000, 2500, 5000, 10000, 18000, 30000, 50000, 80000, 120000, 240000, 480000]
+};
 
 function getUpgradeCost(level, rarity) {
   if (level >= MAX_LEVEL) return null;
-  const base = UPGRADE_BASE[rarity] || 100;
-  return base * Math.pow(2, level - 1);
+  const table = UPGRADE_COST_TABLE[rarity] || UPGRADE_COST_TABLE.common;
+  return table[level] || null;
 }
 
 async function upgradeFish(fishId) {
