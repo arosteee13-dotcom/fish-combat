@@ -756,6 +756,142 @@ const FISH_TYPES = [
       name: 'Kraken Desatado',
       description: 'Al bajar del 40% de vida, se limpia de estados alterados y su ataque sube un +30%.'
     }
+  },
+  {
+    id: 'bacalao',
+    name: 'Bacalao Ártico',
+    rarity: 'common',
+    imgPath: 'img/bacalao_artico.png',
+    emoji: '🐟',
+    maxHp: 6, atk: 5, def: 4, spa: 4, spd: 5, spe: 12,
+    growth: { maxHp: 0.6, atk: 0.5, def: 0.4, spa: 0.4, spd: 0.5, spe: 1.2 },
+    attacks: [
+      { name: 'Embestida Gélida', power: 30, emoji: '❄️', categoria: 'Fisico' },
+      { name: 'Corriente Ártica', power: 40, emoji: '🌊', categoria: 'Fisico', efecto: { probabilidad: 0.1, estado: 'spe_reduction', turns: 2, amount: 1 } }
+    ],
+    passive: {
+      name: 'Sangre Anticongelante',
+      description: 'Al inicio del combate, obtiene inmunidad total contra estados de congelación o ralentización.'
+    }
+  },
+  {
+    id: 'pez_hielo',
+    name: 'Pez Hielo Austral',
+    rarity: 'common',
+    imgPath: 'img/pez_hielo_austral.png',
+    emoji: '🧊',
+    maxHp: 5, atk: 4, def: 6, spa: 7, spd: 8, spe: 10,
+    growth: { maxHp: 0.5, atk: 0.4, def: 0.6, spa: 0.7, spd: 0.8, spe: 1.0 },
+    attacks: [
+      { name: 'Mordisco Pálido', power: 35, emoji: '🦷', categoria: 'Fisico' },
+      { name: 'Destello Glacial', power: 45, emoji: '💡', categoria: 'Especial', efecto: { probabilidad: 0.3, estado: 'precision_reducida', turns: 2 } }
+    ],
+    passive: {
+      name: 'Cuerpo Translúcido',
+      description: 'Reduce un 15% el daño del primer ataque recibido en el combate.'
+    }
+  },
+  {
+    id: 'calamar_cristal',
+    name: 'Calamar de Cristal',
+    rarity: 'rare',
+    imgPath: 'img/calamar_cristal.png',
+    emoji: '🦑',
+    maxHp: 7, atk: 6, def: 5, spa: 10, spd: 7, spe: 11,
+    growth: { maxHp: 0.7, atk: 0.6, def: 0.5, spa: 1.0, spd: 0.7, spe: 1.1 },
+    attacks: [
+      { name: 'Chorros de Tinta Fría', power: 50, emoji: '🖤', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'sangrado', turns: 2 } },
+      { name: 'Constricción Abisal', power: 45, emoji: '🌀', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Manto de Escarcha',
+      description: 'Cada vez que usa un ataque especial, aumenta su velocidad en +1 punto durante ese turno.'
+    }
+  },
+  {
+    id: 'narval',
+    name: 'Narval',
+    rarity: 'rare',
+    imgPath: 'img/narval.png',
+    emoji: '🦄',
+    maxHp: 12, atk: 14, def: 9, spa: 4, spd: 8, spe: 10,
+    growth: { maxHp: 1.2, atk: 1.4, def: 0.9, spa: 0.4, spd: 0.8, spe: 1.0 },
+    attacks: [
+      { name: 'Perforación de Marfil', power: 65, emoji: '🗡️', categoria: 'Fisico' },
+      { name: 'Onda de Choque', power: 40, emoji: '💥', categoria: 'Especial', efecto: { probabilidad: 0.3, estado: 'aturdido' } }
+    ],
+    passive: {
+      name: 'Perforador de Hielo',
+      description: 'Sus ataques físicos ignoran el 20% de la Defensa física del rival gracias a su colmillo.'
+    }
+  },
+  {
+    id: 'leopardo_marino',
+    name: 'Leopardo Marino',
+    rarity: 'epic',
+    imgPath: 'img/leopardo_marino.png',
+    emoji: '🐆',
+    maxHp: 13, atk: 16, def: 10, spa: 5, spd: 9, spe: 17,
+    growth: { maxHp: 1.3, atk: 1.6, def: 1.0, spa: 0.5, spd: 0.9, spe: 1.7 },
+    attacks: [
+      { name: 'Desgarro Feroz', power: 75, emoji: '🦷', categoria: 'Fisico', efecto: { probabilidad: 1, estado: 'sangrado', turns: 3 } },
+      { name: 'Frenesí Acuático', power: 55, emoji: '🌊', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Cazador del Glaciar',
+      description: 'Si la velocidad del Leopardo es mayor que la del rival, su probabilidad de golpe crítico aumenta un 15%.'
+    }
+  },
+  {
+    id: 'tiburon_groenlandia',
+    name: 'Tiburón de Groenlandia',
+    rarity: 'epic',
+    imgPath: 'img/tiburon_groenlandia.png',
+    emoji: '🦈',
+    maxHp: 20, atk: 14, def: 15, spa: 6, spd: 14, spe: 2,
+    growth: { maxHp: 2.0, atk: 1.4, def: 1.5, spa: 0.6, spd: 1.4, spe: 0.2 },
+    attacks: [
+      { name: 'Mandíbula Ancestral', power: 70, emoji: '🦴', categoria: 'Fisico', efecto: { probabilidad: 1, estado: 'def_reduction', turns: 3, amount: 2 } },
+      { name: 'Piel Blindada', power: 0, emoji: '🛡️', categoria: 'Efecto', selfBuff: { stat: 'spd', amount: 3, turns: 99 } }
+    ],
+    passive: {
+      name: 'Longevidad Criogénica',
+      description: 'Una masa de vida blindada. Recupera un 5% de su vida máxima al final de cada turno.'
+    }
+  },
+  {
+    id: 'orca',
+    name: 'Orca',
+    rarity: 'legendary',
+    imgPath: 'img/orca.png',
+    emoji: '🐋',
+    maxHp: 18, atk: 19, def: 14, spa: 12, spd: 12, spe: 16,
+    growth: { maxHp: 1.8, atk: 1.9, def: 1.4, spa: 1.2, spd: 1.2, spe: 1.6 },
+    attacks: [
+      { name: 'Embestida Alfa', power: 85, emoji: '💥', categoria: 'Fisico' },
+      { name: 'Canto Hidroacústico', power: 70, emoji: '🎵', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'atk_reduction', turns: 2, amount: 0.15 } }
+    ],
+    passive: {
+      name: 'Estrategia de Manada',
+      description: 'Cada ataque consecutivo que acierte con éxito aumenta su daño total en un +10% (acumulable hasta 3 veces).'
+    }
+  },
+  {
+    id: 'medusa_melena_artica',
+    name: 'Medusa Melena de León Ártica',
+    rarity: 'legendary',
+    imgPath: 'img/medusa_melena_artica.png',
+    emoji: '🪼',
+    maxHp: 16, atk: 4, def: 16, spa: 19, spd: 18, spe: 3,
+    growth: { maxHp: 1.6, atk: 0.4, def: 1.6, spa: 1.9, spd: 1.8, spe: 0.3 },
+    attacks: [
+      { name: 'Aguijón Congelante', power: 90, emoji: '❄️', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'spe_reduction', turns: 2, amount: 2 } },
+      { name: 'Abrazo de la Melena', power: 75, emoji: '🫳', categoria: 'Fisico', drain: 0.2 }
+    ],
+    passive: {
+      name: 'Tentáculos Kilométricos',
+      description: 'Cualquier enemigo que ejecute un ataque físico contra la medusa recibe automáticamente un contragolpe de veneno que drena vida en cada turno.'
+    }
   }
 ];
 
@@ -916,14 +1052,16 @@ const ARENA_CUP_CHANGES = {
   1: { win: 30, lose: -5 },
   2: { win: 30, lose: -10 },
   3: { win: 30, lose: -20 },
-  4: { win: 30, lose: -25 }
+  4: { win: 30, lose: -25 },
+  5: { win: 30, lose: -30 }
 };
 
 const ARENA_CONFIG = {
   1: { name: 'La Orilla', icon: '🏖️', minCups: 0, maxCups: 300, cssClass: 'arena-beach', winGold: 50, loseGold: 10, minLevel: 1, maxLevel: 3 },
   2: { name: 'Arrecife de Coral', icon: '🪸', minCups: 300, maxCups: 600, cssClass: 'arena-coral', winGold: 80, loseGold: 15, minLevel: 3, maxLevel: 6 },
   3: { name: 'Mar Abierto', icon: '🌊', minCups: 600, maxCups: 900, cssClass: 'arena-temple', winGold: 120, loseGold: 20, minLevel: 6, maxLevel: 9 },
-  4: { name: 'Las Profundidades', icon: '🌌', minCups: 900, maxCups: Infinity, cssClass: 'arena-depths', winGold: 200, loseGold: 30, minLevel: 9, maxLevel: 12 }
+  4: { name: 'Las Profundidades', icon: '🌌', minCups: 900, maxCups: 1200, cssClass: 'arena-depths', winGold: 200, loseGold: 30, minLevel: 9, maxLevel: 12 },
+  5: { name: 'Aguas Heladas', icon: '❄️', minCups: 1200, maxCups: Infinity, cssClass: 'arena-ice', winGold: 300, loseGold: 40, minLevel: 12, maxLevel: 15 }
 };
 
 /* ===== GAME STATE ===== */
@@ -1103,8 +1241,17 @@ function getTrophyBadges() {
       progress: `${Math.min(totalCups, cupTarget)}/${cupTarget} copas`,
       unlocked: totalCups >= cupTarget,
       pct: cupTarget > 0 ? Math.round((Math.min(totalCups, cupTarget) / cupTarget) * 100) : 0
-    }
-  ];
+  },
+  {
+    id: 'superviviente',
+    icon: '🛡️',
+    name: 'Superviviente del Arrecife',
+    desc: `Completa las 20 oleadas del Modo Supervivencia`,
+    progress: `${state.survivalMaxWaves}/20 oleadas`,
+    unlocked: state.survivalMaxWaves >= 20,
+    pct: Math.round((Math.min(state.survivalMaxWaves, 20) / 20) * 100)
+  }
+];
 }
 
 function getArenaFishPool(arenaId) {
@@ -3123,6 +3270,7 @@ function startBattlePassTicker() {
 function getArenaConfig(arenaId) { return ARENA_CONFIG[arenaId] || ARENA_CONFIG[1]; }
 
 function getArenaForCups(cups) {
+  if (cups >= 1201) return 5;
   if (cups >= 901) return 4;
   if (cups >= 601) return 3;
   if (cups >= 301) return 2;
@@ -3250,6 +3398,16 @@ const ARENA_FISH = {
     { fishId: 'tiburon_duende' },
     { fishId: 'engullidor_negro' },
     { fishId: 'kraken' }
+  ],
+  5: [
+    { fishId: 'bacalao' },
+    { fishId: 'pez_hielo' },
+    { fishId: 'calamar_cristal' },
+    { fishId: 'narval' },
+    { fishId: 'leopardo_marino' },
+    { fishId: 'tiburon_groenlandia' },
+    { fishId: 'orca' },
+    { fishId: 'medusa_melena_artica' }
   ]
 };
 
@@ -3260,7 +3418,7 @@ function renderArenaModal() {
     <div class="arena-modal-header arena-detail-header">
       <div>
         <span class="arena-modal-title">🏟️ Mapa Global de Arenas</span>
-        <div class="arena-detail-subtitle">Desliza para ver las 4 zonas</div>
+        <div class="arena-detail-subtitle">Desliza para ver las 5 zonas</div>
       </div>
       <button class="arena-modal-close" id="arena-modal-close-btn">✕</button>
     </div>

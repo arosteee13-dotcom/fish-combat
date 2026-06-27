@@ -499,6 +499,7 @@ body.modal-open .section.active { overflow: hidden; }
 #app.arena-coral { background: linear-gradient(180deg, #1a0628 0%, #2d1045 40%, #4a2068 100%); }
 #app.arena-temple { background: linear-gradient(180deg, #0a1a0a 0%, #0d2d10 40%, #1a4a2a 100%); }
 #app.arena-depths { background: linear-gradient(180deg, #050510 0%, #0a0a1a 40%, #0f0a2a 100%); }
+#app.arena-ice { background: linear-gradient(180deg, #0a1a2a 0%, #1a3a4a 40%, #c8e8f8 100%); }
 
 /* ===== LUCHAR ===== */
 .fight-content {
