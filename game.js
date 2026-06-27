@@ -1152,19 +1152,27 @@ function getUpgradeCost(level, rarity) {
   return base * Math.pow(2, level - 1);
 }
 
-function upgradeFish(fishId) {
+async function upgradeFish(fishId) {
   const fish = getFishById(fishId);
   if (!fish) return;
   const level = getFishLevel(fishId);
   const cost = getUpgradeCost(level, fish.rarity);
   if (cost === null) { alert('¡Este pez ya está en el nivel máximo!'); return; }
   if (state.coins < cost) { alert('Monedas insuficientes'); return; }
+  const prevCoins = state.coins;
+  const prevLevel = state.fishLevels[fishId];
   state.coins -= cost;
   state.fishLevels[fishId] = level + 1;
+  const saved = await forceCloudSave('upgrade_fish');
+  if (!saved) {
+    state.coins = prevCoins;
+    state.fishLevels[fishId] = prevLevel;
+    alert('No se pudo confirmar la mejora en la nube. Inténtalo de nuevo.');
+    return;
+  }
   updateCoinDisplay();
   trackMission('level_up_fish');
   showFishDetail(fishId);
-  scheduleAutosave(0);
 }
 
 /* ===== DAMAGE FORMULA ===== */
@@ -1921,13 +1929,15 @@ async function persistCloudSave(data) {
   const uid = getCurrentAuthUid();
   const profileRef = firebaseProgressDoc(uid);
   if (!profileRef) return false;
+  const localSavedAt = new Date();
   await profileRef.set({
     username: uid,
     usernameLower: normalizeFriendSearch(uid),
     saveData: data,
     savedAt: window.firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
-  localStorage.setItem(getCloudSaveKey(uid), JSON.stringify(data));
+  localStorage.setItem(getCloudSaveKey(uid), JSON.stringify({ ...data, savedAt: localSavedAt.toISOString() }));
+  state.lastSavedAt = localSavedAt;
   return true;
 }
 
@@ -2001,16 +2011,36 @@ async function saveGame({ manual = false } = {}) {
   if (username) localStorage.setItem(LOCAL_AUTH_USERNAME_KEY, username);
   const uid = getCurrentAuthUid();
   if (uid) {
-    localStorage.setItem(getCloudSaveKey(uid), JSON.stringify(data));
-    if (isCloudSessionActive()) {
-      await persistCloudSave(data);
-    }
+    const saved = await persistCloudSave(data);
+    if (!saved) return false;
   } else if (isGuestSessionActive()) {
-    localStorage.setItem(GUEST_SAVE_KEY, JSON.stringify(data));
+    const localSavedAt = new Date();
+    localStorage.setItem(GUEST_SAVE_KEY, JSON.stringify({ ...data, savedAt: localSavedAt.toISOString() }));
+    state.lastSavedAt = localSavedAt;
   }
-  state.lastSavedAt = new Date();
   updateSaveTimestampDisplay();
   return true;
+}
+
+async function forceCloudSave(reason = '') {
+  const data = getSaveData();
+  const uid = getCurrentAuthUid();
+  if (uid && isCloudSessionActive()) {
+    try {
+      const saved = await persistCloudSave(data);
+      if (!saved) console.warn('Forced cloud save failed', reason);
+      return saved;
+    } catch (error) {
+      console.warn('Forced cloud save error', reason, error);
+      return false;
+    }
+  }
+  if (isGuestSessionActive()) {
+    const localSavedAt = new Date();
+    localStorage.setItem(GUEST_SAVE_KEY, JSON.stringify({ ...data, savedAt: localSavedAt.toISOString() }));
+    return true;
+  }
+  return false;
 }
 
 function scheduleAutosave() {}
@@ -3049,6 +3079,7 @@ const ARENA_FISH = {
     { fishId: 'berberecho' },
     { fishId: 'pez_aguja' },
     { fishId: 'medusa_aguamala' },
+    { fishId: 'estrella' },
     { fishId: 'anguila' }
   ],
   2: [
@@ -3574,7 +3605,7 @@ function showFishDetail(fishId) {
   if (selBtn) selBtn.addEventListener('pointerdown', e => { e.preventDefault(); selectFish(fishId); renderBank(); closeFishModal(); });
 
   const upgBtn = dom.fishModalBody.querySelector('.btn-upgrade');
-  if (upgBtn && !upgBtn.disabled) upgBtn.addEventListener('pointerdown', e => { e.preventDefault(); upgradeFish(fishId); });
+  if (upgBtn && !upgBtn.disabled) upgBtn.addEventListener('pointerdown', async e => { e.preventDefault(); await upgradeFish(fishId); });
 
   dom.fishModalBody.querySelector('.btn-close-modal').addEventListener('pointerdown', e => { e.preventDefault(); closeFishModal(); });
 
@@ -3828,9 +3859,9 @@ function renderShop() {
         <div class="daily-offer-price">🪙 ${price}</div>
         <button class="btn-buy daily-buy-btn" ${canAfford ? '' : 'disabled'}>Comprar</button>`;
       if (canAfford) {
-        card.querySelector('.daily-buy-btn').addEventListener('pointerdown', e => {
+        card.querySelector('.daily-buy-btn').addEventListener('pointerdown', async e => {
           e.preventDefault();
-          buyDailyOfferFish(fish.id, price);
+          await buyDailyOfferFish(fish.id, price);
         });
       }
       dom.shopContent.appendChild(card);
@@ -3907,9 +3938,9 @@ function renderShop() {
       </div>
       <button class="btn-buy chest-buy-btn" ${canAfford ? '' : 'disabled'}>Abrir</button>`;
     if (canAfford) {
-      card.querySelector('.chest-buy-btn').addEventListener('pointerdown', e => {
+      card.querySelector('.chest-buy-btn').addEventListener('pointerdown', async e => {
         e.preventDefault();
-        openChest(chest.id);
+        await openChest(chest.id);
       });
     }
     dom.shopContent.appendChild(card);
@@ -4267,8 +4298,9 @@ function renderSettingsModal() {
   const saveBtn = document.getElementById('settings-save-btn');
   if (saveBtn) saveBtn.addEventListener('pointerdown', async e => {
     e.preventDefault();
-    await saveGame({ manual: true });
+    const saved = await saveGame({ manual: true });
     renderSettingsModal();
+    alert(saved ? 'Partida guardada correctamente.' : 'No se pudo guardar en Firebase. Revisa la conexión o la configuración.');
   });
   const resetBtn = document.getElementById('settings-reset-btn');
   if (resetBtn) resetBtn.addEventListener('pointerdown', e => { e.preventDefault(); openResetModal(); });
@@ -4334,16 +4366,24 @@ function getBattlePassRewardUiState(level, track) {
 
 const PRECIO_PASE_PREMIUM = 1000;
 
-function comprarPasePremium() {
+async function comprarPasePremium() {
   if (state.tiene_premium) return;
   if (state.diamonds < PRECIO_PASE_PREMIUM) {
     alert('¡No tienes suficientes gemas! Necesitas 1000 gemas para activar el Pase Premium. ¡Sigue subiendo de arena y abriendo cofres! 💎');
     return;
   }
+  const prevDiamonds = state.diamonds;
   state.diamonds -= PRECIO_PASE_PREMIUM;
   state.tiene_premium = true;
   updateDiamondDisplay();
-  saveGame();
+  const saved = await forceCloudSave('compra_premium');
+  if (!saved) {
+    state.diamonds = prevDiamonds;
+    state.tiene_premium = false;
+    updateDiamondDisplay();
+    alert('No se pudo confirmar la compra en la nube. Inténtalo de nuevo.');
+    return;
+  }
   alert('¡Gracias por tu compra! Pase Premium activado 🌊');
   renderBattlePassModal();
 }
@@ -4396,9 +4436,9 @@ function renderBattlePassModal() {
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeBattlePassModal(); });
   const buyPremiumBtn = document.getElementById('battle-pass-buy-btn');
   if (buyPremiumBtn) {
-    buyPremiumBtn.addEventListener('pointerdown', e => {
+    buyPremiumBtn.addEventListener('pointerdown', async e => {
       e.preventDefault();
-      comprarPasePremium();
+      await comprarPasePremium();
     });
   }
   body.querySelectorAll('[data-bp-claim]').forEach(btn => {
@@ -4441,33 +4481,51 @@ function closeProfileModal() {
   document.body.classList.remove('modal-open');
 }
 
-function buyDailyOfferFish(fishId, price) {
-  if (state.unlockedFish.includes(fishId)) { alert('Ya tienes este pez.'); return; }
-  if (state.coins < price) { alert('Monedas insuficientes'); return; }
+async function buyDailyOfferFish(fishId, price) {
+  if (state.unlockedFish.includes(fishId)) { alert('Ya tienes este pez.'); return false; }
+  if (state.coins < price) { alert('Monedas insuficientes'); return false; }
+  const prevCoins = state.coins;
   state.coins -= price;
   state.unlockedFish.push(fishId);
+  const saved = await forceCloudSave('buy_fish');
+  if (!saved) {
+    state.coins = prevCoins;
+    state.unlockedFish = state.unlockedFish.filter(id => id !== fishId);
+    alert('No se pudo confirmar la compra en la nube. Inténtalo de nuevo.');
+    return false;
+  }
   updateCoinDisplay();
   renderBank();
   renderShop();
   checkCollectionMasterAchievement();
-  scheduleAutosave(0);
+  return true;
 }
 
-function buyItem(itemId, price) {
-  if (state.items.includes(itemId)) { alert('Ya tienes este objeto.'); return; }
-  if (state.coins < price) { alert('Monedas insuficientes'); return; }
+async function buyItem(itemId, price) {
+  if (state.items.includes(itemId)) { alert('Ya tienes este objeto.'); return false; }
+  if (state.coins < price) { alert('Monedas insuficientes'); return false; }
   state.coins -= price;
   state.items.push(itemId);
+  const saved = await forceCloudSave('buy_item');
+  if (!saved) {
+    state.coins += price;
+    state.items = state.items.filter(id => id !== itemId);
+    alert('No se pudo confirmar la compra en la nube. Inténtalo de nuevo.');
+    return false;
+  }
   updateCoinDisplay();
   renderShop();
   renderInventory();
   scheduleAutosave(0);
+  return true;
 }
 
-function openChest(chestId) {
+async function openChest(chestId) {
   const chest = CHEST_TYPES[chestId];
   if (!chest) return;
 
+  const prevCoins = state.coins;
+  const prevDiamonds = state.diamonds;
   if (chest.costType === 'coins') {
     if (state.coins < chest.cost) return;
     state.coins -= chest.cost;
@@ -4478,7 +4536,15 @@ function openChest(chestId) {
   updateCoinDisplay();
   updateDiamondDisplay();
   renderShop();
-  scheduleAutosave(0);
+  const saved = await forceCloudSave('buy_chest');
+  if (!saved) {
+    state.coins = prevCoins;
+    state.diamonds = prevDiamonds;
+    updateCoinDisplay();
+    updateDiamondDisplay();
+    alert('No se pudo confirmar la compra del cofre en la nube. Inténtalo de nuevo.');
+    return;
+  }
 
   const goldAmount = randInt(chest.goldRange[0], chest.goldRange[1]);
   let diamondAmount = 0;
@@ -4749,10 +4815,12 @@ function openItemModal(itemId, cost) {
 
   const buyBtn = document.getElementById('item-buy-btn');
   if (buyBtn && canAfford && !alreadyOwned) {
-    buyBtn.addEventListener('pointerdown', e => {
+    buyBtn.addEventListener('pointerdown', async e => {
       e.preventDefault();
-      buyItem(item.id, cost);
-      closeItemModal();
+      buyBtn.disabled = true;
+      const bought = await buyItem(item.id, cost);
+      if (bought) closeItemModal();
+      else buyBtn.disabled = false;
     });
   }
 
@@ -4795,11 +4863,22 @@ function openGemPackModal(pack) {
 
   const confirmBtn = document.getElementById('gem-confirm-btn');
   if (confirmBtn && canAfford) {
-    confirmBtn.addEventListener('pointerdown', e => {
+    confirmBtn.addEventListener('pointerdown', async e => {
       e.preventDefault();
       if (state.diamonds < pack.cost) return;
+      const prevDiamonds = state.diamonds;
+      const prevCoins = state.coins;
       state.diamonds -= pack.cost;
       state.coins += pack.reward;
+      const saved = await forceCloudSave('gem_exchange');
+      if (!saved) {
+        state.diamonds = prevDiamonds;
+        state.coins = prevCoins;
+        updateCoinDisplay();
+        updateDiamondDisplay();
+        alert('No se pudo confirmar el canje en la nube. Inténtalo de nuevo.');
+        return;
+      }
       updateCoinDisplay();
       updateDiamondDisplay();
       showCoinReward(pack.reward);
@@ -4830,7 +4909,12 @@ function imgTagSmall(src, alt, fallbackEmoji) {
 }
 
 /* ===== COMBATE ===== */
-function initCombat() {
+async function initCombat() {
+  const saved = await forceCloudSave('combat_start');
+  if (!saved) {
+    alert('No se pudo iniciar la batalla. Verifica tu conexión e inténtalo de nuevo.');
+    return false;
+  }
   const playerFishId = state.selectedFishId;
   const playerBase = getFishById(playerFishId);
   const playerLevel = getFishLevel(playerFishId);
@@ -4917,6 +5001,7 @@ function initCombat() {
   dom.playerSpd.textContent = `SPE: ${state.player.type.spe}`;
   dom.logMessage.textContent = '¡Comienza la batalla!';
   setTimeout(() => startTurn(), 600);
+  return true;
 }
 
 function renderCombat() {
@@ -5522,7 +5607,9 @@ function closeMuelleBetModal() {
   document.body.classList.remove('modal-open');
 }
 
-function initMuelle(bet) {
+async function initMuelle(bet) {
+  const prevTickets = state.tickets_muelle;
+  const prevCoins = state.coins;
   state.tickets_muelle = Math.max(0, state.tickets_muelle - 1);
   const round = 1;
   state.muelle = {
@@ -5540,9 +5627,19 @@ function initMuelle(bet) {
     result: null
   };
   state.coins -= bet;
-  saveGame();
+  const saved = await forceCloudSave('muelle_ticket_spent');
+  if (!saved) {
+    state.tickets_muelle = prevTickets;
+    state.coins = prevCoins;
+    state.muelle = null;
+    updateCoinDisplay();
+    alert('No se pudo confirmar el uso del ticket en la nube. Inténtalo de nuevo.');
+    renderMuelleSection();
+    return false;
+  }
   updateCoinDisplay();
   renderMuelleSection();
+  return true;
 }
 
 function renderMuelleSection() {
@@ -5725,11 +5822,11 @@ function endMuelle() {
 
 /* ===== EVENTOS ===== */
 function setupEvents() {
-  dom.btnBattle.addEventListener('pointerdown', e => {
+  dom.btnBattle.addEventListener('pointerdown', async e => {
     e.preventDefault();
     if (!state.selectedFishId || state.isAnimating) return;
     if (!state.unlockedFish.includes(state.selectedFishId)) return;
-    initCombat();
+    await initCombat();
   });
   const actionFishBtn = document.getElementById('action-fish-btn');
   if (actionFishBtn) actionFishBtn.addEventListener('pointerdown', e => { e.preventDefault(); showFishDetail(state.selectedFishId); });
@@ -5847,7 +5944,7 @@ function setupEvents() {
   }
   const muelleBetModal = document.getElementById('muelle-bet-modal');
   if (muelleBetModal) {
-    muelleBetModal.addEventListener('pointerdown', e => {
+    muelleBetModal.addEventListener('pointerdown', async e => {
       const targetEl = getEventTargetElement(e.target);
       if (e.target === muelleBetModal || e.target.classList.contains('muelle-bet-modal-backdrop')) {
         e.preventDefault(); closeMuelleBetModal(); return;
@@ -5866,8 +5963,8 @@ function setupEvents() {
           syncMuelleBetForm();
           return;
         }
-        closeMuelleBetModal();
-        initMuelle(validation.bet);
+        const started = await initMuelle(validation.bet);
+        if (started) closeMuelleBetModal();
         return;
       }
     });
@@ -5876,7 +5973,7 @@ function setupEvents() {
       if (!targetEl || targetEl.id !== 'muelle-bet-input') return;
       syncMuelleBetForm();
     });
-    muelleBetModal.addEventListener('keydown', e => {
+    muelleBetModal.addEventListener('keydown', async e => {
       const targetEl = getEventTargetElement(e.target);
       if (!targetEl || targetEl.id !== 'muelle-bet-input' || e.key !== 'Enter') return;
       e.preventDefault();
@@ -5887,8 +5984,8 @@ function setupEvents() {
         syncMuelleBetForm();
         return;
       }
-      closeMuelleBetModal();
-      initMuelle(validation.bet);
+      const started = await initMuelle(validation.bet);
+      if (started) closeMuelleBetModal();
     });
   }
 }
