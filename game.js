@@ -1075,6 +1075,13 @@ const ACHIEVEMENTS = [
     label: 'Completa las 20 oleadas del Modo Supervivencia',
     progressLabel: 'Oleadas superadas',
     reward: { coins: 500, diamonds: 50 }
+  },
+  {
+    id: 'maestro_supervivencia', name: 'Maestro de la Supervivencia', icon: '👑',
+    target: 20,
+    label: 'Completa las 20 oleadas de Fiebre del Oro o Mina de Gemas',
+    progressLabel: 'Mejor marca en Fiebre',
+    reward: { coins: 1000, diamonds: 100 }
   }
 ];
 
@@ -1134,13 +1141,18 @@ const state = {
     muelle: { claimed: false },
     gladiador: { claimed: false },
     inversor: { claimed: false },
-    superviviente: { claimed: false }
+    superviviente: { claimed: false },
+    maestro_supervivencia: { claimed: false }
   },
   ticketsSpentTotal: 0,
   battleMode: 'normal',
   survivalWave: 0,
   survivalMaxWaves: 0,
   lastSurvivalDate: null,
+  lastGoldFeverDate: null,
+  lastDiamondFeverDate: null,
+  feverWave: 0,
+  feverMaxWaves: 0,
   player: null,
   enemy: null,
   isPlayerTurn: true,
@@ -2235,7 +2247,11 @@ function applyFreshGameState(username) {
   state.paseObjetos = [];
   state.titulosDesbloqueados = [];
   state.shopRotation = null;
-  state.achievements = { collectionMaster: { rewardedForTotal: 0 } };
+  state.achievements = { collectionMaster: { rewardedForTotal: 0 },
+    pescador: { claimed: false }, muelle: { claimed: false },
+    gladiador: { claimed: false }, inversor: { claimed: false },
+    superviviente: { claimed: false }, maestro_supervivencia: { claimed: false }
+  };
   state.battlesPlayed = 0;
   state.battlesWon = 0;
   state.tickets_muelle = 3;
@@ -2360,7 +2376,7 @@ function applySaveData(data) {
   if (savedAchievement && Number.isFinite(savedAchievement.rewardedForTotal)) {
     state.achievements.collectionMaster.rewardedForTotal = Math.max(0, savedAchievement.rewardedForTotal);
   }
-  ['pescador', 'muelle', 'gladiador', 'inversor', 'superviviente'].forEach(id => {
+  ['pescador', 'muelle', 'gladiador', 'inversor', 'superviviente', 'maestro_supervivencia'].forEach(id => {
     const saved = data.achievements?.[id];
     if (saved) {
       if (Array.isArray(saved.phasesClaimed)) {
@@ -2373,6 +2389,9 @@ function applySaveData(data) {
   if (typeof data.ticketsSpentTotal === 'number' && data.ticketsSpentTotal >= 0) state.ticketsSpentTotal = data.ticketsSpentTotal;
   if (typeof data.survivalMaxWaves === 'number' && data.survivalMaxWaves >= 0) state.survivalMaxWaves = data.survivalMaxWaves;
   if (typeof data.lastSurvivalDate === 'number' && data.lastSurvivalDate > 0) state.lastSurvivalDate = data.lastSurvivalDate;
+  if (typeof data.lastGoldFeverDate === 'number' && data.lastGoldFeverDate > 0) state.lastGoldFeverDate = data.lastGoldFeverDate;
+  if (typeof data.lastDiamondFeverDate === 'number' && data.lastDiamondFeverDate > 0) state.lastDiamondFeverDate = data.lastDiamondFeverDate;
+  if (typeof data.feverMaxWaves === 'number' && data.feverMaxWaves >= 0) state.feverMaxWaves = data.feverMaxWaves;
   if (data.selectedFish && getFishById(data.selectedFish) && state.unlockedFish.includes(data.selectedFish)) {
     state.selectedFishId = data.selectedFish;
   }
@@ -2418,6 +2437,9 @@ function getSaveData() {
     ticketsSpentTotal: state.ticketsSpentTotal,
     survivalMaxWaves: state.survivalMaxWaves,
     lastSurvivalDate: state.lastSurvivalDate,
+    lastGoldFeverDate: state.lastGoldFeverDate,
+    lastDiamondFeverDate: state.lastDiamondFeverDate,
+    feverMaxWaves: state.feverMaxWaves,
     tickets_muelle: state.tickets_muelle,
     timestamp: Date.now()
   };
@@ -3996,12 +4018,20 @@ function updateBattleButtonStyle() {
   const btn = dom.btnBattle;
   if (!btn) return;
   btn.classList.toggle('survival', state.battleMode === 'survival');
+  btn.classList.toggle('gold-fever', state.battleMode === 'goldFever');
+  btn.classList.toggle('diamond-fever', state.battleMode === 'diamondFever');
 
   const parent = btn.parentElement;
   if (!parent) return;
   let cooldownEl = document.getElementById('battle-cooldown-text');
-  if (state.battleMode === 'survival' && state.lastSurvivalDate) {
-    const elapsed = Date.now() - state.lastSurvivalDate;
+  if (survivalTimerInterval) { clearInterval(survivalTimerInterval); survivalTimerInterval = null; }
+
+  const cooldownField = state.battleMode === 'goldFever' ? 'lastGoldFeverDate'
+    : state.battleMode === 'diamondFever' ? 'lastDiamondFeverDate'
+    : state.battleMode === 'survival' ? 'lastSurvivalDate' : null;
+
+  if (cooldownField && state[cooldownField]) {
+    const elapsed = Date.now() - state[cooldownField];
     if (elapsed < 86400000) {
       if (!cooldownEl) {
         cooldownEl = document.createElement('span');
@@ -4009,9 +4039,8 @@ function updateBattleButtonStyle() {
         cooldownEl.className = 'battle-cooldown-text';
         parent.appendChild(cooldownEl);
       }
-      if (survivalTimerInterval) clearInterval(survivalTimerInterval);
       const tick = () => {
-        const remaining = 86400000 - (Date.now() - state.lastSurvivalDate);
+        const remaining = 86400000 - (Date.now() - state[cooldownField]);
         if (remaining <= 0) {
           cooldownEl.textContent = '✅ Disponible';
           btn.disabled = false;
@@ -4029,7 +4058,6 @@ function updateBattleButtonStyle() {
       return;
     }
   }
-  if (survivalTimerInterval) { clearInterval(survivalTimerInterval); survivalTimerInterval = null; }
   if (cooldownEl) cooldownEl.remove();
   if (state.selectedFishId && state.unlockedFish.includes(state.selectedFishId)) {
     btn.disabled = false;
@@ -4048,7 +4076,7 @@ function closeModeDropdown() {
 }
 
 function selectBattleMode(mode) {
-  if (mode !== 'normal' && mode !== 'survival') return;
+  if (mode !== 'normal' && mode !== 'survival' && mode !== 'goldFever' && mode !== 'diamondFever') return;
   state.battleMode = mode;
   closeModeDropdown();
   updateBattleButtonStyle();
@@ -4349,7 +4377,7 @@ function renderShop() {
     const canAfford = chest.costType === 'coins' ? state.coins >= chest.cost : state.diamonds >= chest.cost;
     const card = document.createElement('div');
     card.className = `chest-card${canAfford ? '' : ' locked'}`;
-    const rewardTags = [`🟡 ${chest.goldRange[0]}-${chest.goldRange[1]}`];
+    const rewardTags = [`🪙 ${chest.goldRange[0]}-${chest.goldRange[1]}`];
     if (chest.diamondChance > 0) rewardTags.push(`💎 ${chest.diamondChance >= 1 ? `${chest.diamondRange[0]}-${chest.diamondRange[1]}` : '?'}`);
     if (chest.fishChance > 0) rewardTags.push(`🐟 ${Math.round(chest.fishChance * 100)}%`);
     card.innerHTML = `
@@ -4624,6 +4652,9 @@ function getAchievementProgress(achId) {
       break;
     case 'superviviente':
       current = state.survivalMaxWaves || 0;
+      break;
+    case 'maestro_supervivencia':
+      current = state.feverMaxWaves || 0;
       break;
   }
   const complete = current >= def.target;
@@ -5705,6 +5736,8 @@ function playerAttack(index) {
     state.gameOver = true;
     if (state.battleMode === 'survival') {
       setTimeout(() => handleSurvivalEnemyDefeat(), 800);
+    } else if (state.battleMode === 'goldFever' || state.battleMode === 'diamondFever') {
+      setTimeout(() => handleFeverEnemyDefeat(), 800);
     } else {
       setTimeout(() => showResult(true), 800);
     }
@@ -5841,7 +5874,13 @@ function doEnemyAttack() {
   checkImpulsoHuida(state.player);
   if (state.player.currentHp <= 0) {
     triggerEstomagoSinFondo(state.enemy);
-    state.gameOver = true; setTimeout(() => showResult(false), 800); return;
+    state.gameOver = true;
+    if (state.battleMode === 'goldFever' || state.battleMode === 'diamondFever') {
+      setTimeout(() => handleFeverPlayerDefeat(), 800);
+    } else {
+      setTimeout(() => showResult(false), 800);
+    }
+    return;
   }
   applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
   checkKrakenDesatado(state.enemy);
@@ -5863,6 +5902,8 @@ function checkGameOver() {
     state.gameOver = true;
     if (state.battleMode === 'survival') {
       setTimeout(() => handleSurvivalEnemyDefeat(), 800);
+    } else if (state.battleMode === 'goldFever' || state.battleMode === 'diamondFever') {
+      setTimeout(() => handleFeverEnemyDefeat(), 800);
     } else {
       setTimeout(() => showResult(true), 800);
     }
@@ -5890,6 +5931,21 @@ const SURVIVAL_ARENA_BONUS = {
   3: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.20 }] },
   4: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.35 }, { id: 'obj_toxina_concentrada', chance: 0.08 }] },
   5: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.50 }, { id: 'obj_toxina_concentrada', chance: 0.18 }] },
+};
+
+/* ===== FIEBRE DEL ORO / FIEBRE DE DIAMANTES ===== */
+const FEVER_TOTAL_WAVES = 20;
+
+const GOLD_FEVER_REWARDS = {
+  basePerWave: 100,
+  scalingPerWave: 25,
+  victoryBonus: 2000,
+};
+
+const DIAMOND_FEVER_REWARDS = {
+  basePerWave: 2,
+  scalingPerWave: 1,
+  victoryBonus: 30,
 };
 
 function getSurvivalEnemyLevel(wave) {
@@ -6103,6 +6159,195 @@ async function showSurvivalResult(victory) {
     ${itemLines.length ? `<span class="survival-reward-row">🎁 Objetos obtenidos:</span>` : ''}
     ${itemLines.map(l => `<span class="survival-reward-row item">${l}</span>`).join('')}
     <span class="survival-reward-row total">${parts.join(' · ')}</span>
+  </div>`;
+
+  signalAchievementUpdate();
+}
+
+/* ===== FIEBRE DEL ORO / FIEBRE DE DIAMANTES ===== */
+function getFeverMultiplier(wave) {
+  return 1 + (wave - 1) * 0.10;
+}
+
+function getFeverEnemyLevel(wave) {
+  return getSurvivalEnemyLevel(wave);
+}
+
+function getFeverReward(wave, mode) {
+  const table = mode === 'gold' ? GOLD_FEVER_REWARDS : DIAMOND_FEVER_REWARDS;
+  return table.basePerWave + (wave - 1) * table.scalingPerWave;
+}
+
+function getFeverTotalRewards(wavesCompleted, mode) {
+  let total = 0;
+  for (let w = 1; w <= wavesCompleted; w++) {
+    total += getFeverReward(w, mode);
+  }
+  const victoryBonus = wavesCompleted >= FEVER_TOTAL_WAVES
+    ? (mode === 'gold' ? GOLD_FEVER_REWARDS.victoryBonus : DIAMOND_FEVER_REWARDS.victoryBonus)
+    : 0;
+  return { total, victoryBonus };
+}
+
+async function startFeverRun(mode) {
+  if (!state.selectedFishId || state.isAnimating) return false;
+  if (!state.unlockedFish.includes(state.selectedFishId)) return false;
+  const cooldownField = mode === 'gold' ? 'lastGoldFeverDate' : 'lastDiamondFeverDate';
+  if (state[cooldownField] && (Date.now() - state[cooldownField] < 86400000)) return false;
+  const prev = state[cooldownField];
+  state[cooldownField] = Date.now();
+  state.feverWave = 1;
+  state.battleMode = mode === 'gold' ? 'goldFever' : 'diamondFever';
+  const saved = await forceCloudSave('fever_start_' + mode);
+  if (!saved) {
+    state[cooldownField] = prev;
+    state.feverWave = 0;
+    state.battleMode = 'normal';
+    return false;
+  }
+  return initFeverWave(1, mode);
+}
+
+function initFeverWave(wave, mode) {
+  const playerFishId = state.selectedFishId;
+  const playerBase = getFishById(playerFishId);
+  const playerLevel = getFishLevel(playerFishId);
+  const playerType = roundFishStats(getLeveledFishType(playerBase, playerLevel));
+
+  const enemyLevel = getFeverEnemyLevel(wave);
+  const enemyBase = randomFish();
+  let enemyType = roundFishStats(getLeveledFishType(enemyBase, enemyLevel));
+
+  const scale = getFeverMultiplier(wave);
+  enemyType = {
+    ...enemyType,
+    maxHp: Math.round(enemyType.maxHp * scale),
+    atk: Math.round(enemyType.atk * scale),
+    def: Math.round(enemyType.def * scale),
+    spa: Math.round(enemyType.spa * scale),
+    spd: Math.round(enemyType.spd * scale),
+  };
+
+  if (wave === FEVER_TOTAL_WAVES) {
+    enemyType = { ...enemyType, maxHp: enemyType.maxHp * 2 };
+  }
+
+  const playerFields = {
+    type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp,
+    status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
+    destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
+    buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false,
+    mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
+    impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
+    selfHealUsed: {}
+  };
+  const enemyFields = {
+    type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp,
+    status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
+    destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
+    buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false,
+    mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
+    impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
+    selfHealUsed: {}
+  };
+
+  if (state.equippedItems.length > 0) {
+    state.equippedItems.forEach(itemId => {
+      const item = ITEMS.find(i => i.id === itemId);
+      if (item?.passive) {
+        item.passive(playerFields, enemyFields);
+      }
+    });
+  }
+
+  state.player = playerFields;
+  state.enemy = enemyFields;
+  state.isPlayerTurn = true;
+  state.gameOver = false;
+  state.turnPhase = 'player_first';
+  state.isAnimating = false;
+  state.doubleTurnBypass = false;
+  dom.box.style.display = 'flex';
+
+  renderCombat();
+  showScreen('combat');
+
+  const waveEl = dom.waveIndicator;
+  if (waveEl) {
+    waveEl.style.display = 'block';
+    waveEl.textContent = wave === FEVER_TOTAL_WAVES
+      ? `👑 OLEADA ${wave}/${FEVER_TOTAL_WAVES} — ¡JEFE FINAL!`
+      : `🌊 Oleada ${wave}/${FEVER_TOTAL_WAVES}`;
+  }
+
+  dom.logMessage.textContent = `🌊 Oleada ${wave}/${FEVER_TOTAL_WAVES} — ¡${enemyType.name} aparece!`;
+
+  if (state.isPlayerTurn) {
+    updateSkillButtons(true);
+  } else {
+    setTimeout(() => executeEnemyTurn(), 800);
+  }
+  return true;
+}
+
+async function handleFeverEnemyDefeat() {
+  const mode = state.battleMode === 'goldFever' ? 'gold' : 'diamond';
+  const nextWave = state.feverWave + 1;
+  if (nextWave > FEVER_TOTAL_WAVES) {
+    state.feverMaxWaves = Math.max(state.feverMaxWaves || 0, FEVER_TOTAL_WAVES);
+    signalAchievementUpdate();
+    const saved = await forceCloudSave('fever_victory');
+    if (!saved) {
+      showCloudSaveWarning();
+    }
+    showFeverResult(true, mode);
+    return;
+  }
+  state.feverWave = nextWave;
+  const saved = await forceCloudSave('fever_wave');
+  if (!saved) {
+    showCloudSaveWarning();
+  }
+  initFeverWave(nextWave, mode);
+}
+
+async function handleFeverPlayerDefeat() {
+  const mode = state.battleMode === 'goldFever' ? 'gold' : 'diamond';
+  state.feverMaxWaves = Math.max(state.feverMaxWaves || 0, Math.max(0, state.feverWave - 1));
+  signalAchievementUpdate();
+  showFeverResult(false, mode);
+}
+
+async function showFeverResult(victory, mode) {
+  const wavesCompleted = victory ? FEVER_TOTAL_WAVES : Math.max(0, state.feverWave - 1);
+  const { total, victoryBonus } = getFeverTotalRewards(wavesCompleted, mode);
+
+  if (mode === 'gold') {
+    state.coins += total + victoryBonus;
+    updateCoinDisplay();
+  } else {
+    state.diamonds += total + victoryBonus;
+    updateDiamondDisplay();
+  }
+  addBattlePassXpFromCombat(victory);
+
+  const waveEl = dom.waveIndicator;
+  if (waveEl) waveEl.style.display = 'none';
+
+  const modeName = mode === 'gold' ? 'Fiebre del Oro' : 'Mina de Gemas';
+  showScreen('result');
+  dom.resultTitle.textContent = victory
+    ? `🔥 ¡${modeName} COMPLETADA!`
+    : `💀 Derrota en ${modeName}`;
+  dom.resultTitle.className = 'result-title ' + (victory ? 'victory' : 'defeat');
+  dom.resultEmoji.textContent = victory ? '🏆' : '💀';
+  dom.resultCups.textContent = `🔥 Oleadas completadas: ${wavesCompleted}/${FEVER_TOTAL_WAVES}`;
+  dom.resultCups.style.color = victory ? '#ff9800' : '#f44336';
+
+  const rewardLabel = mode === 'gold' ? '🪙' : '💎';
+  const bonusText = victoryBonus ? ` + ${victoryBonus} ${rewardLabel} (bonus victoria)` : '';
+  dom.resultSub.innerHTML = `<div class="survival-rewards-list">
+    <span class="survival-reward-row">💰 Recompensa total: ${total} ${rewardLabel}${bonusText}</span>
   </div>`;
 
   signalAchievementUpdate();
@@ -6603,6 +6848,20 @@ function setupEvents() {
       }
       const started = await startSurvivalRun();
       if (!started) alert('No se pudo iniciar el Modo Supervivencia. Verifica tu conexión.');
+    } else if (state.battleMode === 'goldFever') {
+      if (state.lastGoldFeverDate && (Date.now() - state.lastGoldFeverDate < 86400000)) {
+        alert('¡Ya has usado Fiebre del Oro hoy! Vuelve en 24 horas.');
+        return;
+      }
+      const started = await startFeverRun('gold');
+      if (!started) alert('No se pudo iniciar Fiebre del Oro. Verifica tu conexión.');
+    } else if (state.battleMode === 'diamondFever') {
+      if (state.lastDiamondFeverDate && (Date.now() - state.lastDiamondFeverDate < 86400000)) {
+        alert('¡Ya has usado Mina de Gemas hoy! Vuelve en 24 horas.');
+        return;
+      }
+      const started = await startFeverRun('diamond');
+      if (!started) alert('No se pudo iniciar Mina de Gemas. Verifica tu conexión.');
     } else {
       await initCombat();
     }

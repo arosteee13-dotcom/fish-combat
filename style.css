@@ -712,6 +712,8 @@ body.modal-open .section.active { overflow: hidden; }
 .mode-option:active { background: rgba(255,255,255,0.12); }
 .mode-option-normal { color: #4facfe; }
 .mode-option-survival { color: #ff5252; }
+.mode-option-gold-fever { color: #ffa000; }
+.mode-option-diamond-fever { color: #7c4dff; }
 .mode-option.active {
   background: rgba(255,255,255,0.1);
   outline: 1px solid rgba(255,255,255,0.2);
@@ -721,6 +723,14 @@ body.modal-open .section.active { overflow: hidden; }
 .btn-battle.survival {
   background: linear-gradient(135deg, #d32f2f 0%, #ff5252 50%, #ff1744 100%) !important;
   box-shadow: 0 4px 20px rgba(211,47,47,0.35) !important;
+}
+.btn-battle.gold-fever {
+  background: linear-gradient(135deg, #e65100 0%, #ff9800 50%, #ffc107 100%) !important;
+  box-shadow: 0 4px 20px rgba(255,152,0,0.35) !important;
+}
+.btn-battle.diamond-fever {
+  background: linear-gradient(135deg, #311b92 0%, #7c4dff 50%, #b388ff 100%) !important;
+  box-shadow: 0 4px 20px rgba(124,77,255,0.35) !important;
 }
 .battle-cooldown-text {
   display: block;
