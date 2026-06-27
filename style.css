@@ -1196,6 +1196,60 @@ body.modal-open .section.active { overflow: hidden; }
   display: flex; align-items: center; justify-content: center; gap: 0.3rem;
 }
 
+/* ===== INVENTORY TABS ===== */
+.inv-tabs {
+  display: flex; gap: 0.5rem; margin-bottom: 0.75rem;
+}
+.inv-tab {
+  flex: 1; padding: 0.5rem 0.75rem; border: none; border-radius: 10px;
+  font-size: 0.78rem; font-weight: 800; cursor: pointer; touch-action: manipulation;
+  background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55);
+  transition: background 0.2s, color 0.2s;
+}
+.inv-tab.active {
+  background: rgba(79,172,254,0.15); color: #4facfe;
+}
+.inv-tab-panel { display: none; }
+.inv-tab-panel.active { display: block; }
+
+/* ===== FRAME GRID ===== */
+.frame-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+}
+.frame-card {
+  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+  padding: 0.8rem 0.5rem; border-radius: 12px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer; touch-action: manipulation;
+  transition: border-color 0.2s, background 0.2s;
+}
+.frame-card:active { transform: scale(0.97); }
+.frame-card.equipped { border-color: #4facfe; background: rgba(79,172,254,0.08); }
+.frame-card-name { font-size: 0.7rem; font-weight: 700; text-align: center; color: rgba(255,255,255,0.8); }
+.frame-card-status { font-size: 0.62rem; font-weight: 600; color: rgba(255,255,255,0.45); }
+
+/* ===== FRAME DETAIL ===== */
+.inv-frame-detail {
+  text-align: center; padding: 0.5rem 0;
+}
+.frame-detail-back {
+  background: none; border: none; color: rgba(255,255,255,0.5);
+  font-size: 0.78rem; font-weight: 700; cursor: pointer; touch-action: manipulation;
+  padding: 0.3rem 0.5rem; margin-bottom: 0.5rem;
+}
+.frame-detail-name {
+  font-size: 0.9rem; font-weight: 800; color: rgba(255,255,255,0.85);
+  margin: 0.5rem 0 1rem;
+}
+.frame-detail-equip-btn {
+  display: block; margin: 0 auto; padding: 0.65rem 2rem; border: none; border-radius: 12px;
+  font-size: 0.85rem; font-weight: 800; cursor: pointer; touch-action: manipulation;
+  background: linear-gradient(135deg, #4facfe, #00f2fe); color: #fff;
+}
+.frame-detail-equip-btn:disabled {
+  background: rgba(129,199,132,0.2); color: #c8e6c9; cursor: default;
+}
+
 /* ===== EQUIP MODAL ===== */
 .equip-modal {
   position: fixed; inset: 0; z-index: 200;

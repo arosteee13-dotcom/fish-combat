@@ -13,7 +13,7 @@ const FISH_TYPES = [
     id: 'clownfish',
     name: 'Pez Payaso',
     rarity: 'common',
-    imgPath: 'img/payaso.png',
+    imgPath: 'img/peces/payaso.png',
     emoji: '🐠',
     maxHp: 12, atk: 4, def: 5, spa: 4, spd: 5, spe: 4,
     growth: { maxHp: 1.2, atk: 0.4, def: 0.5, spa: 0.4, spd: 0.5, spe: 0.4 },
@@ -30,7 +30,7 @@ const FISH_TYPES = [
     id: 'pufferfish',
     name: 'Pez Globo',
     rarity: 'rare',
-    imgPath: 'img/globo.png',
+    imgPath: 'img/peces/globo.png',
     emoji: '🐡',
     maxHp: 14, atk: 6, def: 4, spa: 5, spd: 3, spe: 1,
     growth: { maxHp: 1.5, atk: 0.6, def: 0.4, spa: 0.5, spd: 0.3, spe: 0.1 },
@@ -47,7 +47,7 @@ const FISH_TYPES = [
     id: 'salmonete',
     name: 'Salmonete',
     rarity: 'common',
-    imgPath: 'img/salmonete.png',
+    imgPath: 'img/peces/salmonete.png',
     emoji: '🐟',
     maxHp: 10, atk: 4, def: 3, spa: 2, spd: 3, spe: 6,
     growth: { maxHp: 1.0, atk: 0.4, def: 0.3, spa: 0.2, spd: 0.3, spe: 0.6 },
@@ -64,7 +64,7 @@ const FISH_TYPES = [
     id: 'blenio',
     name: 'Blenio',
     rarity: 'common',
-    imgPath: 'img/blenio.png',
+    imgPath: 'img/peces/blenio.png',
     emoji: '🐍',
     maxHp: 11, atk: 3, def: 4, spa: 3, spd: 4, spe: 5,
     growth: { maxHp: 1.1, atk: 0.3, def: 0.4, spa: 0.3, spd: 0.4, spe: 0.5 },
@@ -81,7 +81,7 @@ const FISH_TYPES = [
     id: 'cabracho',
     name: 'Cabracho',
     rarity: 'rare',
-    imgPath: 'img/cabracho.png',
+    imgPath: 'img/peces/cabracho.png',
     emoji: '🦎',
     maxHp: 13, atk: 5, def: 7, spa: 1, spd: 5, spe: 2,
     growth: { maxHp: 1.3, atk: 0.5, def: 0.7, spa: 0.1, spd: 0.5, spe: 0.2 },
@@ -98,7 +98,7 @@ const FISH_TYPES = [
     id: 'anemona',
     name: 'Anémona de Mar',
     rarity: 'rare',
-    imgPath: 'img/anemona_de_mar.png',
+    imgPath: 'img/peces/anemona_de_mar.png',
     emoji: '🪸',
     maxHp: 13, atk: 2, def: 5, spa: 6, spd: 6, spe: 1,
     growth: { maxHp: 1.3, atk: 0.2, def: 0.5, spa: 0.6, spd: 0.6, spe: 0.1 },
@@ -115,7 +115,7 @@ const FISH_TYPES = [
     id: 'cangrejo',
     name: 'Cangrejo Ermitaño',
     rarity: 'common',
-    imgPath: 'img/cangrejo_ermitano.png',
+    imgPath: 'img/peces/cangrejo_ermitano.png',
     emoji: '🦀',
     maxHp: 15, atk: 4, def: 7, spa: 1, spd: 4, spe: 2,
     growth: { maxHp: 1.5, atk: 0.4, def: 0.7, spa: 0.1, spd: 0.4, spe: 0.2 },
@@ -132,7 +132,7 @@ const FISH_TYPES = [
     id: 'pulpo',
     name: 'Pulpo de Roca',
     rarity: 'rare',
-    imgPath: 'img/pulpo_de_roca.png',
+    imgPath: 'img/peces/pulpo_de_roca.png',
     emoji: '🐙',
     maxHp: 11, atk: 5, def: 4, spa: 5, spd: 4, spe: 6,
     growth: { maxHp: 1.1, atk: 0.5, def: 0.4, spa: 0.5, spd: 0.4, spe: 0.6 },
@@ -149,7 +149,7 @@ const FISH_TYPES = [
     id: 'lenguado',
     name: 'Lenguado',
     rarity: 'common',
-    imgPath: 'img/lenguado.png',
+    imgPath: 'img/peces/lenguado.png',
     emoji: '🥞',
     maxHp: 10, atk: 4, def: 5, spa: 3, spd: 3, spe: 5,
     growth: { maxHp: 1.0, atk: 0.4, def: 0.5, spa: 0.3, spd: 0.3, spe: 0.5 },
@@ -166,7 +166,7 @@ const FISH_TYPES = [
     id: 'sepia',
     name: 'Sepia',
     rarity: 'rare',
-    imgPath: 'img/sepia.png',
+    imgPath: 'img/peces/sepia.png',
     emoji: '🦑',
     maxHp: 11, atk: 3, def: 4, spa: 6, spd: 5, spe: 5,
     growth: { maxHp: 1.1, atk: 0.3, def: 0.4, spa: 0.6, spd: 0.5, spe: 0.5 },
@@ -183,7 +183,7 @@ const FISH_TYPES = [
     id: 'quisquilla',
     name: 'Quisquilla',
     rarity: 'rare',
-    imgPath: 'img/quisquilla.png',
+    imgPath: 'img/peces/quisquilla.png',
     emoji: '🦐',
     maxHp: 8, atk: 5, def: 3, spa: 3, spd: 3, spe: 9,
     growth: { maxHp: 0.8, atk: 0.5, def: 0.3, spa: 0.3, spd: 0.3, spe: 0.9 },
@@ -200,7 +200,7 @@ const FISH_TYPES = [
     id: 'pez_aguja',
     name: 'Pez Aguja',
     rarity: 'common',
-    imgPath: 'img/pez_aguja.png',
+    imgPath: 'img/peces/pez_aguja.png',
     emoji: '🪡',
     maxHp: 10, atk: 6, def: 4, spa: 2, spd: 3, spe: 7,
     growth: { maxHp: 1.0, atk: 0.6, def: 0.4, spa: 0.2, spd: 0.3, spe: 0.7 },
@@ -217,7 +217,7 @@ const FISH_TYPES = [
     id: 'medusa_aguamala',
     name: 'Medusa Aguamala',
     rarity: 'common',
-    imgPath: 'img/medusa_aguamala.png',
+    imgPath: 'img/peces/medusa_aguamala.png',
     emoji: '🧫',
     maxHp: 11, atk: 1, def: 3, spa: 5, spd: 6, spe: 2,
     growth: { maxHp: 1.1, atk: 0.1, def: 0.3, spa: 0.5, spd: 0.6, spe: 0.2 },
@@ -234,7 +234,7 @@ const FISH_TYPES = [
     id: 'estrella',
     name: 'Estrella de Mar',
     rarity: 'common',
-    imgPath: 'img/estrella_de_mar.png',
+    imgPath: 'img/peces/estrella_de_mar.png',
     emoji: '⭐',
     maxHp: 14, atk: 3, def: 6, spa: 2, spd: 6, spe: 1,
     growth: { maxHp: 1.4, atk: 0.3, def: 0.6, spa: 0.2, spd: 0.6, spe: 0.1 },
@@ -251,7 +251,7 @@ const FISH_TYPES = [
     id: 'berberecho',
     name: 'Berberecho',
     rarity: 'common',
-    imgPath: 'img/berberecho.png',
+    imgPath: 'img/peces/berberecho.png',
     emoji: '🐚',
     maxHp: 11, atk: 2, def: 8, spa: 1, spd: 5, spe: 1,
     growth: { maxHp: 1.1, atk: 0.2, def: 0.8, spa: 0.1, spd: 0.5, spe: 0.1 },
@@ -268,7 +268,7 @@ const FISH_TYPES = [
     id: 'anguila',
     name: 'Anguila de Arena',
     rarity: 'common',
-    imgPath: 'img/anguila_de_arena.png',
+    imgPath: 'img/peces/anguila_de_arena.png',
     emoji: '🐍',
     maxHp: 9, atk: 6, def: 3, spa: 2, spd: 3, spe: 8,
     growth: { maxHp: 0.9, atk: 0.6, def: 0.3, spa: 0.2, spd: 0.3, spe: 0.8 },
@@ -285,7 +285,7 @@ const FISH_TYPES = [
     id: 'pulpo_anillos_azules',
     name: 'Pulpo de Anillos Azules',
     rarity: 'epic',
-    imgPath: 'img/pulpo_anillos_azules.png',
+    imgPath: 'img/peces/pulpo_anillos_azules.png',
     emoji: '🐙',
     maxHp: 11, atk: 4, def: 3, spa: 9, spd: 5, spe: 9,
     growth: { maxHp: 1.1, atk: 0.4, def: 0.3, spa: 0.9, spd: 0.5, spe: 0.9 },
@@ -302,7 +302,7 @@ const FISH_TYPES = [
     id: 'pez_loro',
     name: 'Pez Loro',
     rarity: 'rare',
-    imgPath: 'img/pez_loro.png',
+    imgPath: 'img/peces/pez_loro.png',
     emoji: '🦜',
     maxHp: 12, atk: 7, def: 5, spa: 2, spd: 3, spe: 4,
     growth: { maxHp: 1.2, atk: 0.7, def: 0.5, spa: 0.2, spd: 0.3, spe: 0.4 },
@@ -319,7 +319,7 @@ const FISH_TYPES = [
     id: 'morena',
     name: 'Morena de Arrecife',
     rarity: 'epic',
-    imgPath: 'img/morena_arrecife.png',
+    imgPath: 'img/peces/morena_arrecife.png',
     emoji: '🐍',
     maxHp: 11, atk: 7, def: 3, spa: 2, spd: 5, spe: 7,
     growth: { maxHp: 1.1, atk: 0.7, def: 0.3, spa: 0.2, spd: 0.5, spe: 0.7 },
@@ -336,7 +336,7 @@ const FISH_TYPES = [
     id: 'camaron_pistola',
     name: 'Camarón Pistola',
     rarity: 'rare',
-    imgPath: 'img/camaron_pistola.png',
+    imgPath: 'img/peces/camaron_pistola.png',
     emoji: '🦐',
     maxHp: 9, atk: 3, def: 5, spa: 7, spd: 3, spe: 5,
     growth: { maxHp: 0.9, atk: 0.3, def: 0.5, spa: 0.7, spd: 0.3, spe: 0.5 },
@@ -353,7 +353,7 @@ const FISH_TYPES = [
     id: 'pez_cirujano',
     name: 'Pez Cirujano Azul',
     rarity: 'common',
-    imgPath: 'img/pez_cirujano_azul.png',
+    imgPath: 'img/peces/pez_cirujano_azul.png',
     emoji: '🐟',
     maxHp: 10, atk: 5, def: 3, spa: 3, spd: 4, spe: 6,
     growth: { maxHp: 1.0, atk: 0.5, def: 0.3, spa: 0.3, spd: 0.4, spe: 0.6 },
@@ -370,7 +370,7 @@ const FISH_TYPES = [
     id: 'pez_damisela',
     name: 'Pez Damisela Azul',
     rarity: 'common',
-    imgPath: 'img/pez_damisela_azul.png',
+    imgPath: 'img/peces/pez_damisela_azul.png',
     emoji: '🐟',
     maxHp: 7, atk: 4, def: 3, spa: 4, spd: 4, spe: 6,
     growth: { maxHp: 0.7, atk: 0.4, def: 0.3, spa: 0.4, spd: 0.4, spe: 0.6 },
@@ -387,7 +387,7 @@ const FISH_TYPES = [
     id: 'pez_ballesta',
     name: 'Pez Ballesta Picassiano',
     rarity: 'common',
-    imgPath: 'img/pez_ballesta_picassiano.png',
+    imgPath: 'img/peces/pez_ballesta_picassiano.png',
     emoji: '🎨',
     maxHp: 8, atk: 5, def: 5, spa: 2, spd: 3, spe: 4,
     growth: { maxHp: 0.8, atk: 0.5, def: 0.5, spa: 0.2, spd: 0.3, spe: 0.4 },
@@ -404,7 +404,7 @@ const FISH_TYPES = [
     id: 'pez_mariposa',
     name: 'Pez Mariposa',
     rarity: 'common',
-    imgPath: 'img/pez_mariposa.png',
+    imgPath: 'img/peces/pez_mariposa.png',
     emoji: '🦋',
     maxHp: 8, atk: 2, def: 3, spa: 4, spd: 5, spe: 6,
     growth: { maxHp: 0.8, atk: 0.2, def: 0.3, spa: 0.4, spd: 0.5, spe: 0.6 },
@@ -421,7 +421,7 @@ const FISH_TYPES = [
     id: 'pez_cofre',
     name: 'Pez Cofre Amarillo',
     rarity: 'common',
-    imgPath: 'img/pez_cofre_amarillo.png',
+    imgPath: 'img/peces/pez_cofre_amarillo.png',
     emoji: '🟨',
     maxHp: 9, atk: 3, def: 6, spa: 3, spd: 4, spe: 1,
     growth: { maxHp: 0.9, atk: 0.3, def: 0.6, spa: 0.3, spd: 0.4, spe: 0.1 },
@@ -438,7 +438,7 @@ const FISH_TYPES = [
     id: 'pez_leon',
     name: 'Pez León',
     rarity: 'rare',
-    imgPath: 'img/pez_leon.png',
+    imgPath: 'img/peces/pez_leon.png',
     emoji: '🦁',
     maxHp: 10, atk: 4, def: 4, spa: 7, spd: 4, spe: 3,
     growth: { maxHp: 1.0, atk: 0.4, def: 0.4, spa: 0.7, spd: 0.4, spe: 0.3 },
@@ -455,7 +455,7 @@ const FISH_TYPES = [
     id: 'pez_angel_emperador',
     name: 'Pez Ángel Emperador',
     rarity: 'rare',
-    imgPath: 'img/pez_angel_emperador.png',
+    imgPath: 'img/peces/pez_angel_emperador.png',
     emoji: '👑',
     maxHp: 10, atk: 5, def: 5, spa: 5, spd: 6, spe: 4,
     growth: { maxHp: 1.0, atk: 0.5, def: 0.5, spa: 0.5, spd: 0.6, spe: 0.4 },
@@ -472,7 +472,7 @@ const FISH_TYPES = [
     id: 'pez_piedra',
     name: 'Pez Piedra',
     rarity: 'rare',
-    imgPath: 'img/pez_piedra.png',
+    imgPath: 'img/peces/pez_piedra.png',
     emoji: '🪨',
     maxHp: 12, atk: 7, def: 7, spa: 2, spd: 3, spe: 1,
     growth: { maxHp: 1.2, atk: 0.7, def: 0.7, spa: 0.2, spd: 0.3, spe: 0.1 },
@@ -489,7 +489,7 @@ const FISH_TYPES = [
     id: 'pez_espada',
     name: 'Pez Espada',
     rarity: 'rare',
-    imgPath: 'img/pez_espada.png',
+    imgPath: 'img/peces/pez_espada.png',
     emoji: '🗡️',
     maxHp: 10, atk: 14, def: 6, spa: 5, spd: 7, spe: 15,
     growth: { maxHp: 1.0, atk: 1.4, def: 0.6, spa: 0.5, spd: 0.7, spe: 1.5 },
@@ -506,7 +506,7 @@ const FISH_TYPES = [
     id: 'atun_rojo',
     name: 'Atún Rojo',
     rarity: 'common',
-    imgPath: 'img/atun_rojo.png',
+    imgPath: 'img/peces/atun_rojo.png',
     emoji: '🐟',
     maxHp: 15, atk: 9, def: 12, spa: 4, spd: 11, spe: 6,
     growth: { maxHp: 1.5, atk: 0.9, def: 1.2, spa: 0.4, spd: 1.1, spe: 0.6 },
@@ -523,7 +523,7 @@ const FISH_TYPES = [
     id: 'tiburon_martillo',
     name: 'Tiburón Martillo',
     rarity: 'epic',
-    imgPath: 'img/tiburon_martillo.png',
+    imgPath: 'img/peces/tiburon_martillo.png',
     emoji: '🦈',
     maxHp: 11, atk: 13, def: 9, spa: 6, spd: 8, spe: 10,
     growth: { maxHp: 1.1, atk: 1.3, def: 0.9, spa: 0.6, spd: 0.8, spe: 1.0 },
@@ -540,7 +540,7 @@ const FISH_TYPES = [
     id: 'pez_volador',
     name: 'Pez Volador',
     rarity: 'common',
-    imgPath: 'img/pez_volador.png',
+    imgPath: 'img/peces/pez_volador.png',
     emoji: '🪽',
     maxHp: 8, atk: 3, def: 3, spa: 4, spd: 4, spe: 8,
     growth: { maxHp: 0.8, atk: 0.3, def: 0.3, spa: 0.4, spd: 0.4, spe: 0.8 },
@@ -557,7 +557,7 @@ const FISH_TYPES = [
     id: 'remora',
     name: 'Rémora',
     rarity: 'common',
-    imgPath: 'img/remora.png',
+    imgPath: 'img/peces/remora.png',
     emoji: '🦈',
     maxHp: 10, atk: 4, def: 5, spa: 3, spd: 5, spe: 4,
     growth: { maxHp: 1.0, atk: 0.4, def: 0.5, spa: 0.3, spd: 0.5, spe: 0.4 },
@@ -574,7 +574,7 @@ const FISH_TYPES = [
     id: 'barracuda',
     name: 'Barracuda',
     rarity: 'rare',
-    imgPath: 'img/barracuda.png',
+    imgPath: 'img/peces/barracuda.png',
     emoji: '🐊',
     maxHp: 8, atk: 8, def: 3, spa: 3, spd: 3, spe: 8,
     growth: { maxHp: 0.8, atk: 0.8, def: 0.3, spa: 0.3, spd: 0.3, spe: 0.8 },
@@ -591,7 +591,7 @@ const FISH_TYPES = [
     id: 'pez_vela',
     name: 'Pez Vela',
     rarity: 'epic',
-    imgPath: 'img/pez_vela.png',
+    imgPath: 'img/peces/pez_vela.png',
     emoji: '⛵',
     maxHp: 10, atk: 6, def: 4, spa: 5, spd: 5, spe: 10,
     growth: { maxHp: 1.0, atk: 0.6, def: 0.4, spa: 0.5, spd: 0.5, spe: 1.0 },
@@ -608,7 +608,7 @@ const FISH_TYPES = [
     id: 'carabela_portuguesa',
     name: 'Carabela Portuguesa',
     rarity: 'epic',
-    imgPath: 'img/carabela_portuguesa.png',
+    imgPath: 'img/peces/carabela_portuguesa.png',
     emoji: '🪼',
     maxHp: 8, atk: 2, def: 5, spa: 8, spd: 7, spe: 2,
     growth: { maxHp: 1.0, atk: 0.2, def: 0.5, spa: 0.8, spd: 0.7, spe: 0.2 },
@@ -625,7 +625,7 @@ const FISH_TYPES = [
     id: 'pez_linterna',
     name: 'Pez Linterna',
     rarity: 'common',
-    imgPath: 'img/pez_linterna.png',
+    imgPath: 'img/peces/pez_linterna.png',
     emoji: '🏮',
     maxHp: 6, atk: 5, def: 4, spa: 8, spd: 6, spe: 7,
     growth: { maxHp: 0.6, atk: 0.5, def: 0.4, spa: 0.8, spd: 0.6, spe: 0.7 },
@@ -642,7 +642,7 @@ const FISH_TYPES = [
     id: 'pez_tripode',
     name: 'Pez Trípode',
     rarity: 'common',
-    imgPath: 'img/pez_tripode.png',
+    imgPath: 'img/peces/pez_tripode.png',
     emoji: '🦯',
     maxHp: 8, atk: 4, def: 9, spa: 4, spd: 8, spe: 2,
     growth: { maxHp: 0.8, atk: 0.4, def: 0.9, spa: 0.4, spd: 0.8, spe: 0.2 },
@@ -659,7 +659,7 @@ const FISH_TYPES = [
     id: 'pez_demonio',
     name: 'Pez Demonio',
     rarity: 'rare',
-    imgPath: 'img/pez_demonio.png',
+    imgPath: 'img/peces/pez_demonio.png',
     emoji: '🧛',
     maxHp: 7, atk: 11, def: 6, spa: 2, spd: 5, spe: 9,
     growth: { maxHp: 0.7, atk: 1.1, def: 0.6, spa: 0.2, spd: 0.5, spe: 0.9 },
@@ -676,7 +676,7 @@ const FISH_TYPES = [
     id: 'tiburon_anguila',
     name: 'Tiburón Anguila',
     rarity: 'rare',
-    imgPath: 'img/tiburon_anguila.png',
+    imgPath: 'img/peces/tiburon_anguila.png',
     emoji: '🐍',
     maxHp: 10, atk: 9, def: 7, spa: 4, spd: 6, spe: 7,
     growth: { maxHp: 1.0, atk: 0.9, def: 0.7, spa: 0.4, spd: 0.6, spe: 0.7 },
@@ -693,7 +693,7 @@ const FISH_TYPES = [
     id: 'pez_vibora',
     name: 'Pez Víbora',
     rarity: 'rare',
-    imgPath: 'img/pez_vibora.png',
+    imgPath: 'img/peces/pez_vibora.png',
     emoji: '🐍💀',
     maxHp: 6, atk: 12, def: 4, spa: 3, spd: 4, spe: 11,
     growth: { maxHp: 0.6, atk: 1.2, def: 0.4, spa: 0.3, spd: 0.4, spe: 1.1 },
@@ -710,7 +710,7 @@ const FISH_TYPES = [
     id: 'tiburon_duende',
     name: 'Tiburón Duende',
     rarity: 'epic',
-    imgPath: 'img/tiburon_duende.png',
+    imgPath: 'img/peces/tiburon_duende.png',
     emoji: '👺',
     maxHp: 11, atk: 13, def: 8, spa: 3, spd: 7, spe: 5,
     growth: { maxHp: 1.1, atk: 1.3, def: 0.8, spa: 0.3, spd: 0.7, spe: 0.5 },
@@ -727,7 +727,7 @@ const FISH_TYPES = [
     id: 'engullidor_negro',
     name: 'Engullidor Negro',
     rarity: 'epic',
-    imgPath: 'img/engullidor_negro.png',
+    imgPath: 'img/peces/engullidor_negro.png',
     emoji: '🕳️',
     maxHp: 13, atk: 7, def: 5, spa: 11, spd: 9, spe: 4,
     growth: { maxHp: 1.3, atk: 0.7, def: 0.5, spa: 1.1, spd: 0.9, spe: 0.4 },
@@ -744,7 +744,7 @@ const FISH_TYPES = [
     id: 'kraken',
     name: 'Kraken',
     rarity: 'legendary',
-    imgPath: 'img/kraken.png',
+    imgPath: 'img/peces/kraken.png',
     emoji: '🦑',
     maxHp: 15, atk: 14, def: 9, spa: 5, spd: 10, spe: 4,
     growth: { maxHp: 1.5, atk: 1.4, def: 0.9, spa: 0.5, spd: 1.0, spe: 0.4 },
@@ -761,7 +761,7 @@ const FISH_TYPES = [
     id: 'bacalao',
     name: 'Bacalao Ártico',
     rarity: 'common',
-    imgPath: 'img/bacalao_artico.png',
+    imgPath: 'img/peces/bacalao_artico.png',
     emoji: '🐟',
     maxHp: 6, atk: 5, def: 4, spa: 4, spd: 5, spe: 12,
     growth: { maxHp: 0.6, atk: 0.5, def: 0.4, spa: 0.4, spd: 0.5, spe: 1.2 },
@@ -778,7 +778,7 @@ const FISH_TYPES = [
     id: 'pez_hielo',
     name: 'Pez Hielo Austral',
     rarity: 'common',
-    imgPath: 'img/pez_hielo_austral.png',
+    imgPath: 'img/peces/pez_hielo_austral.png',
     emoji: '🧊',
     maxHp: 5, atk: 4, def: 6, spa: 7, spd: 8, spe: 10,
     growth: { maxHp: 0.5, atk: 0.4, def: 0.6, spa: 0.7, spd: 0.8, spe: 1.0 },
@@ -795,7 +795,7 @@ const FISH_TYPES = [
     id: 'calamar_cristal',
     name: 'Calamar de Cristal',
     rarity: 'rare',
-    imgPath: 'img/calamar_cristal.png',
+    imgPath: 'img/peces/calamar_cristal.png',
     emoji: '🦑',
     maxHp: 7, atk: 6, def: 5, spa: 10, spd: 7, spe: 11,
     growth: { maxHp: 0.7, atk: 0.6, def: 0.5, spa: 1.0, spd: 0.7, spe: 1.1 },
@@ -812,7 +812,7 @@ const FISH_TYPES = [
     id: 'narval',
     name: 'Narval',
     rarity: 'rare',
-    imgPath: 'img/narval.png',
+    imgPath: 'img/peces/narval.png',
     emoji: '🦄',
     maxHp: 12, atk: 14, def: 9, spa: 4, spd: 8, spe: 10,
     growth: { maxHp: 1.2, atk: 1.4, def: 0.9, spa: 0.4, spd: 0.8, spe: 1.0 },
@@ -829,7 +829,7 @@ const FISH_TYPES = [
     id: 'leopardo_marino',
     name: 'Leopardo Marino',
     rarity: 'epic',
-    imgPath: 'img/leopardo_marino.png',
+    imgPath: 'img/peces/leopardo_marino.png',
     emoji: '🐆',
     maxHp: 13, atk: 16, def: 10, spa: 5, spd: 9, spe: 17,
     growth: { maxHp: 1.3, atk: 1.6, def: 1.0, spa: 0.5, spd: 0.9, spe: 1.7 },
@@ -846,7 +846,7 @@ const FISH_TYPES = [
     id: 'tiburon_groenlandia',
     name: 'Tiburón de Groenlandia',
     rarity: 'epic',
-    imgPath: 'img/tiburon_groenlandia.png',
+    imgPath: 'img/peces/tiburon_groenlandia.png',
     emoji: '🦈',
     maxHp: 20, atk: 14, def: 15, spa: 6, spd: 14, spe: 2,
     growth: { maxHp: 2.0, atk: 1.4, def: 1.5, spa: 0.6, spd: 1.4, spe: 0.2 },
@@ -863,7 +863,7 @@ const FISH_TYPES = [
     id: 'orca',
     name: 'Orca',
     rarity: 'legendary',
-    imgPath: 'img/orca.png',
+    imgPath: 'img/peces/orca.png',
     emoji: '🐋',
     maxHp: 18, atk: 19, def: 14, spa: 12, spd: 12, spe: 16,
     growth: { maxHp: 1.8, atk: 1.9, def: 1.4, spa: 1.2, spd: 1.2, spe: 1.6 },
@@ -880,7 +880,7 @@ const FISH_TYPES = [
     id: 'medusa_melena_artica',
     name: 'Medusa Melena de León Ártica',
     rarity: 'legendary',
-    imgPath: 'img/medusa_melena_artica.png',
+    imgPath: 'img/peces/medusa_melena_artica.png',
     emoji: '🪼',
     maxHp: 16, atk: 4, def: 16, spa: 19, spd: 18, spe: 3,
     growth: { maxHp: 1.6, atk: 0.4, def: 1.6, spa: 1.9, spd: 1.8, spe: 0.3 },
@@ -911,7 +911,19 @@ const ITEMS = [
   { id: 'anzuelo_suerte', name: 'Anzuelo de la Suerte', rarity: 'rare', imgPath: 'img/objetos/anzuelo_suerte.png', emoji: '🎣', description: 'Un anzuelo bañado en buena fortuna. Aumenta la probabilidad de golpe crítico un 15%.' },
   { id: 'coral_defensivo', name: 'Coral Defensivo', rarity: 'common', imgPath: 'img/objetos/coral_defensivo.png', emoji: '🪸', description: 'Un coral duro como la piedra. Otorga un escudo del 10% de los PS máximos al iniciar el combate.' },
   { id: 'perla_abismo', name: 'Perla del Abismo', rarity: 'epic', imgPath: 'img/objetos/perla_abismo.png', emoji: '🌑', description: 'Una perla oscura nacida en las fosas más profundas. Aumenta la Defensa Especial un 30%.' },
-  { id: 'tridente_roto', name: 'Tridente Roto', rarity: 'rare', imgPath: 'img/objetos/tridente_roto.png', emoji: '🔱', description: 'Un tridente astillado pero aún letal. Aumenta el Ataque Físico un 15%.' }
+  { id: 'tridente_roto', name: 'Tridente Roto', rarity: 'rare', imgPath: 'img/objetos/tridente_roto.png', emoji: '🔱', description: 'Un tridente astillado pero aún letal. Aumenta el Ataque Físico un 15%.' },
+  { id: 'escama_basalto', name: 'Escama de Basalto', rarity: 'common', imgPath: 'img/objetos/escama_basalto.png', emoji: '🪨', description: 'Escama volcánica endurecida. Aumenta la Defensa Física un 10%.' },
+  { id: 'fragmento_obsidiana', name: 'Fragmento de Obsidiana', rarity: 'rare', imgPath: 'img/objetos/fragmento_obsidiana.png', emoji: '🔶', description: 'Fragmento de roca ígnea. Aumenta el Ataque Físico un 15%.' },
+  { id: 'anzuelo_termico', name: 'Anzuelo Térmico', rarity: 'rare', imgPath: 'img/objetos/anzuelo_termico.png', emoji: '🎣', description: 'Anzuelo forjado en magma. Aumenta la probabilidad de golpe crítico un 15%.' },
+  { id: 'coral_azufre', name: 'Coral de Azufre', rarity: 'common', imgPath: 'img/objetos/coral_azufre.png', emoji: '🪸', description: 'Coral sulfuroso. Otorga un escudo del 10% de los PS máximos al iniciar el combate.' },
+  { id: 'nucleo_magma', name: 'Núcleo de Magma', rarity: 'epic', imgPath: 'img/objetos/nucleo_magma.png', emoji: '🌋', description: 'Núcleo de fuego líquido. Reduce la precisión del rival un 30% los 2 primeros turnos.' },
+  { id: 'coraza_lava', name: 'Coraza de Lava', rarity: 'rare', imgPath: 'img/objetos/coraza_lava.png', emoji: '🛡️', description: 'Armadura de lava petrificada. Aumenta la Defensa Especial un 20%.' },
+  { id: 'tridente_ceniza', name: 'Tridente de Ceniza', rarity: 'rare', imgPath: 'img/objetos/tridente_ceniza.png', emoji: '🔱', description: 'Tridente envuelto en ceniza volcánica. Aumenta el Ataque Físico un 18%.' }
+];
+
+const FRAMES = [
+  { id: 'marco_dorado',   name: 'Marco Cosmético Dorado',   emoji: '🌟', imgPath: 'img/marcos/marco_dorado.png',   borderStyle: '0 0 0 3px #ffd700, 0 0 12px rgba(255,215,0,0.45)' },
+  { id: 'marco_volcanico', name: 'Marco Cosmético Volcánico', emoji: '🌋', imgPath: 'img/marcos/marco_volcanico.png', borderStyle: '0 0 0 3px #ff4500, 0 0 12px rgba(255,69,0,0.45)' },
 ];
 
 const SHOP_ITEMS = [
@@ -928,9 +940,9 @@ const SHOP_ITEMS = [
 ];
 
 const GEM_PACKS = [
-  { id: 'small',  name: 'Bolsa de Oro Pequeña',  cost: 10,  reward: 250,  imgPath: 'img/oro_pequeno.png',  emoji: '📦' },
-  { id: 'medium', name: 'Cofre de Oro Mediano',   cost: 50,  reward: 1500, imgPath: 'img/oro_mediano.png',   emoji: '📦' },
-  { id: 'large',  name: 'Tesoro de Oro Grande',   cost: 100, reward: 3500, imgPath: 'img/oro_grande.png',   emoji: '📦' }
+  { id: 'small',  name: 'Bolsa de Oro Pequeña',  cost: 10,  reward: 250,  imgPath: 'img/oro/oro_pequeno.png',  emoji: '📦' },
+  { id: 'medium', name: 'Cofre de Oro Mediano',   cost: 50,  reward: 1500, imgPath: 'img/oro/oro_mediano.png',   emoji: '📦' },
+  { id: 'large',  name: 'Tesoro de Oro Grande',   cost: 100, reward: 3500, imgPath: 'img/oro/oro_grande.png',   emoji: '📦' }
 ];
 
 const DAILY_MISSIONS = [
@@ -1002,6 +1014,24 @@ const BATTLE_PASS_LEVELS = [
     premium: { type: 'frame', label: 'Marco Cosmético Dorado' }
   }
 ];
+
+const BATTLE_PASS_LEVELS_JULY = [
+  { level: 1, free: { type: 'coins', amount: 100, label: '100 Monedas' }, premium: { type: 'coins', amount: 300, label: '300 Monedas Extra' } },
+  { level: 2, free: { type: 'item', label: 'Escama de Basalto' }, premium: { type: 'item', label: 'Fragmento de Obsidiana' } },
+  { level: 3, free: { type: 'coins', amount: 150, label: '150 Monedas' }, premium: { type: 'coins', amount: 400, label: '400 Monedas Extra' } },
+  { level: 4, free: { type: 'coins', amount: 200, label: '200 Monedas' }, premium: { type: 'item', label: 'Anzuelo Térmico' } },
+  { level: 5, free: { type: 'coins', amount: 250, label: '250 Monedas' }, premium: { type: 'coins', amount: 600, label: '600 Monedas Extra' } },
+  { level: 6, free: { type: 'item', label: 'Coral de Azufre' }, premium: { type: 'item', label: 'Núcleo de Magma' } },
+  { level: 7, free: { type: 'coins', amount: 300, label: '300 Monedas' }, premium: { type: 'coins', amount: 800, label: '800 Monedas Extra' } },
+  { level: 8, free: { type: 'item', label: 'Coraza de Lava' }, premium: { type: 'item', label: 'Tridente de Ceniza' } },
+  { level: 9, free: { type: 'coins', amount: 400, label: '400 Monedas' }, premium: { type: 'coins', amount: 1200, label: '1200 Monedas Extra' } },
+  { level: 10, free: { type: 'title', label: 'Pez Dragón Negro' }, premium: { type: 'frame', label: 'Marco Cosmético Volcánico' } }
+];
+
+function getBattlePassLevels() {
+  const month = new Date().getUTCMonth() + 1;
+  return month >= 7 ? BATTLE_PASS_LEVELS_JULY : BATTLE_PASS_LEVELS;
+}
 
 const COLLECTION_MASTER_REWARD = { coins: 2000, diamonds: 30 };
 const AUTH_ACCOUNTS_KEY = 'fba_accounts_registry';
@@ -1101,6 +1131,7 @@ const state = {
   paseObjetos: [],
   titulosDesbloqueados: [],
   marcosDesbloqueados: [],
+  currentFrameId: null,
   shopRotation: null,
   achievements: {
     collectionMaster: {
@@ -2216,6 +2247,7 @@ function applyFreshGameState(username) {
   state.battlesPlayed = 0;
   state.battlesWon = 0;
   state.tickets_muelle = 3;
+  state.currentFrameId = null;
   state.selectedFishId = 'salmonete';
   state.player = null;
   state.enemy = null;
@@ -2330,6 +2362,7 @@ function applySaveData(data) {
   repairMissingBattlePassItems();
   if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
   if (Array.isArray(data.marcosDesbloqueados)) state.marcosDesbloqueados = data.marcosDesbloqueados;
+  if (typeof data.currentFrameId === 'string') state.currentFrameId = data.currentFrameId;
   if (data.shopRotation && typeof data.shopRotation === 'object') state.shopRotation = data.shopRotation;
   if (typeof data.tickets_muelle === 'number' && data.tickets_muelle >= 0) state.tickets_muelle = data.tickets_muelle;
   ensureBattlePassState();
@@ -2392,6 +2425,7 @@ function getSaveData() {
     paseObjetos: state.paseObjetos,
     titulosDesbloqueados: state.titulosDesbloqueados,
     marcosDesbloqueados: state.marcosDesbloqueados,
+    currentFrameId: state.currentFrameId,
     shopRotation: state.shopRotation,
     achievements: state.achievements,
     ticketsSpentTotal: state.ticketsSpentTotal,
@@ -3068,6 +3102,7 @@ function ensureBattlePassState() {
   if (!Array.isArray(state.paseObjetos)) state.paseObjetos = [];
   if (!Array.isArray(state.titulosDesbloqueados)) state.titulosDesbloqueados = [];
   if (!Array.isArray(state.marcosDesbloqueados)) state.marcosDesbloqueados = [];
+  if (typeof state.currentFrameId !== 'string' && state.currentFrameId !== null) state.currentFrameId = null;
 }
 
 function getBattlePassRewardKey(level, track) {
@@ -3075,7 +3110,7 @@ function getBattlePassRewardKey(level, track) {
 }
 
 function repairMissingBattlePassItems() {
-  BATTLE_PASS_LEVELS.forEach(tier => {
+  getBattlePassLevels().forEach(tier => {
     ['free', 'premium'].forEach(track => {
       const reward = tier[track];
       if (!reward || reward.type !== 'item') return;
@@ -3110,7 +3145,7 @@ function isBattlePassRewardClaimed(level, track) {
 
 function getCurrentSeasonMonthStr() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
 function getUtcDayKey(ts = Date.now()) {
@@ -3169,9 +3204,7 @@ function getShopRotationRemainingMs() {
 
 function getSeasonEndDate() {
   const now = new Date();
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  lastDay.setHours(23, 59, 59, 999);
-  return lastDay;
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
 }
 
 function getSeasonRemainingMs(now = Date.now()) {
@@ -3180,7 +3213,9 @@ function getSeasonRemainingMs(now = Date.now()) {
 
 function getSeasonName() {
   const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  return `Temporada de las Profundidades - ${months[new Date().getMonth()]}`;
+  const m = new Date().getUTCMonth();
+  const theme = m >= 6 ? 'Volcanes Submarinos' : 'de las Profundidades';
+  return `Temporada ${theme} - ${months[m]}`;
 }
 
 function getSeasonCountdownText() {
@@ -3260,7 +3295,7 @@ async function claimBattlePassReward(level, track) {
   checkBattlePassSeasonExpiration();
   if (track !== 'free' && track !== 'premium') return { ok: false, reason: 'Tipo de recompensa inválido.' };
   if (!Number.isInteger(level)) return { ok: false, reason: 'Nivel inválido.' };
-  const tier = BATTLE_PASS_LEVELS.find(l => l.level === level);
+  const tier = getBattlePassLevels().find(l => l.level === level);
   if (!tier) return { ok: false, reason: 'Nivel fuera de rango.' };
   if (state.nivel_pase < level) return { ok: false, reason: 'Nivel aún no desbloqueado.' };
   if (track === 'premium' && !state.tiene_premium) return { ok: false, reason: 'Requiere Pase Premium.' };
@@ -4056,26 +4091,28 @@ function updateActionFooter() {
   }
   const level = getFishLevel(fishId);
   btn.innerHTML = `${imgTag(base.imgPath, base.name, base.emoji)}<span class="action-fish-badge">${level}</span>`;
+  const frame = FRAMES.find(f => f.id === state.currentFrameId);
+  btn.style.boxShadow = frame ? frame.borderStyle : 'none';
 }
 
 /* ===== TIENDA ===== */
 const CHEST_TYPES = {
   wood: {
-    id: 'wood', name: 'Madera', imgPath: 'img/cofre_madera.png',
+    id: 'wood', name: 'Madera', imgPath: 'img/cofres/cofre_madera.png',
     costType: 'coins', cost: 150,
     goldRange: [20, 50],
     diamondChance: 0, diamondRange: [5, 5],
     fishChance: 0.8
   },
   silver: {
-    id: 'silver', name: 'Plata', imgPath: 'img/cofre_plata.png',
+    id: 'silver', name: 'Plata', imgPath: 'img/cofres/cofre_plata.png',
     costType: 'coins', cost: 400,
     goldRange: [50, 100],
     diamondChance: 0.15, diamondRange: [5, 5],
     fishChance: 0.9
   },
   gold: {
-    id: 'gold', name: 'Oro', imgPath: 'img/cofre_oro.png',
+    id: 'gold', name: 'Oro', imgPath: 'img/cofres/cofre_oro.png',
     costType: 'diamonds', cost: 60,
     goldRange: [150, 300],
     diamondChance: 0.3, diamondRange: [10, 10],
@@ -4653,7 +4690,7 @@ function renderProfileModal() {
       <button class="profile-modal-close" id="profile-modal-close-btn">✕</button>
     </div>
     <div class="profile-hero-card">
-      <div class="profile-hero-avatar">👤</div>
+      <div class="profile-hero-avatar" id="profile-hero-avatar">👤</div>
       <div class="profile-hero-meta">
         <div class="profile-hero-name-row">
           <strong class="profile-hero-name">${escapeHtml(state.playerUsername || 'Jugador')}</strong>
@@ -4771,6 +4808,14 @@ function renderProfileModal() {
       await claimAchievementPhase(btn.dataset.achId);
     });
   });
+  applyFrameToAvatar();
+}
+
+function applyFrameToAvatar() {
+  const avatar = document.getElementById('profile-hero-avatar');
+  if (!avatar) return;
+  const frame = FRAMES.find(f => f.id === state.currentFrameId);
+  avatar.style.boxShadow = frame ? frame.borderStyle : 'none';
 }
 
 function renderSettingsModal() {
@@ -4909,7 +4954,7 @@ function renderBattlePassModal() {
       <span class="battle-pass-summary-sub">${state.tiene_premium ? 'Premium activo: Gratis + Premium habilitados' : 'Premium inactivo: solo Gratis habilitado'}</span>
     </div>
     <div class="battle-pass-level-list">
-      ${BATTLE_PASS_LEVELS.map(tier => {
+      ${getBattlePassLevels().map(tier => {
         const freeUi = getBattlePassRewardUiState(tier.level, 'free');
         const premiumUi = getBattlePassRewardUiState(tier.level, 'premium');
         return `
@@ -5141,10 +5186,37 @@ function closeChestModal() {
 
 /* ===== SECCIÓN: OBJETOS ===== */
 function renderInventory() {
-  dom.inventoryContent.innerHTML = '';
+  dom.inventoryContent.innerHTML = `
+    <div class="inv-tabs">
+      <button class="inv-tab active" data-inv-tab="materiales">📦 Materiales</button>
+      <button class="inv-tab" data-inv-tab="cosmeticos">🎨 Cosméticos</button>
+    </div>
+    <div class="inv-tab-panel active" id="inv-panel-materiales"></div>
+    <div class="inv-tab-panel" id="inv-panel-cosmeticos"></div>
+    <div class="inv-frame-detail" id="inv-frame-detail" style="display:none"></div>
+  `;
+  dom.inventoryContent.querySelectorAll('.inv-tab').forEach(btn => {
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      document.getElementById('inv-frame-detail').style.display = 'none';
+      dom.inventoryContent.querySelectorAll('.inv-tab').forEach(b => b.classList.remove('active'));
+      dom.inventoryContent.querySelectorAll('.inv-tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const panel = document.getElementById('inv-panel-' + btn.dataset.invTab);
+      if (panel) panel.classList.add('active');
+      if (btn.dataset.invTab === 'cosmeticos') renderCosmeticosTab();
+    });
+  });
+  renderMaterialesTab();
+}
+
+function renderMaterialesTab() {
+  const panel = document.getElementById('inv-panel-materiales');
+  if (!panel) return;
+  panel.innerHTML = '';
   const ownedItems = ITEMS.filter(it => state.items.includes(it.id));
   if (ownedItems.length === 0) {
-    dom.inventoryContent.innerHTML = `<div class="inv-empty"><p>📦 No tienes objetos</p><p class="inv-empty-sub">Consigue objetos en la Tienda</p></div>`;
+    panel.innerHTML = `<div class="inv-empty"><p>📦 No tienes objetos</p><p class="inv-empty-sub">Consigue objetos en la Tienda o en el Pase de Batalla</p></div>`;
     return;
   }
   const grid = document.createElement('div');
@@ -5176,7 +5248,67 @@ function renderInventory() {
     });
     grid.appendChild(card);
   });
-  dom.inventoryContent.appendChild(grid);
+  panel.appendChild(grid);
+}
+
+function renderCosmeticosTab() {
+  const panel = document.getElementById('inv-panel-cosmeticos');
+  if (!panel) return;
+  panel.innerHTML = '';
+  const ownedFrames = FRAMES.filter(f => state.marcosDesbloqueados.includes(f.name));
+  if (ownedFrames.length === 0) {
+    panel.innerHTML = `<div class="inv-empty"><p>🎨 Sin cosméticos</p><p class="inv-empty-sub">Consigue marcos en el Pase de Batalla (nivel 10 Premium)</p></div>`;
+    return;
+  }
+  const grid = document.createElement('div');
+  grid.className = 'frame-grid';
+  ownedFrames.forEach(frame => {
+    const isEquipped = state.currentFrameId === frame.id;
+    const card = document.createElement('div');
+    card.className = `frame-card ${isEquipped ? 'equipped' : ''}`;
+    card.innerHTML = `
+      <div class="frame-card-preview" style="box-shadow:${frame.borderStyle};width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06);margin:0 auto;font-size:1.6rem;">${frame.emoji}</div>
+      <div class="frame-card-name">${frame.name}</div>
+      <div class="frame-card-status">${isEquipped ? '✅ Equipado' : '📭 Disponible'}</div>
+    `;
+    card.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      showFrameDetail(frame.id);
+    });
+    grid.appendChild(card);
+  });
+  panel.appendChild(grid);
+}
+
+function showFrameDetail(frameId) {
+  const frame = FRAMES.find(f => f.id === frameId);
+  if (!frame) return;
+  const detail = document.getElementById('inv-frame-detail');
+  if (!detail) return;
+  document.getElementById('inv-panel-cosmeticos').style.display = 'none';
+  detail.style.display = 'block';
+  const isEquipped = state.currentFrameId === frame.id;
+  detail.innerHTML = `
+    <button class="frame-detail-back" id="frame-detail-back">← Volver</button>
+    <div class="frame-detail-preview" style="box-shadow:${frame.borderStyle};width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);margin:1rem auto;font-size:2.4rem;">${frame.emoji}</div>
+    <div class="frame-detail-name">${frame.name}</div>
+    <button class="frame-detail-equip-btn" id="frame-detail-equip-btn" ${isEquipped ? 'disabled' : ''}>${isEquipped ? '✅ Equipado' : 'Equipar'}</button>
+  `;
+  document.getElementById('frame-detail-back').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    detail.style.display = 'none';
+    document.getElementById('inv-panel-cosmeticos').style.display = '';
+    renderCosmeticosTab();
+  });
+  document.getElementById('frame-detail-equip-btn').addEventListener('pointerdown', async e => {
+    e.preventDefault();
+    state.currentFrameId = frame.id;
+    await forceCloudSave('equip_frame');
+    updateActionFooter();
+    showFrameDetail(frame.id);
+    renderCosmeticosTab();
+    renderProfileModal();
+  });
 }
 
 function openEquipModal(itemId) {
@@ -6203,6 +6335,7 @@ async function resetAccount() {
   state.battlesPlayed = 0;
   state.battlesWon = 0;
   state.tickets_muelle = 3;
+  state.currentFrameId = null;
   state.selectedFishId = 'salmonete';
   state.player = null;
   state.enemy = null;
