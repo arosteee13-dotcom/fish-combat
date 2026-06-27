@@ -922,8 +922,10 @@ const ITEMS = [
 ];
 
 const FRAMES = [
-  { id: 'marco_dorado',   name: 'Marco Cosmético Dorado',   emoji: '🌟', imgPath: 'img/marcos/marco_dorado.png',   borderStyle: '0 0 0 3px #ffd700, 0 0 12px rgba(255,215,0,0.45)' },
-  { id: 'marco_volcanico', name: 'Marco Cosmético Volcánico', emoji: '🌋', imgPath: 'img/marcos/marco_volcanico.png', borderStyle: '0 0 0 3px #ff4500, 0 0 12px rgba(255,69,0,0.45)' },
+  { id: 'marco_guardian_del_mar',   name: 'Marco Guardián del Mar',   emoji: '🛡️', imgPath: 'img/marcos/marco_guardian_del_mar.png',   borderStyle: '0 0 0 3px #00bcd4, 0 0 12px rgba(0,188,212,0.45)' },
+  { id: 'marco_cosmetico_dorado',   name: 'Marco Cosmético Dorado',   emoji: '🌟', imgPath: 'img/marcos/marco_cosmetico_dorado.png',   borderStyle: '0 0 0 3px #ffd700, 0 0 12px rgba(255,215,0,0.45)' },
+  { id: 'marco_piedra_volcanica',   name: 'Marco de Piedra Volcánica', emoji: '🪨', imgPath: 'img/marcos/marco_piedra_volcanica.png',   borderStyle: '0 0 0 3px #78909c, 0 0 12px rgba(120,144,156,0.45)' },
+  { id: 'marco_magma_animado',      name: 'Marco de Magma Animado',    emoji: '🌋', imgPath: 'img/marcos/marco_magma_animado.png',      borderStyle: '0 0 0 3px #ff5722, 0 0 12px rgba(255,87,34,0.45)' },
 ];
 
 const SHOP_ITEMS = [
@@ -1010,7 +1012,7 @@ const BATTLE_PASS_LEVELS = [
   },
   {
     level: 10,
-    free: { type: 'title', label: 'Guardián del Mar' },
+    free: { type: 'frame', label: 'Marco Guardián del Mar' },
     premium: { type: 'frame', label: 'Marco Cosmético Dorado' }
   }
 ];
@@ -1025,7 +1027,7 @@ const BATTLE_PASS_LEVELS_JULY = [
   { level: 7, free: { type: 'coins', amount: 300, label: '300 Monedas' }, premium: { type: 'coins', amount: 800, label: '800 Monedas Extra' } },
   { level: 8, free: { type: 'item', label: 'Coraza de Lava' }, premium: { type: 'item', label: 'Tridente de Ceniza' } },
   { level: 9, free: { type: 'coins', amount: 400, label: '400 Monedas' }, premium: { type: 'coins', amount: 1200, label: '1200 Monedas Extra' } },
-  { level: 10, free: { type: 'title', label: 'Pez Dragón Negro' }, premium: { type: 'frame', label: 'Marco Cosmético Volcánico' } }
+  { level: 10, free: { type: 'frame', label: 'Marco de Piedra Volcánica' }, premium: { type: 'frame', label: 'Marco de Magma Animado' } }
 ];
 
 function getBattlePassLevels() {
