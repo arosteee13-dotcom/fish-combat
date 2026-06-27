@@ -1924,21 +1924,54 @@ function updateHeaderUsernameDisplay() {
   if (dom.headerUserBox) dom.headerUserBox.setAttribute('aria-label', `Editar nombre de usuario: ${username}`);
 }
 
+function sanitizeForFirestore(obj) {
+  if (obj === null || obj === undefined) return undefined;
+  if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean') return obj;
+  if (Array.isArray(obj)) {
+    const arr = obj.map(sanitizeForFirestore).filter(v => v !== undefined);
+    return arr.length > 0 ? arr : undefined;
+  }
+  if (typeof obj === 'object') {
+    const clean = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const v = sanitizeForFirestore(value);
+      if (v !== undefined) clean[key] = v;
+    }
+    return Object.keys(clean).length > 0 ? clean : undefined;
+  }
+  return undefined;
+}
+
 async function persistCloudSave(data) {
-  if (!isCloudSessionActive() || !initFirebaseIfNeeded()) return false;
-  const uid = getCurrentAuthUid();
-  const profileRef = firebaseProgressDoc(uid);
+  if (!isFirebaseAvailable() || !initFirebaseIfNeeded()) return false;
+  const auth = getFirebaseAuth();
+  if (!auth || !auth.currentUser) return false;
+  const username = normalizeAuthUsername(state.playerUsername || auth.currentUser.displayName || '');
+  if (!username) return false;
+  const profileRef = firebaseProgressDoc(username);
   if (!profileRef) return false;
   const localSavedAt = new Date();
-  await profileRef.set({
-    username: uid,
-    usernameLower: normalizeFriendSearch(uid),
-    saveData: data,
-    savedAt: window.firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
-  localStorage.setItem(getCloudSaveKey(uid), JSON.stringify({ ...data, savedAt: localSavedAt.toISOString() }));
-  state.lastSavedAt = localSavedAt;
-  return true;
+  const cleanData = sanitizeForFirestore(data);
+  if (!cleanData) return false;
+  try {
+    await socialDb.runTransaction(async transaction => {
+      const snap = await transaction.get(profileRef);
+      transaction.set(profileRef, {
+        username,
+        usernameLower: normalizeFriendSearch(username),
+        saveData: cleanData,
+        savedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    });
+    const cachePayload = { ...data, savedAt: localSavedAt.toISOString() };
+    localStorage.setItem(getCloudSaveKey(username), JSON.stringify(cachePayload));
+    state.lastSavedAt = localSavedAt;
+    return true;
+  } catch (error) {
+    console.error('Error exacto en Tienda:', error.code);
+    console.error('Detalle persistCloudSave:', error.code, error.message);
+    return false;
+  }
 }
 
 function applyFreshGameState(username) {
@@ -2012,12 +2045,15 @@ async function saveGame({ manual = false } = {}) {
   const uid = getCurrentAuthUid();
   if (uid) {
     const saved = await persistCloudSave(data);
-    if (!saved) return false;
-  } else if (isGuestSessionActive()) {
-    const localSavedAt = new Date();
-    localStorage.setItem(GUEST_SAVE_KEY, JSON.stringify({ ...data, savedAt: localSavedAt.toISOString() }));
-    state.lastSavedAt = localSavedAt;
+    if (saved) {
+      updateSaveTimestampDisplay();
+      return true;
+    }
   }
+  const localSavedAt = new Date();
+  const key = getSaveKey();
+  localStorage.setItem(key, JSON.stringify({ ...data, savedAt: localSavedAt.toISOString() }));
+  state.lastSavedAt = localSavedAt;
   updateSaveTimestampDisplay();
   return true;
 }
@@ -2025,22 +2061,18 @@ async function saveGame({ manual = false } = {}) {
 async function forceCloudSave(reason = '') {
   const data = getSaveData();
   const uid = getCurrentAuthUid();
-  if (uid && isCloudSessionActive()) {
-    try {
-      const saved = await persistCloudSave(data);
-      if (!saved) console.warn('Forced cloud save failed', reason);
-      return saved;
-    } catch (error) {
-      console.warn('Forced cloud save error', reason, error);
-      return false;
+  if (uid) {
+    const saved = await persistCloudSave(data);
+    if (saved) return true;
+    const auth = getFirebaseAuth();
+    if (auth && auth.currentUser) {
+      console.error(`Error en guardado de tienda (${reason}): no se pudo persistir en Firestore`);
     }
   }
-  if (isGuestSessionActive()) {
-    const localSavedAt = new Date();
-    localStorage.setItem(GUEST_SAVE_KEY, JSON.stringify({ ...data, savedAt: localSavedAt.toISOString() }));
-    return true;
-  }
-  return false;
+  const localSavedAt = new Date();
+  const key = getSaveKey();
+  localStorage.setItem(key, JSON.stringify({ ...data, savedAt: localSavedAt.toISOString() }));
+  return true;
 }
 
 function scheduleAutosave() {}
@@ -2153,60 +2185,93 @@ async function loadGame() {
   if (isCloudSessionActive()) {
     const uid = getCurrentAuthUid();
     if (!uid) return false;
-    if (!initFirebaseIfNeeded()) {
-      const cached = localStorage.getItem(getCloudSaveKey(uid));
+    const username = normalizeAuthUsername(state.playerUsername || uid);
+    const auth = getFirebaseAuth();
+    const hasFirebaseAuth = !!(auth && auth.currentUser);
+
+    if (!hasFirebaseAuth || !initFirebaseIfNeeded()) {
+      const cached = localStorage.getItem(getCloudSaveKey(username));
       if (cached) {
         try {
           const cachedData = JSON.parse(cached);
           const loaded = applySaveData(cachedData);
           if (loaded) {
-            state.playerUsername = uid;
+            state.playerUsername = username;
             state.lastSavedAt = normalizeSavedTimestamp(cachedData.savedAt || cachedData.timestamp) || null;
             updateHeaderUsernameDisplay();
             return true;
           }
         } catch (e) {}
       }
-      applyFreshGameState(uid);
+      applyFreshGameState(username);
       return true;
     }
-    const profileRef = firebaseProgressDoc(uid);
+
+    let profileRef = firebaseProgressDoc(username);
     if (!profileRef) return false;
+    let snap = null;
     try {
-      const snap = await profileRef.get();
-      const data = snap.exists ? snap.data() : null;
+      snap = await profileRef.get();
+    } catch (e) {}
+    if (!snap || !snap.exists) {
+      if (username !== uid) {
+        profileRef = firebaseProgressDoc(uid);
+        if (profileRef) {
+          try {
+            snap = await profileRef.get();
+          } catch (e) {}
+        }
+      }
+    }
+    try {
+      const data = snap && snap.exists ? snap.data() : null;
       const saveData = data?.saveData || null;
       if (!saveData) {
-        applyFreshGameState(uid);
+        const localKey = getCloudSaveKey(username);
+        const localRaw = localStorage.getItem(localKey);
+        if (localRaw) {
+          try {
+            const localData = JSON.parse(localRaw);
+            const loaded = applySaveData(localData);
+            if (loaded) {
+              state.playerUsername = username;
+              state.lastSavedAt = normalizeSavedTimestamp(localData.savedAt || localData.timestamp) || null;
+              updateHeaderUsernameDisplay();
+              await persistCloudSave(getSaveData());
+              return true;
+            }
+          } catch (e) {}
+        }
+        applyFreshGameState(username);
         const created = getSaveData();
         await persistCloudSave(created);
-        localStorage.setItem(getCloudSaveKey(uid), JSON.stringify(created));
+        localStorage.setItem(localKey, JSON.stringify(created));
         state.lastSavedAt = new Date();
         return true;
       }
       const loaded = applySaveData(saveData);
       if (loaded) {
-        state.playerUsername = uid;
+        state.playerUsername = username;
         state.lastSavedAt = normalizeSavedTimestamp(data?.savedAt || data?.timestamp) || null;
         updateHeaderUsernameDisplay();
-        localStorage.setItem(getCloudSaveKey(uid), JSON.stringify(saveData));
+        localStorage.setItem(getCloudSaveKey(username), JSON.stringify(saveData));
       }
       return loaded;
     } catch (e) {
-      const cached = localStorage.getItem(getCloudSaveKey(uid));
+      const cached = localStorage.getItem(getCloudSaveKey(username));
       if (cached) {
         try {
           const cachedData = JSON.parse(cached);
           const loaded = applySaveData(cachedData);
           if (loaded) {
-            state.playerUsername = uid;
+            state.playerUsername = username;
             state.lastSavedAt = normalizeSavedTimestamp(cachedData.savedAt || cachedData.timestamp) || null;
             updateHeaderUsernameDisplay();
             return true;
           }
         } catch (err) {}
       }
-      applyFreshGameState(uid);
+      applyFreshGameState(username);
       return true;
     }
   }
@@ -2938,7 +3003,7 @@ function grantBattlePassReward(reward) {
   return null;
 }
 
-function claimBattlePassReward(level, track) {
+async function claimBattlePassReward(level, track) {
   checkBattlePassSeasonExpiration();
   if (track !== 'free' && track !== 'premium') return { ok: false, reason: 'Tipo de recompensa inválido.' };
   if (!Number.isInteger(level)) return { ok: false, reason: 'Nivel inválido.' };
@@ -2949,26 +3014,27 @@ function claimBattlePassReward(level, track) {
   if (isBattlePassRewardClaimed(level, track)) return { ok: false, reason: 'Recompensa ya reclamada.' };
   const reward = grantBattlePassReward(tier[track]);
   state.paseRecompensasReclamadas.push(getBattlePassRewardKey(level, track));
+  await forceCloudSave('battle_pass_claim');
   return { ok: true, rewards: reward ? [reward] : [] };
 }
 
-function claimBattlePassLevelRewards(level) {
+async function claimBattlePassLevelRewards(level) {
   const claimed = [];
-  const freeResult = claimBattlePassReward(level, 'free');
+  const freeResult = await claimBattlePassReward(level, 'free');
   if (freeResult.ok) claimed.push(...freeResult.rewards);
   if (state.tiene_premium) {
-    const premiumResult = claimBattlePassReward(level, 'premium');
+    const premiumResult = await claimBattlePassReward(level, 'premium');
     if (premiumResult.ok) claimed.push(...premiumResult.rewards);
   }
   if (!claimed.length) return { ok: false, reason: freeResult.reason || 'Nivel ya reclamado.' };
   return { ok: true, rewards: claimed };
 }
 
-function claimAllAvailableBattlePassRewards() {
+async function claimAllAvailableBattlePassRewards() {
   checkBattlePassSeasonExpiration();
   const claimed = [];
   for (let level = 1; level <= state.nivel_pase; level++) {
-    const result = claimBattlePassLevelRewards(level);
+    const result = await claimBattlePassLevelRewards(level);
     if (result.ok) claimed.push({ level, rewards: result.rewards });
   }
   return claimed;
@@ -3827,9 +3893,9 @@ function renderShop() {
     </div>
     ${canClaim ? '<button class="btn-buy daily-gift-btn">Reclamar</button>' : '<button class="btn-buy daily-gift-btn" disabled>✅</button>'}`;
   if (canClaim) {
-    giftCard.querySelector('.daily-gift-btn').addEventListener('pointerdown', e => {
+    giftCard.querySelector('.daily-gift-btn').addEventListener('pointerdown', async e => {
       e.preventDefault();
-      claimFreeGift(50);
+      await claimFreeGift(50);
     });
   }
   dom.shopContent.appendChild(giftCard);
@@ -3986,9 +4052,10 @@ function renderShop() {
   startGlobalCountdown();
 }
 
-function claimFreeGift(amount) {
+async function claimFreeGift(amount) {
   state.coins += amount;
   state.lastFreeClaim = Date.now();
+  await forceCloudSave('free_gift');
   updateCoinDisplay();
   renderShop();
   updateNotificationDots();
@@ -4050,13 +4117,14 @@ function trackMission(id) {
   updateMissionsButton();
 }
 
-function claimMission(id) {
+async function claimMission(id) {
   if (state.missionsClaimed.includes(id)) return;
   const mission = DAILY_MISSIONS.find(m => m.id === id);
   if (!mission || state.missions[id] < mission.target) return;
   state.missionsClaimed.push(id);
   state.coins += mission.reward;
   addBattlePassXpFromDailyMission();
+  await forceCloudSave('mission_claim');
   updateCoinDisplay();
   renderMissionsModal();
   updateMissionsButton();
@@ -4143,18 +4211,19 @@ function renderMissionsModal() {
     </div>`;
 
   body.querySelectorAll('.mission-claim-btn:not(.disabled)').forEach(btn => {
-    btn.addEventListener('pointerdown', e => {
+    btn.addEventListener('pointerdown', async e => {
       e.preventDefault();
-      claimMission(btn.dataset.missionId);
+      await claimMission(btn.dataset.missionId);
     });
   });
 
   const bonusBtn = document.getElementById('missions-claim-bonus');
   if (bonusBtn) {
-    bonusBtn.addEventListener('pointerdown', e => {
+    bonusBtn.addEventListener('pointerdown', async e => {
       e.preventDefault();
       state.missionsBonusClaimed = true;
       state.coins += 200;
+      await forceCloudSave('mission_bonus');
       updateCoinDisplay();
       renderMissionsModal();
       updateMissionsButton();
@@ -4442,12 +4511,12 @@ function renderBattlePassModal() {
     });
   }
   body.querySelectorAll('[data-bp-claim]').forEach(btn => {
-    btn.addEventListener('pointerdown', e => {
+    btn.addEventListener('pointerdown', async e => {
       e.preventDefault();
       if (btn.disabled) return;
       const level = parseInt(btn.dataset.level || '', 10);
       const track = btn.dataset.track;
-      const result = claimBattlePassReward(level, track);
+      const result = await claimBattlePassReward(level, track);
       if (!result.ok) {
         alert(result.reason);
         return;
@@ -4524,8 +4593,6 @@ async function openChest(chestId) {
   const chest = CHEST_TYPES[chestId];
   if (!chest) return;
 
-  const prevCoins = state.coins;
-  const prevDiamonds = state.diamonds;
   if (chest.costType === 'coins') {
     if (state.coins < chest.cost) return;
     state.coins -= chest.cost;
@@ -4536,15 +4603,6 @@ async function openChest(chestId) {
   updateCoinDisplay();
   updateDiamondDisplay();
   renderShop();
-  const saved = await forceCloudSave('buy_chest');
-  if (!saved) {
-    state.coins = prevCoins;
-    state.diamonds = prevDiamonds;
-    updateCoinDisplay();
-    updateDiamondDisplay();
-    alert('No se pudo confirmar la compra del cofre en la nube. Inténtalo de nuevo.');
-    return;
-  }
 
   const goldAmount = randInt(chest.goldRange[0], chest.goldRange[1]);
   let diamondAmount = 0;
@@ -4565,7 +4623,7 @@ async function openChest(chestId) {
   showChestReveal(chest, goldAmount, diamondAmount, fish, compensation);
 }
 
-function showChestReveal(chest, gold, diamonds, fish, compensation) {
+async function showChestReveal(chest, gold, diamonds, fish, compensation) {
   const body = dom.chestModalBody;
   if (!body) return;
 
@@ -4591,7 +4649,7 @@ function showChestReveal(chest, gold, diamonds, fish, compensation) {
       if (lvl < 10) state.fishLevels[fish.id] = lvl + 1;
     }
   }
-  scheduleAutosave(0);
+  await forceCloudSave('buy_chest');
 
   let currentStep = 0;
   const steps = [];
@@ -5347,7 +5405,7 @@ function checkGameOver() {
 }
 
 /* ===== RESULTADO ===== */
-function showResult(victory) {
+async function showResult(victory) {
   const arena = getArenaConfig(state.currentArena);
   const reward = victory ? arena.winGold : arena.loseGold;
   const arenaCups = ARENA_CUP_CHANGES[state.currentArena] || ARENA_CUP_CHANGES[1];
@@ -5378,7 +5436,7 @@ function showResult(victory) {
   dom.resultSub.textContent = victory
     ? `¡${state.player.type.name} ha vencido a ${state.enemy.type.name}! +${reward} 🪙`
     : `${state.enemy.type.name} ha derrotado a ${state.player.type.name}... +${reward} 🪙`;
-  scheduleAutosave(0);
+  await forceCloudSave('combat_end');
 }
 
 /* ===== REINICIO ===== */
