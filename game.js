@@ -1077,11 +1077,18 @@ const ACHIEVEMENTS = [
     reward: { coins: 500, diamonds: 50 }
   },
   {
-    id: 'maestro_supervivencia', name: 'Maestro de la Supervivencia', icon: '👑',
+    id: 'achievement_rey_midas', name: 'Rey Midas', icon: '👑',
     target: 20,
-    label: 'Completa las 20 oleadas de Fiebre del Oro o Mina de Gemas',
-    progressLabel: 'Mejor marca en Fiebre',
-    reward: { coins: 1000, diamonds: 100 }
+    label: 'Completa las 20 oleadas de la Fiebre del Oro',
+    progressLabel: 'Mejor marca en Fiebre del Oro',
+    reward: { coins: 2000, diamonds: 50 }
+  },
+  {
+    id: 'achievement_codicia_absoluta', name: 'Codicia Absoluta', icon: '💎',
+    target: 20,
+    label: 'Completa las 20 oleadas de la Mina de Gemas',
+    progressLabel: 'Mejor marca en Mina de Gemas',
+    reward: { coins: 0, diamonds: 200 }
   }
 ];
 
@@ -1142,7 +1149,8 @@ const state = {
     gladiador: { claimed: false },
     inversor: { claimed: false },
     superviviente: { claimed: false },
-    maestro_supervivencia: { claimed: false }
+    achievement_rey_midas: { claimed: false },
+    achievement_codicia_absoluta: { claimed: false }
   },
   ticketsSpentTotal: 0,
   battleMode: 'normal',
@@ -1151,6 +1159,8 @@ const state = {
   lastSurvivalDate: null,
   lastGoldFeverDate: null,
   lastDiamondFeverDate: null,
+  goldFeverMaxWaves: 0,
+  diamondFeverMaxWaves: 0,
   feverWave: 0,
   feverMaxWaves: 0,
   player: null,
@@ -2250,7 +2260,8 @@ function applyFreshGameState(username) {
   state.achievements = { collectionMaster: { rewardedForTotal: 0 },
     pescador: { claimed: false }, muelle: { claimed: false },
     gladiador: { claimed: false }, inversor: { claimed: false },
-    superviviente: { claimed: false }, maestro_supervivencia: { claimed: false }
+    superviviente: { claimed: false },
+    achievement_rey_midas: { claimed: false }, achievement_codicia_absoluta: { claimed: false }
   };
   state.battlesPlayed = 0;
   state.battlesWon = 0;
@@ -2376,7 +2387,7 @@ function applySaveData(data) {
   if (savedAchievement && Number.isFinite(savedAchievement.rewardedForTotal)) {
     state.achievements.collectionMaster.rewardedForTotal = Math.max(0, savedAchievement.rewardedForTotal);
   }
-  ['pescador', 'muelle', 'gladiador', 'inversor', 'superviviente', 'maestro_supervivencia'].forEach(id => {
+  ['pescador', 'muelle', 'gladiador', 'inversor', 'superviviente', 'achievement_rey_midas', 'achievement_codicia_absoluta'].forEach(id => {
     const saved = data.achievements?.[id];
     if (saved) {
       if (Array.isArray(saved.phasesClaimed)) {
@@ -2392,6 +2403,8 @@ function applySaveData(data) {
   if (typeof data.lastGoldFeverDate === 'number' && data.lastGoldFeverDate > 0) state.lastGoldFeverDate = data.lastGoldFeverDate;
   if (typeof data.lastDiamondFeverDate === 'number' && data.lastDiamondFeverDate > 0) state.lastDiamondFeverDate = data.lastDiamondFeverDate;
   if (typeof data.feverMaxWaves === 'number' && data.feverMaxWaves >= 0) state.feverMaxWaves = data.feverMaxWaves;
+  if (typeof data.goldFeverMaxWaves === 'number' && data.goldFeverMaxWaves >= 0) state.goldFeverMaxWaves = data.goldFeverMaxWaves;
+  if (typeof data.diamondFeverMaxWaves === 'number' && data.diamondFeverMaxWaves >= 0) state.diamondFeverMaxWaves = data.diamondFeverMaxWaves;
   if (data.selectedFish && getFishById(data.selectedFish) && state.unlockedFish.includes(data.selectedFish)) {
     state.selectedFishId = data.selectedFish;
   }
@@ -2440,6 +2453,8 @@ function getSaveData() {
     lastGoldFeverDate: state.lastGoldFeverDate,
     lastDiamondFeverDate: state.lastDiamondFeverDate,
     feverMaxWaves: state.feverMaxWaves,
+    goldFeverMaxWaves: state.goldFeverMaxWaves,
+    diamondFeverMaxWaves: state.diamondFeverMaxWaves,
     tickets_muelle: state.tickets_muelle,
     timestamp: Date.now()
   };
@@ -4653,8 +4668,11 @@ function getAchievementProgress(achId) {
     case 'superviviente':
       current = state.survivalMaxWaves || 0;
       break;
-    case 'maestro_supervivencia':
-      current = state.feverMaxWaves || 0;
+    case 'achievement_rey_midas':
+      current = state.goldFeverMaxWaves || 0;
+      break;
+    case 'achievement_codicia_absoluta':
+      current = state.diamondFeverMaxWaves || 0;
       break;
   }
   const complete = current >= def.target;
@@ -4803,6 +4821,8 @@ function renderProfileModal() {
         html.push(ach(as[2]));    // Row 3: Gladiador del Mar
         html.push(ach(as[3]));    // Row 4: Inversor Marino
         html.push(ach(as[4]));    // Row 4: Superviviente del Arrecife
+        html.push(ach(as[5]));    // Row 5: Rey Midas
+        html.push(ach(as[6]));    // Row 5: Codicia Absoluta
         return html.join('');
       })()}
     </div>
@@ -6295,6 +6315,11 @@ async function handleFeverEnemyDefeat() {
   const nextWave = state.feverWave + 1;
   if (nextWave > FEVER_TOTAL_WAVES) {
     state.feverMaxWaves = Math.max(state.feverMaxWaves || 0, FEVER_TOTAL_WAVES);
+    if (mode === 'gold') {
+      state.goldFeverMaxWaves = Math.max(state.goldFeverMaxWaves || 0, FEVER_TOTAL_WAVES);
+    } else {
+      state.diamondFeverMaxWaves = Math.max(state.diamondFeverMaxWaves || 0, FEVER_TOTAL_WAVES);
+    }
     signalAchievementUpdate();
     const saved = await forceCloudSave('fever_victory');
     if (!saved) {
@@ -6313,7 +6338,13 @@ async function handleFeverEnemyDefeat() {
 
 async function handleFeverPlayerDefeat() {
   const mode = state.battleMode === 'goldFever' ? 'gold' : 'diamond';
-  state.feverMaxWaves = Math.max(state.feverMaxWaves || 0, Math.max(0, state.feverWave - 1));
+  const waves = Math.max(0, state.feverWave - 1);
+  state.feverMaxWaves = Math.max(state.feverMaxWaves || 0, waves);
+  if (mode === 'gold') {
+    state.goldFeverMaxWaves = Math.max(state.goldFeverMaxWaves || 0, waves);
+  } else {
+    state.diamondFeverMaxWaves = Math.max(state.diamondFeverMaxWaves || 0, waves);
+  }
   signalAchievementUpdate();
   showFeverResult(false, mode);
 }
