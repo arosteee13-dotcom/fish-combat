@@ -5284,7 +5284,10 @@ function renderCosmeticosTab() {
     const card = document.createElement('div');
     card.className = `frame-card ${isEquipped ? 'equipped' : ''}`;
     card.innerHTML = `
-      <div class="frame-card-preview" style="box-shadow:${frame.borderStyle};width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06);margin:0 auto;font-size:1.6rem;">${frame.emoji}</div>
+      <div class="frame-card-preview" style="box-shadow:${frame.borderStyle};width:56px;height:56px;border-radius:50%;margin:0 auto;position:relative;overflow:hidden;">
+        <img src="${frame.imgPath}" alt="${frame.name}" class="fish-img" onerror="this.classList.add('img-broken')" style="width:100%;height:100%;object-fit:contain;">
+        <span class="img-fallback" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem;">${frame.emoji}</span>
+      </div>
       <div class="frame-card-name">${frame.name}</div>
       <div class="frame-card-status">${isEquipped ? '✅ Equipado' : '📭 Disponible'}</div>
     `;
@@ -5307,7 +5310,10 @@ function showFrameDetail(frameId) {
   const isEquipped = state.currentFrameId === frame.id;
   detail.innerHTML = `
     <button class="frame-detail-back" id="frame-detail-back">← Volver</button>
-    <div class="frame-detail-preview" style="box-shadow:${frame.borderStyle};width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);margin:1rem auto;font-size:2.4rem;">${frame.emoji}</div>
+    <div class="frame-detail-preview" style="box-shadow:${frame.borderStyle};width:80px;height:80px;border-radius:50%;margin:1rem auto;position:relative;overflow:hidden;">
+      <img src="${frame.imgPath}" alt="${frame.name}" class="fish-img" onerror="this.classList.add('img-broken')" style="width:100%;height:100%;object-fit:contain;">
+      <span class="img-fallback" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.4rem;">${frame.emoji}</span>
+    </div>
     <div class="frame-detail-name">${frame.name}</div>
     <button class="frame-detail-equip-btn" id="frame-detail-equip-btn" ${isEquipped ? 'disabled' : ''}>${isEquipped ? '✅ Equipado' : 'Equipar'}</button>
   `;
