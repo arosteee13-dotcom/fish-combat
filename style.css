@@ -270,9 +270,11 @@ body.modal-open .section.active { overflow: hidden; }
 /* ===== ARENA MODAL ===== */
 .arena-modal {
   position: fixed; inset: 0; z-index: 3000;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.arena-modal.open { display: flex; }
+.arena-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .arena-modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.65);
@@ -1196,9 +1198,11 @@ body.modal-open .section.active { overflow: hidden; }
 /* ===== EQUIP MODAL ===== */
 .equip-modal {
   position: fixed; inset: 0; z-index: 200;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.equip-modal.open { display: flex; }
+.equip-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .equip-modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7);
 }
@@ -1246,9 +1250,11 @@ body.modal-open .section.active { overflow: hidden; }
 /* ===== CHEST MODAL ===== */
 .chest-modal {
   position: fixed; inset: 0; z-index: 200;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.chest-modal.open { display: flex; }
+.chest-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .chest-modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7);
 }
@@ -1285,9 +1291,11 @@ body.modal-open .section.active { overflow: hidden; }
 /* ===== ITEM MODAL ===== */
 .item-modal {
   position: fixed; inset: 0; z-index: 210;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.item-modal.open { display: flex; }
+.item-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .item-modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7);
 }
@@ -1347,9 +1355,11 @@ body.modal-open .section.active { overflow: hidden; }
 /* ===== RESET MODAL ===== */
 .reset-modal {
   position: fixed; inset: 0; z-index: 300;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.reset-modal.open { display: flex; }
+.reset-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .reset-modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.75);
 }
@@ -1444,9 +1454,11 @@ body.modal-open .section.active { overflow: hidden; }
 /* ===== MISIONES MODAL ===== */
 .missions-modal {
   position: fixed; inset: 0; z-index: 100;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.missions-modal.open { display: flex; }
+.missions-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .missions-modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.65);
 }
@@ -1585,9 +1597,11 @@ body.modal-open .section.active { overflow: hidden; }
 /* Battle pass modal */
 .battle-pass-modal {
   position: fixed; inset: 0; z-index: 100;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.battle-pass-modal.open { display: flex; }
+.battle-pass-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .battle-pass-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.65); }
 .battle-pass-modal-content {
   position: relative; z-index: 1;
@@ -1718,9 +1732,11 @@ body.modal-open .section.active { overflow: hidden; }
 /* Profile modal */
 .profile-modal {
   position: fixed; inset: 0; z-index: 100;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.profile-modal.open { display: flex; }
+.profile-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .profile-modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.65);
 }
@@ -1905,9 +1921,11 @@ body.modal-open .section.active { overflow: hidden; }
 }
 .settings-modal {
   position: fixed; inset: 0; z-index: 100;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.settings-modal.open { display: flex; }
+.settings-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .settings-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.65); }
 .settings-modal-content {
   position: relative; z-index: 1;
@@ -1946,9 +1964,11 @@ body.modal-open .section.active { overflow: hidden; }
 /* ===== FISH DETAIL MODAL ===== */
 .fish-modal {
   position: fixed; inset: 0; z-index: 100;
-  display: none; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.fish-modal.open { display: flex; }
+.fish-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .fish-modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.65);
@@ -2153,8 +2173,8 @@ body.modal-open .section.active { overflow: hidden; }
 .muelle-result-bust { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.35); color: #ef9a9a; }
 
 /* Bet modal */
-.muelle-bet-modal { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; }
-.muelle-bet-modal.open { display: flex; }
+.muelle-bet-modal { position: fixed; inset: 0; z-index: 100; align-items: center; justify-content: center; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0.3s ease; }
+.muelle-bet-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .muelle-bet-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.65); }
 .muelle-bet-modal-content {
   position: relative; z-index: 1; width: 92%; max-width: 380px;
@@ -2270,8 +2290,8 @@ body.modal-open .section.active { overflow: hidden; }
 }
 
 /* ── Update Modal ─────────────────────────────────────────── */
-.update-modal { display: none; position: fixed; inset: 0; z-index: 2000; align-items: center; justify-content: center; }
-.update-modal.open { display: flex; }
+.update-modal { position: fixed; inset: 0; z-index: 2000; align-items: center; justify-content: center; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0.3s ease; }
+.update-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .update-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.78); }
 .update-modal-content {
   position: relative;
@@ -2350,8 +2370,8 @@ body.modal-open .section.active { overflow: hidden; }
 }
 
 /* ── Friends Modal ─────────────────────────────────────────── */
-.friends-modal { display: none; position: fixed; inset: 0; z-index: 2000; align-items: center; justify-content: center; }
-.friends-modal.open { display: flex; }
+.friends-modal { position: fixed; inset: 0; z-index: 2000; align-items: center; justify-content: center; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0.3s ease; }
+.friends-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .friends-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.78); }
 .friends-modal-content {
   position: relative;
@@ -2491,8 +2511,8 @@ body.modal-open .section.active { overflow: hidden; }
 .friends-modal-close:active { color: #fff; }
 
 /* ── Auth / Username Modals ───────────────────────────────── */
-.auth-modal, .username-modal { display: none; position: fixed; inset: 0; z-index: 2100; align-items: center; justify-content: center; }
-.auth-modal.open, .username-modal.open { display: flex; }
+.auth-modal, .username-modal { position: fixed; inset: 0; z-index: 2100; align-items: center; justify-content: center; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0.3s ease; }
+.auth-modal.open, .username-modal.open { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
 .auth-modal-backdrop, .username-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.82); }
 .auth-modal-content, .username-modal-content {
   position: relative;
@@ -2642,6 +2662,73 @@ body.modal-open .section.active { overflow: hidden; }
 .auth-modal,
 .username-modal {
   z-index: 3000;
+}
+
+/* ===== MODAL ANIMATIONS ===== */
+
+/* Backdrop fade */
+.arena-modal-backdrop,
+.equip-modal-backdrop,
+.chest-modal-backdrop,
+.item-modal-backdrop,
+.reset-modal-backdrop,
+.missions-modal-backdrop,
+.battle-pass-modal-backdrop,
+.profile-modal-backdrop,
+.settings-modal-backdrop,
+.fish-modal-backdrop,
+.muelle-bet-modal-backdrop,
+.update-modal-backdrop,
+.friends-modal-backdrop,
+.auth-modal-backdrop,
+.username-modal-backdrop {
+  transition: opacity 0.3s ease;
+}
+
+/* Group 1 — Dropdown from top (Profile, Settings, News, Friends, Missions, Arena) */
+.profile-modal-content,
+.settings-modal-content,
+.update-modal-content,
+.friends-modal-content,
+.missions-modal-content,
+.arena-modal-content {
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.215, 0.61, 0.355, 1),
+              opacity 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+.profile-modal.open .profile-modal-content,
+.settings-modal.open .settings-modal-content,
+.update-modal.open .update-modal-content,
+.friends-modal.open .friends-modal-content,
+.missions-modal.open .missions-modal-content,
+.arena-modal.open .arena-modal-content {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Group 2 — Floating focus (Shop detail, Battle Pass, Fish detail, Equip, Chest, Reset, Muelle) */
+.item-modal-content,
+.battle-pass-modal-content,
+.fish-modal-content,
+.equip-modal-content,
+.chest-modal-content,
+.reset-modal-content,
+.muelle-bet-modal-content {
+  transform: scale(0.8) rotateZ(-3deg);
+  opacity: 0;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              opacity 0.2s ease;
+}
+.item-modal.open .item-modal-content,
+.battle-pass-modal.open .battle-pass-modal-content,
+.fish-modal.open .fish-modal-content,
+.equip-modal.open .equip-modal-content,
+.chest-modal.open .chest-modal-content,
+.reset-modal.open .reset-modal-content,
+.muelle-bet-modal.open .muelle-bet-modal-content {
+  transform: scale(1) rotateZ(0deg);
+  opacity: 1;
 }
 
 @media (max-width: 380px) {
