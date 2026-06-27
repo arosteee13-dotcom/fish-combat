@@ -2364,6 +2364,7 @@ function applySaveData(data) {
   repairMissingBattlePassItems();
   if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
   if (Array.isArray(data.marcosDesbloqueados)) state.marcosDesbloqueados = data.marcosDesbloqueados;
+  repairMissingBattlePassFrames();
   if (typeof data.currentFrameId === 'string') state.currentFrameId = data.currentFrameId;
   if (data.shopRotation && typeof data.shopRotation === 'object') state.shopRotation = data.shopRotation;
   if (typeof data.tickets_muelle === 'number' && data.tickets_muelle >= 0) state.tickets_muelle = data.tickets_muelle;
@@ -3120,6 +3121,20 @@ function repairMissingBattlePassItems() {
       const matchedItem = ITEMS.find(it => it.name === reward.label);
       if (matchedItem && !state.items.includes(matchedItem.id)) {
         state.items.push(matchedItem.id);
+      }
+    });
+  });
+}
+
+function repairMissingBattlePassFrames() {
+  [...BATTLE_PASS_LEVELS, ...BATTLE_PASS_LEVELS_JULY].forEach(tier => {
+    ['free', 'premium'].forEach(track => {
+      const reward = tier[track];
+      if (!reward || reward.type !== 'frame') return;
+      if (!isBattlePassRewardClaimed(tier.level, track)) return;
+      const frame = FRAMES.find(f => f.name === reward.label);
+      if (frame && !state.marcosDesbloqueados.includes(frame.name)) {
+        state.marcosDesbloqueados.push(frame.name);
       }
     });
   });
