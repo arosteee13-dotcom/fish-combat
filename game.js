@@ -922,10 +922,10 @@ const ITEMS = [
 ];
 
 const FRAMES = [
-  { id: 'marco_guardian_del_mar',   name: 'Marco Guardián del Mar',   emoji: '🛡️', imgPath: 'img/marcos/marco_guardian_del_mar.png',   borderStyle: '0 0 0 3px #00bcd4, 0 0 12px rgba(0,188,212,0.45)' },
-  { id: 'marco_cosmetico_dorado',   name: 'Marco Cosmético Dorado',   emoji: '🌟', imgPath: 'img/marcos/marco_cosmetico_dorado.png',   borderStyle: '0 0 0 3px #ffd700, 0 0 12px rgba(255,215,0,0.45)' },
-  { id: 'marco_piedra_volcanica',   name: 'Marco de Piedra Volcánica', emoji: '🪨', imgPath: 'img/marcos/marco_piedra_volcanica.png',   borderStyle: '0 0 0 3px #78909c, 0 0 12px rgba(120,144,156,0.45)' },
-  { id: 'marco_magma_animado',      name: 'Marco de Magma Animado',    emoji: '🌋', imgPath: 'img/marcos/marco_magma_animado.png',      borderStyle: '0 0 0 3px #ff5722, 0 0 12px rgba(255,87,34,0.45)' },
+  { id: 'marco_guardian_del_mar',   name: 'Marco Guardián del Mar',   emoji: '🛡️', imgPath: 'img/marcos/marco_guardian_del_mar.png',   borderStyle: '0 0 0 3px #00bcd4, 0 0 12px rgba(0,188,212,0.45)', seasonMonth: 6 },
+  { id: 'marco_cosmetico_dorado',   name: 'Marco Cosmético Dorado',   emoji: '🌟', imgPath: 'img/marcos/marco_cosmetico_dorado.png',   borderStyle: '0 0 0 3px #ffd700, 0 0 12px rgba(255,215,0,0.45)', seasonMonth: 6 },
+  { id: 'marco_piedra_volcanica',   name: 'Marco de Piedra Volcánica', emoji: '🪨', imgPath: 'img/marcos/marco_piedra_volcanica.png',   borderStyle: '0 0 0 3px #78909c, 0 0 12px rgba(120,144,156,0.45)', seasonMonth: 7 },
+  { id: 'marco_magma_animado',      name: 'Marco de Magma Animado',    emoji: '🌋', imgPath: 'img/marcos/marco_magma_animado.png',      borderStyle: '0 0 0 3px #ff5722, 0 0 12px rgba(255,87,34,0.45)', seasonMonth: 7 },
 ];
 
 const SHOP_ITEMS = [
@@ -5272,7 +5272,8 @@ function renderCosmeticosTab() {
   const panel = document.getElementById('inv-panel-cosmeticos');
   if (!panel) return;
   panel.innerHTML = '';
-  const ownedFrames = FRAMES.filter(f => state.marcosDesbloqueados.includes(f.name));
+  const currentMonth = new Date().getUTCMonth() + 1;
+  const ownedFrames = FRAMES.filter(f => state.marcosDesbloqueados.includes(f.name) && f.seasonMonth <= currentMonth);
   if (ownedFrames.length === 0) {
     panel.innerHTML = `<div class="inv-empty"><p>🎨 Sin cosméticos</p><p class="inv-empty-sub">Consigue marcos en el Pase de Batalla (nivel 10 Premium)</p></div>`;
     return;
@@ -5284,12 +5285,12 @@ function renderCosmeticosTab() {
     const card = document.createElement('div');
     card.className = `frame-card ${isEquipped ? 'equipped' : ''}`;
     card.innerHTML = `
-      <div class="frame-card-preview" style="box-shadow:${frame.borderStyle};width:56px;height:56px;border-radius:50%;margin:0 auto;position:relative;overflow:hidden;">
+      <div class="frame-card-preview" style="box-shadow:${frame.borderStyle};width:80%;aspect-ratio:1;border-radius:50%;margin:0 auto;position:relative;overflow:hidden;">
         <img src="${frame.imgPath}" alt="${frame.name}" class="fish-img" onerror="this.classList.add('img-broken')" style="width:100%;height:100%;object-fit:contain;">
-        <span class="img-fallback" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem;">${frame.emoji}</span>
+        <span class="img-fallback" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;">${frame.emoji}</span>
       </div>
       <div class="frame-card-name">${frame.name}</div>
-      <div class="frame-card-status">${isEquipped ? '✅ Equipado' : '📭 Disponible'}</div>
+      <div class="frame-card-status">${isEquipped ? 'Equipado' : 'Disponible'}</div>
     `;
     card.addEventListener('pointerdown', e => {
       e.preventDefault();
@@ -5310,12 +5311,12 @@ function showFrameDetail(frameId) {
   const isEquipped = state.currentFrameId === frame.id;
   detail.innerHTML = `
     <button class="frame-detail-back" id="frame-detail-back">← Volver</button>
-    <div class="frame-detail-preview" style="box-shadow:${frame.borderStyle};width:80px;height:80px;border-radius:50%;margin:1rem auto;position:relative;overflow:hidden;">
+    <div class="frame-detail-preview" style="box-shadow:${frame.borderStyle};width:120px;height:120px;border-radius:50%;margin:1rem auto;position:relative;overflow:hidden;">
       <img src="${frame.imgPath}" alt="${frame.name}" class="fish-img" onerror="this.classList.add('img-broken')" style="width:100%;height:100%;object-fit:contain;">
-      <span class="img-fallback" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.4rem;">${frame.emoji}</span>
+      <span class="img-fallback" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3.2rem;">${frame.emoji}</span>
     </div>
     <div class="frame-detail-name">${frame.name}</div>
-    <button class="frame-detail-equip-btn" id="frame-detail-equip-btn" ${isEquipped ? 'disabled' : ''}>${isEquipped ? '✅ Equipado' : 'Equipar'}</button>
+    <button class="frame-detail-equip-btn" id="frame-detail-equip-btn" ${isEquipped ? 'disabled' : ''}>${isEquipped ? 'Equipado' : 'Equipar'}</button>
   `;
   document.getElementById('frame-detail-back').addEventListener('pointerdown', e => {
     e.preventDefault();
