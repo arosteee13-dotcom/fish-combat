@@ -907,7 +907,7 @@ const ACHIEVEMENTS = [
     id: 'superviviente', name: 'Superviviente del Arrecife', icon: '🛡️',
     target: 20,
     label: 'Completa las 20 oleadas del Modo Supervivencia',
-    progressLabel: 'Oleadas máximas superadas',
+    progressLabel: 'Oleadas superadas',
     reward: { coins: 500, diamonds: 50 }
   }
 ];
