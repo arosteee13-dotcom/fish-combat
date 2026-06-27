@@ -906,7 +906,12 @@ const ITEMS = [
   { id: 'obj_escama_brillante', name: 'Escama Brillante', rarity: 'common', imgPath: 'img/objetos/escama_brillante.png', emoji: '✨', description: 'Una escama pulida que refleja la luz. Aumenta la Velocidad un +10% y otorga +5% de Esquiva.' },
   { id: 'obj_coral_fuego', name: 'Coral de Fuego', rarity: 'rare', imgPath: 'img/objetos/coral_fuego.png', emoji: '🪸', description: 'Coral urticante. Los ataques Especiales ganan un 15% de probabilidad de infligir Veneno por 2 turnos.' },
   { id: 'obj_toxina_concentrada', name: 'Toxina Concentrada', rarity: 'epic', imgPath: 'img/objetos/toxina_concentrada.png', emoji: '🧪', description: 'Veneno puro. Los estados alterados (Veneno/Sangrado/Aturdir) causados por este pez no se pueden mitigar.' },
-  { id: 'obj_perla_arrecife', name: 'Perla del Arrecife', rarity: 'epic', imgPath: 'img/objetos/perla_arrecife.png', emoji: '🔮', description: 'Joya mística. Al iniciar el combate, otorga al portador un Escudo protector equivalente al 20% de sus PS máximos.' }
+  { id: 'obj_perla_arrecife', name: 'Perla del Arrecife', rarity: 'epic', imgPath: 'img/objetos/perla_arrecife.png', emoji: '🔮', description: 'Joya mística. Al iniciar el combate, otorga al portador un Escudo protector equivalente al 20% de sus PS máximos.' },
+  { id: 'concha_comun', name: 'Concha Común', rarity: 'common', imgPath: 'img/objetos/concha_comun.png', emoji: '🐚', description: 'Una concha resistente que ofrece protección básica. Reduce el daño físico recibido un 5%.' },
+  { id: 'anzuelo_suerte', name: 'Anzuelo de la Suerte', rarity: 'rare', imgPath: 'img/objetos/anzuelo_suerte.png', emoji: '🎣', description: 'Un anzuelo bañado en buena fortuna. Aumenta la probabilidad de golpe crítico un 10%.' },
+  { id: 'coral_defensivo', name: 'Coral Defensivo', rarity: 'common', imgPath: 'img/objetos/coral_defensivo.png', emoji: '🪸', description: 'Un coral duro como la piedra. Otorga un escudo del 10% de los PS máximos al iniciar el combate.' },
+  { id: 'perla_abismo', name: 'Perla del Abismo', rarity: 'epic', imgPath: 'img/objetos/perla_abismo.png', emoji: '🌑', description: 'Una perla oscura nacida en las fosas más profundas. Aumenta la Defensa Especial un 20%.' },
+  { id: 'tridente_roto', name: 'Tridente Roto', rarity: 'rare', imgPath: 'img/objetos/tridente_roto.png', emoji: '🔱', description: 'Un tridente astillado pero aún letal. Aumenta el Ataque Físico un 15%.' }
 ];
 
 const SHOP_ITEMS = [
@@ -2313,7 +2318,16 @@ function applySaveData(data) {
   if (Number.isFinite(data.paseInicioTemporada) && data.paseInicioTemporada > 0) state.paseInicioTemporada = data.paseInicioTemporada;
   if (typeof data.paseSeasonMonth === 'string') state.paseSeasonMonth = data.paseSeasonMonth;
   if (Array.isArray(data.paseRecompensasReclamadas)) state.paseRecompensasReclamadas = data.paseRecompensasReclamadas;
-  if (Array.isArray(data.paseObjetos)) state.paseObjetos = data.paseObjetos;
+  if (Array.isArray(data.paseObjetos)) {
+    state.paseObjetos = data.paseObjetos;
+    state.paseObjetos.forEach(label => {
+      const matchedItem = ITEMS.find(it => it.name === label);
+      if (matchedItem && !state.items.includes(matchedItem.id)) {
+        state.items.push(matchedItem.id);
+      }
+    });
+  }
+  repairMissingBattlePassItems();
   if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
   if (Array.isArray(data.marcosDesbloqueados)) state.marcosDesbloqueados = data.marcosDesbloqueados;
   if (data.shopRotation && typeof data.shopRotation === 'object') state.shopRotation = data.shopRotation;
@@ -3060,6 +3074,20 @@ function getBattlePassRewardKey(level, track) {
   return `${level}:${track}`;
 }
 
+function repairMissingBattlePassItems() {
+  BATTLE_PASS_LEVELS.forEach(tier => {
+    ['free', 'premium'].forEach(track => {
+      const reward = tier[track];
+      if (!reward || reward.type !== 'item') return;
+      if (!isBattlePassRewardClaimed(tier.level, track)) return;
+      const matchedItem = ITEMS.find(it => it.name === reward.label);
+      if (matchedItem && !state.items.includes(matchedItem.id)) {
+        state.items.push(matchedItem.id);
+      }
+    });
+  });
+}
+
 function normalizeBattlePassClaimedRewards(claimedRewards) {
   if (!Array.isArray(claimedRewards)) return [];
   const normalized = [];
@@ -3211,6 +3239,10 @@ function grantBattlePassReward(reward) {
   }
   if (reward.type === 'item') {
     if (!state.paseObjetos.includes(reward.label)) state.paseObjetos.push(reward.label);
+    const matchedItem = ITEMS.find(it => it.name === reward.label);
+    if (matchedItem && !state.items.includes(matchedItem.id)) {
+      state.items.push(matchedItem.id);
+    }
     return reward.label;
   }
   if (reward.type === 'title') {
@@ -3233,9 +3265,20 @@ async function claimBattlePassReward(level, track) {
   if (state.nivel_pase < level) return { ok: false, reason: 'Nivel aún no desbloqueado.' };
   if (track === 'premium' && !state.tiene_premium) return { ok: false, reason: 'Requiere Pase Premium.' };
   if (isBattlePassRewardClaimed(level, track)) return { ok: false, reason: 'Recompensa ya reclamada.' };
+  const prevCoins = state.coins;
+  const prevItems = [...state.items];
+  const prevPaseObjetos = [...state.paseObjetos];
+  const prevReclamadas = [...state.paseRecompensasReclamadas];
   const reward = grantBattlePassReward(tier[track]);
   state.paseRecompensasReclamadas.push(getBattlePassRewardKey(level, track));
-  await forceCloudSave('battle_pass_claim');
+  const saved = await forceCloudSave('battle_pass_claim');
+  if (!saved) {
+    state.coins = prevCoins;
+    state.items = prevItems;
+    state.paseObjetos = prevPaseObjetos;
+    state.paseRecompensasReclamadas = prevReclamadas;
+    return { ok: false, reason: 'Error al guardar en la nube. Inténtalo de nuevo.' };
+  }
   return { ok: true, rewards: reward ? [reward] : [] };
 }
 
@@ -4907,6 +4950,7 @@ function renderBattlePassModal() {
       }
       renderBattlePassModal();
       renderProfileModal();
+      renderInventory();
     });
   });
 }
