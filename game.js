@@ -874,6 +874,37 @@ const PROGRESS_COLLECTION = 'usuarios';
 /* ===== CONSTANTS ===== */
 const MAX_LEVEL = 12;
 
+const ACHIEVEMENTS = [
+  {
+    id: 'pescador', name: 'Pescador Experto', icon: '🎣',
+    target: 16,
+    label: 'Desbloquea los 16 peces de la Arena 1',
+    progressLabel: 'Peces desbloqueados',
+    reward: { coins: 200, diamonds: 25 }
+  },
+  {
+    id: 'muelle', name: 'Señor del Muelle', icon: '🎰',
+    target: 200,
+    label: 'Gasta 200 tickets en el muelle',
+    progressLabel: 'Tickets gastados',
+    reward: { coins: 250, diamonds: 15 }
+  },
+  {
+    id: 'gladiador', name: 'Gladiador del Mar', icon: '⚔️',
+    target: 100,
+    label: 'Gana 100 batallas',
+    progressLabel: 'Batallas ganadas',
+    reward: { coins: 200, diamonds: 30 }
+  },
+  {
+    id: 'inversor', name: 'Inversor Marino', icon: '📈',
+    target: 1,
+    label: `Lleva cualquier pez al nivel máximo (${MAX_LEVEL})`,
+    progressLabel: 'Nivel máximo alcanzado',
+    reward: { coins: 200, diamonds: 20 }
+  }
+];
+
 const ARENA_CUP_CHANGES = {
   1: { win: 30, lose: -5 },
   2: { win: 30, lose: -10 },
@@ -924,8 +955,13 @@ const state = {
   achievements: {
     collectionMaster: {
       rewardedForTotal: 0
-    }
+    },
+    pescador: { claimed: false },
+    muelle: { claimed: false },
+    gladiador: { claimed: false },
+    inversor: { claimed: false }
   },
+  ticketsSpentTotal: 0,
   player: null,
   enemy: null,
   isPlayerTurn: true,
@@ -1173,6 +1209,7 @@ async function upgradeFish(fishId) {
   updateCoinDisplay();
   trackMission('level_up_fish');
   showFishDetail(fishId);
+  signalAchievementUpdate();
 }
 
 /* ===== DAMAGE FORMULA ===== */
@@ -2119,6 +2156,17 @@ function applySaveData(data) {
   if (savedAchievement && Number.isFinite(savedAchievement.rewardedForTotal)) {
     state.achievements.collectionMaster.rewardedForTotal = Math.max(0, savedAchievement.rewardedForTotal);
   }
+  ['pescador', 'muelle', 'gladiador', 'inversor'].forEach(id => {
+    const saved = data.achievements?.[id];
+    if (saved) {
+      if (Array.isArray(saved.phasesClaimed)) {
+        state.achievements[id] = { claimed: saved.phasesClaimed.length > 0 };
+      } else if (typeof saved.claimed === 'boolean') {
+        state.achievements[id] = { claimed: saved.claimed };
+      }
+    }
+  });
+  if (typeof data.ticketsSpentTotal === 'number' && data.ticketsSpentTotal >= 0) state.ticketsSpentTotal = data.ticketsSpentTotal;
   if (data.selectedFish && getFishById(data.selectedFish) && state.unlockedFish.includes(data.selectedFish)) {
     state.selectedFishId = data.selectedFish;
   }
@@ -2162,6 +2210,7 @@ function getSaveData() {
     marcosDesbloqueados: state.marcosDesbloqueados,
     shopRotation: state.shopRotation,
     achievements: state.achievements,
+    ticketsSpentTotal: state.ticketsSpentTotal,
     tickets_muelle: state.tickets_muelle,
     timestamp: Date.now()
   };
@@ -4246,6 +4295,51 @@ function closeMissionsModal() {
   document.body.classList.remove('modal-open');
 }
 
+/* ===== LOGROS ===== */
+
+function getAchievementProgress(achId) {
+  const def = ACHIEVEMENTS.find(x => x.id === achId);
+  if (!def) return null;
+  const a = state.achievements[achId];
+  let current = 0;
+  switch (achId) {
+    case 'pescador': {
+      const arena1 = ARENA_FISH[1] || [];
+      current = arena1.filter(e => state.unlockedFish.includes(e.fishId)).length;
+      break;
+    }
+    case 'muelle': current = state.ticketsSpentTotal || 0; break;
+    case 'gladiador': current = state.battlesWon || 0; break;
+    case 'inversor':
+      current = Object.values(state.fishLevels).some(l => l >= MAX_LEVEL) ? 1 : 0;
+      break;
+  }
+  const complete = current >= def.target;
+  return { current, target: def.target, canClaim: complete && !a.claimed, isClaimed: a.claimed, complete };
+}
+
+async function claimAchievementPhase(achId) {
+  const def = ACHIEVEMENTS.find(x => x.id === achId);
+  if (!def) return false;
+  const a = state.achievements[achId];
+  const { canClaim } = getAchievementProgress(achId);
+  if (!canClaim) return false;
+
+  a.claimed = true;
+  state.coins += def.reward.coins;
+  state.diamonds += def.reward.diamonds;
+  await forceCloudSave('achievement_claim');
+
+  updateCoinDisplay();
+  updateDiamondDisplay();
+  renderProfileModal();
+  return true;
+}
+
+function signalAchievementUpdate() {
+  if (dom.profileModal.classList.contains('open')) renderProfileModal();
+}
+
 function renderProfileModal() {
   checkBattlePassSeasonExpiration();
   const body = dom.profileModalBody;
@@ -4258,7 +4352,6 @@ function renderProfileModal() {
   const battlesWon = Math.max(0, state.battlesWon || 0);
   const battlesLost = Math.max(0, battlesPlayed - battlesWon);
   const winRate = battlesPlayed > 0 ? Math.round((battlesWon / battlesPlayed) * 100) : 0;
-  const badges = getTrophyBadges();
   body.innerHTML = `
     <div class="profile-modal-header">
       <span class="profile-modal-title">👤 Perfil del Jugador</span>
@@ -4324,17 +4417,50 @@ function renderProfileModal() {
       <span class="profile-trophies-title">🏅 Logros y trofeos</span>
     </div>
     <div class="profile-trophy-grid">
-      ${badges.map(badge => `
-        <div class="profile-trophy-card ${badge.unlocked ? 'unlocked' : 'locked'}">
-          <span class="profile-trophy-icon">${badge.icon}</span>
+      ${(() => {
+        const bs = getTrophyBadges();
+        const as = ACHIEVEMENTS;
+        const html = [];
+        const badge = (b) => `<div class="profile-trophy-card ${b.unlocked ? 'unlocked' : 'locked'}">
+          <span class="profile-trophy-icon">${b.icon}</span>
           <div class="profile-trophy-texts">
-            <div class="profile-trophy-name">${badge.name}</div>
-            <div class="profile-trophy-desc">${badge.desc}</div>
-            <div class="profile-trophy-progress">${badge.progress}</div>
-            <span class="profile-trophy-status">${badge.unlocked ? 'CONSEGUIDA' : 'BLOQUEADA'}</span>
+            <div class="profile-trophy-name">${b.name}</div>
+            <div class="profile-trophy-desc">${b.desc}</div>
+            <div class="profile-trophy-progress">${b.progress}</div>
+            <span class="profile-trophy-status">${b.unlocked ? 'CONSEGUIDA' : 'BLOQUEADA'}</span>
           </div>
-        </div>
-      `).join('')}
+        </div>`;
+        const ach = (d) => {
+          const p = getAchievementProgress(d.id);
+          if (!p) return '';
+          const pct = Math.min(100, (p.current / p.target) * 100);
+          const done = p.isClaimed;
+          const r = p.canClaim;
+          const cls = done ? 'profile-trophy-card unlocked ach-done' : r ? 'profile-trophy-card unlocked ach-ready' : 'profile-trophy-card locked ach-pending';
+          const rew = [];
+          if (d.reward.coins > 0) rew.push(`🪙 ${d.reward.coins}`);
+          if (d.reward.diamonds > 0) rew.push(`💎 ${d.reward.diamonds}`);
+          return `<div class="${cls}">
+          <span class="profile-trophy-icon">${d.icon}</span>
+          <div class="profile-trophy-texts">
+            <div class="profile-trophy-name">${d.name}</div>
+            <div class="profile-trophy-desc">${d.label}</div>
+            <div class="ach-profile-bar"><div class="ach-profile-fill" style="width:${pct}%"></div></div>
+            <div class="profile-trophy-progress">${d.progressLabel}: ${Math.min(p.current, p.target)} / ${p.target}</div>
+            ${r ? `<button class="ach-claim-btn profile-ach-claim-btn" data-ach-id="${d.id}">RECLAMAR ${rew.join(' ')}</button>` : ''}
+            ${done ? '<span class="ach-done-badge">COMPLETADO</span>' : ''}
+          </div>
+        </div>`;
+        };
+        html.push(badge(bs[0]));  // Row 1: Maestro de la Colección
+        html.push(badge(bs[1]));  // Row 1: Conquistador de Arena
+        html.push(badge(bs[2]));  // Row 2: Cazador de Copas
+        html.push(ach(as[0]));    // Row 2: Pescador Experto
+        html.push(ach(as[1]));    // Row 3: Señor del Muelle
+        html.push(ach(as[2]));    // Row 3: Gladiador del Mar
+        html.push(ach(as[3]));    // Row 4: Inversor Marino
+        return html.join('');
+      })()}
     </div>
     <div class="profile-actions-section">
       <p class="profile-auto-save-note">Gestiona tu partida desde el menú de ajustes.</p>
@@ -4343,6 +4469,12 @@ function renderProfileModal() {
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeProfileModal(); });
   const renameBtn = document.getElementById('profile-rename-btn');
   if (renameBtn) renameBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeProfileModal(); openUsernameModal(); });
+  body.querySelectorAll('.profile-ach-claim-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', async e => {
+      e.preventDefault();
+      await claimAchievementPhase(btn.dataset.achId);
+    });
+  });
 }
 
 function renderSettingsModal() {
@@ -4566,6 +4698,7 @@ async function buyDailyOfferFish(fishId, price) {
   renderBank();
   renderShop();
   checkCollectionMasterAchievement();
+  signalAchievementUpdate();
   return true;
 }
 
@@ -4649,6 +4782,7 @@ async function showChestReveal(chest, gold, diamonds, fish, compensation) {
     }
   }
   await forceCloudSave('buy_chest');
+  signalAchievementUpdate();
 
   let currentStep = 0;
   const steps = [];
@@ -5436,6 +5570,7 @@ async function showResult(victory) {
     ? `¡${state.player.type.name} ha vencido a ${state.enemy.type.name}! +${reward} 🪙`
     : `${state.enemy.type.name} ha derrotado a ${state.player.type.name}... +${reward} 🪙`;
   await forceCloudSave('combat_end');
+  signalAchievementUpdate();
 }
 
 /* ===== REINICIO ===== */
@@ -5667,6 +5802,7 @@ function closeMuelleBetModal() {
 async function initMuelle(bet) {
   const prevTickets = state.tickets_muelle;
   const prevCoins = state.coins;
+  const prevTicketsSpent = state.ticketsSpentTotal;
   state.tickets_muelle = Math.max(0, state.tickets_muelle - 1);
   const round = 1;
   state.muelle = {
@@ -5684,10 +5820,12 @@ async function initMuelle(bet) {
     result: null
   };
   state.coins -= bet;
+  state.ticketsSpentTotal = (state.ticketsSpentTotal || 0) + 1;
   const saved = await forceCloudSave('muelle_ticket_spent');
   if (!saved) {
     state.tickets_muelle = prevTickets;
     state.coins = prevCoins;
+    state.ticketsSpentTotal = prevTicketsSpent;
     state.muelle = null;
     updateCoinDisplay();
     alert('No se pudo confirmar el uso del ticket en la nube. Inténtalo de nuevo.');
@@ -5696,6 +5834,7 @@ async function initMuelle(bet) {
   }
   updateCoinDisplay();
   renderMuelleSection();
+  signalAchievementUpdate();
   return true;
 }
 
@@ -5826,6 +5965,7 @@ function revealMuelleHole(index) {
     if (!state.unlockedFish.includes(m.fishPrize.id)) {
       state.unlockedFish.push(m.fishPrize.id);
       m.fishAlreadyOwned = false;
+      signalAchievementUpdate();
     } else {
       m.fishAlreadyOwned = true;
       const gain = Math.round(m.bet * 1.5);
