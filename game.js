@@ -921,13 +921,6 @@ const ITEMS = [
   { id: 'tridente_ceniza', name: 'Tridente de Ceniza', rarity: 'rare', imgPath: 'img/objetos/tridente_ceniza.png', emoji: '🔱', description: 'Tridente envuelto en ceniza volcánica. Aumenta el Ataque Físico un 18%.' }
 ];
 
-const FRAMES = [
-  { id: 'marco_guardian_del_mar',   name: 'Marco Guardián del Mar',   emoji: '🛡️', imgPath: 'img/marcos/marco_guardian_del_mar.png',   borderStyle: '0 0 0 3px #00bcd4, 0 0 12px rgba(0,188,212,0.45)', seasonMonth: 6 },
-  { id: 'marco_cosmetico_dorado',   name: 'Marco Cosmético Dorado',   emoji: '🌟', imgPath: 'img/marcos/marco_cosmetico_dorado.png',   borderStyle: '0 0 0 3px #ffd700, 0 0 12px rgba(255,215,0,0.45)', seasonMonth: 6 },
-  { id: 'marco_piedra_volcanica',   name: 'Marco de Piedra Volcánica', emoji: '🪨', imgPath: 'img/marcos/marco_piedra_volcanica.png',   borderStyle: '0 0 0 3px #78909c, 0 0 12px rgba(120,144,156,0.45)', seasonMonth: 7 },
-  { id: 'marco_magma_animado',      name: 'Marco de Magma Animado',    emoji: '🌋', imgPath: 'img/marcos/marco_magma_animado.png',      borderStyle: '0 0 0 3px #ff5722, 0 0 12px rgba(255,87,34,0.45)', seasonMonth: 7 },
-];
-
 const SHOP_ITEMS = [
   { itemId: 'fragmento_coral',   cost: 150, costType: 'coins' },
   { itemId: 'diente_tiburon',    cost: 400, costType: 'coins' },
@@ -1012,8 +1005,8 @@ const BATTLE_PASS_LEVELS = [
   },
   {
     level: 10,
-    free: { type: 'frame', label: 'Marco Guardián del Mar' },
-    premium: { type: 'frame', label: 'Marco Cosmético Dorado' }
+    free: { type: 'coins', amount: 500, label: '500 Monedas' },
+    premium: { type: 'coins', amount: 1500, label: '1500 Monedas Extra' }
   }
 ];
 
@@ -1027,7 +1020,7 @@ const BATTLE_PASS_LEVELS_JULY = [
   { level: 7, free: { type: 'coins', amount: 300, label: '300 Monedas' }, premium: { type: 'coins', amount: 800, label: '800 Monedas Extra' } },
   { level: 8, free: { type: 'item', label: 'Coraza de Lava' }, premium: { type: 'item', label: 'Tridente de Ceniza' } },
   { level: 9, free: { type: 'coins', amount: 400, label: '400 Monedas' }, premium: { type: 'coins', amount: 1200, label: '1200 Monedas Extra' } },
-  { level: 10, free: { type: 'frame', label: 'Marco de Piedra Volcánica' }, premium: { type: 'frame', label: 'Marco de Magma Animado' } }
+  { level: 10, free: { type: 'coins', amount: 500, label: '500 Monedas' }, premium: { type: 'coins', amount: 1500, label: '1500 Monedas Extra' } }
 ];
 
 function getBattlePassLevels() {
@@ -1132,8 +1125,6 @@ const state = {
   paseRecompensasReclamadas: [],
   paseObjetos: [],
   titulosDesbloqueados: [],
-  marcosDesbloqueados: [],
-  currentFrameId: null,
   shopRotation: null,
   achievements: {
     collectionMaster: {
@@ -2243,13 +2234,11 @@ function applyFreshGameState(username) {
   state.paseRecompensasReclamadas = [];
   state.paseObjetos = [];
   state.titulosDesbloqueados = [];
-  state.marcosDesbloqueados = [];
   state.shopRotation = null;
   state.achievements = { collectionMaster: { rewardedForTotal: 0 } };
   state.battlesPlayed = 0;
   state.battlesWon = 0;
   state.tickets_muelle = 3;
-  state.currentFrameId = null;
   state.selectedFishId = 'salmonete';
   state.player = null;
   state.enemy = null;
@@ -2363,9 +2352,6 @@ function applySaveData(data) {
   }
   repairMissingBattlePassItems();
   if (Array.isArray(data.titulosDesbloqueados)) state.titulosDesbloqueados = data.titulosDesbloqueados;
-  if (Array.isArray(data.marcosDesbloqueados)) state.marcosDesbloqueados = data.marcosDesbloqueados;
-  repairMissingBattlePassFrames();
-  if (typeof data.currentFrameId === 'string') state.currentFrameId = data.currentFrameId;
   if (data.shopRotation && typeof data.shopRotation === 'object') state.shopRotation = data.shopRotation;
   if (typeof data.tickets_muelle === 'number' && data.tickets_muelle >= 0) state.tickets_muelle = data.tickets_muelle;
   ensureBattlePassState();
@@ -2427,8 +2413,6 @@ function getSaveData() {
     paseRecompensasReclamadas: state.paseRecompensasReclamadas,
     paseObjetos: state.paseObjetos,
     titulosDesbloqueados: state.titulosDesbloqueados,
-    marcosDesbloqueados: state.marcosDesbloqueados,
-    currentFrameId: state.currentFrameId,
     shopRotation: state.shopRotation,
     achievements: state.achievements,
     ticketsSpentTotal: state.ticketsSpentTotal,
@@ -3104,8 +3088,6 @@ function ensureBattlePassState() {
   state.paseRecompensasReclamadas = normalizeBattlePassClaimedRewards(state.paseRecompensasReclamadas);
   if (!Array.isArray(state.paseObjetos)) state.paseObjetos = [];
   if (!Array.isArray(state.titulosDesbloqueados)) state.titulosDesbloqueados = [];
-  if (!Array.isArray(state.marcosDesbloqueados)) state.marcosDesbloqueados = [];
-  if (typeof state.currentFrameId !== 'string' && state.currentFrameId !== null) state.currentFrameId = null;
 }
 
 function getBattlePassRewardKey(level, track) {
@@ -3121,20 +3103,6 @@ function repairMissingBattlePassItems() {
       const matchedItem = ITEMS.find(it => it.name === reward.label);
       if (matchedItem && !state.items.includes(matchedItem.id)) {
         state.items.push(matchedItem.id);
-      }
-    });
-  });
-}
-
-function repairMissingBattlePassFrames() {
-  [...BATTLE_PASS_LEVELS, ...BATTLE_PASS_LEVELS_JULY].forEach(tier => {
-    ['free', 'premium'].forEach(track => {
-      const reward = tier[track];
-      if (!reward || reward.type !== 'frame') return;
-      if (!isBattlePassRewardClaimed(tier.level, track)) return;
-      const frame = FRAMES.find(f => f.name === reward.label);
-      if (frame && !state.marcosDesbloqueados.includes(frame.name)) {
-        state.marcosDesbloqueados.push(frame.name);
       }
     });
   });
@@ -3299,10 +3267,6 @@ function grantBattlePassReward(reward) {
   }
   if (reward.type === 'title') {
     if (!state.titulosDesbloqueados.includes(reward.label)) state.titulosDesbloqueados.push(reward.label);
-    return reward.label;
-  }
-  if (reward.type === 'frame') {
-    if (!state.marcosDesbloqueados.includes(reward.label)) state.marcosDesbloqueados.push(reward.label);
     return reward.label;
   }
   return null;
@@ -4108,8 +4072,7 @@ function updateActionFooter() {
   }
   const level = getFishLevel(fishId);
   btn.innerHTML = `${imgTag(base.imgPath, base.name, base.emoji)}<span class="action-fish-badge">${level}</span>`;
-  const frame = FRAMES.find(f => f.id === state.currentFrameId);
-  btn.style.boxShadow = frame ? frame.borderStyle : 'none';
+  btn.style.boxShadow = 'none';
 }
 
 /* ===== TIENDA ===== */
@@ -4825,14 +4788,6 @@ function renderProfileModal() {
       await claimAchievementPhase(btn.dataset.achId);
     });
   });
-  applyFrameToAvatar();
-}
-
-function applyFrameToAvatar() {
-  const avatar = document.getElementById('profile-hero-avatar');
-  if (!avatar) return;
-  const frame = FRAMES.find(f => f.id === state.currentFrameId);
-  avatar.style.boxShadow = frame ? frame.borderStyle : 'none';
 }
 
 function renderSettingsModal() {
@@ -5203,27 +5158,7 @@ function closeChestModal() {
 
 /* ===== SECCIÓN: OBJETOS ===== */
 function renderInventory() {
-  dom.inventoryContent.innerHTML = `
-    <div class="inv-tabs">
-      <button class="inv-tab active" data-inv-tab="materiales">📦 Materiales</button>
-      <button class="inv-tab" data-inv-tab="cosmeticos">🎨 Cosméticos</button>
-    </div>
-    <div class="inv-tab-panel active" id="inv-panel-materiales"></div>
-    <div class="inv-tab-panel" id="inv-panel-cosmeticos"></div>
-    <div class="inv-frame-detail" id="inv-frame-detail" style="display:none"></div>
-  `;
-  dom.inventoryContent.querySelectorAll('.inv-tab').forEach(btn => {
-    btn.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      document.getElementById('inv-frame-detail').style.display = 'none';
-      dom.inventoryContent.querySelectorAll('.inv-tab').forEach(b => b.classList.remove('active'));
-      dom.inventoryContent.querySelectorAll('.inv-tab-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      const panel = document.getElementById('inv-panel-' + btn.dataset.invTab);
-      if (panel) panel.classList.add('active');
-      if (btn.dataset.invTab === 'cosmeticos') renderCosmeticosTab();
-    });
-  });
+  dom.inventoryContent.innerHTML = `<div id="inv-panel-materiales"></div>`;
   renderMaterialesTab();
 }
 
@@ -5266,73 +5201,6 @@ function renderMaterialesTab() {
     grid.appendChild(card);
   });
   panel.appendChild(grid);
-}
-
-function renderCosmeticosTab() {
-  const panel = document.getElementById('inv-panel-cosmeticos');
-  if (!panel) return;
-  panel.innerHTML = '';
-  const currentMonth = new Date().getUTCMonth() + 1;
-  const ownedFrames = FRAMES.filter(f => state.marcosDesbloqueados.includes(f.name) && f.seasonMonth <= currentMonth);
-  if (ownedFrames.length === 0) {
-    panel.innerHTML = `<div class="inv-empty"><p>🎨 Sin cosméticos</p><p class="inv-empty-sub">Consigue marcos en el Pase de Batalla (nivel 10 Premium)</p></div>`;
-    return;
-  }
-  const grid = document.createElement('div');
-  grid.className = 'frame-grid';
-  ownedFrames.forEach(frame => {
-    const isEquipped = state.currentFrameId === frame.id;
-    const card = document.createElement('div');
-    card.className = `frame-card ${isEquipped ? 'equipped' : ''}`;
-    card.innerHTML = `
-      <div class="frame-card-preview" style="box-shadow:${frame.borderStyle};width:80%;aspect-ratio:1;border-radius:50%;margin:0 auto;position:relative;overflow:hidden;">
-        <img src="${frame.imgPath}" alt="${frame.name}" class="fish-img" onerror="this.classList.add('img-broken')" style="width:100%;height:100%;object-fit:contain;">
-        <span class="img-fallback" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;">${frame.emoji}</span>
-      </div>
-      <div class="frame-card-name">${frame.name}</div>
-      <div class="frame-card-status">${isEquipped ? 'Equipado' : 'Disponible'}</div>
-    `;
-    card.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      showFrameDetail(frame.id);
-    });
-    grid.appendChild(card);
-  });
-  panel.appendChild(grid);
-}
-
-function showFrameDetail(frameId) {
-  const frame = FRAMES.find(f => f.id === frameId);
-  if (!frame) return;
-  const detail = document.getElementById('inv-frame-detail');
-  if (!detail) return;
-  document.getElementById('inv-panel-cosmeticos').style.display = 'none';
-  detail.style.display = 'block';
-  const isEquipped = state.currentFrameId === frame.id;
-  detail.innerHTML = `
-    <button class="frame-detail-back" id="frame-detail-back">← Volver</button>
-    <div class="frame-detail-preview" style="box-shadow:${frame.borderStyle};width:120px;height:120px;border-radius:50%;margin:1rem auto;position:relative;overflow:hidden;">
-      <img src="${frame.imgPath}" alt="${frame.name}" class="fish-img" onerror="this.classList.add('img-broken')" style="width:100%;height:100%;object-fit:contain;">
-      <span class="img-fallback" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3.2rem;">${frame.emoji}</span>
-    </div>
-    <div class="frame-detail-name">${frame.name}</div>
-    <button class="frame-detail-equip-btn" id="frame-detail-equip-btn" ${isEquipped ? 'disabled' : ''}>${isEquipped ? 'Equipado' : 'Equipar'}</button>
-  `;
-  document.getElementById('frame-detail-back').addEventListener('pointerdown', e => {
-    e.preventDefault();
-    detail.style.display = 'none';
-    document.getElementById('inv-panel-cosmeticos').style.display = '';
-    renderCosmeticosTab();
-  });
-  document.getElementById('frame-detail-equip-btn').addEventListener('pointerdown', async e => {
-    e.preventDefault();
-    state.currentFrameId = frame.id;
-    await forceCloudSave('equip_frame');
-    updateActionFooter();
-    showFrameDetail(frame.id);
-    renderCosmeticosTab();
-    renderProfileModal();
-  });
 }
 
 function openEquipModal(itemId) {
@@ -6353,13 +6221,11 @@ async function resetAccount() {
   state.paseRecompensasReclamadas = [];
   state.paseObjetos = [];
   state.titulosDesbloqueados = [];
-  state.marcosDesbloqueados = [];
   state.shopRotation = null;
   state.achievements = { collectionMaster: { rewardedForTotal: 0 } };
   state.battlesPlayed = 0;
   state.battlesWon = 0;
   state.tickets_muelle = 3;
-  state.currentFrameId = null;
   state.selectedFishId = 'salmonete';
   state.player = null;
   state.enemy = null;
