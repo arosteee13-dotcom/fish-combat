@@ -902,6 +902,13 @@ const ACHIEVEMENTS = [
     label: `Lleva cualquier pez al nivel máximo (${MAX_LEVEL})`,
     progressLabel: 'Nivel máximo alcanzado',
     reward: { coins: 200, diamonds: 20 }
+  },
+  {
+    id: 'superviviente', name: 'Superviviente del Arrecife', icon: '🛡️',
+    target: 20,
+    label: 'Completa las 20 oleadas del Modo Supervivencia',
+    progressLabel: 'Oleadas máximas superadas',
+    reward: { coins: 500, diamonds: 50 }
   }
 ];
 
@@ -959,9 +966,14 @@ const state = {
     pescador: { claimed: false },
     muelle: { claimed: false },
     gladiador: { claimed: false },
-    inversor: { claimed: false }
+    inversor: { claimed: false },
+    superviviente: { claimed: false }
   },
   ticketsSpentTotal: 0,
+  battleMode: 'normal',
+  survivalWave: 0,
+  survivalMaxWaves: 0,
+  lastSurvivalDate: null,
   player: null,
   enemy: null,
   isPlayerTurn: true,
@@ -1002,6 +1014,7 @@ const dom = {
   playerEmoji: $('player-emoji'), playerArea: $('player-area'), playerSpd: $('player-spd'),
   arenaModal: $('arena-modal'), arenaModalBody: $('arena-modal-body'),
   attackMenu: $('attack-menu'), logMessage: $('log-message'),
+  waveIndicator: $('wave-indicator'),
   resultTitle: $('result-title'), resultEmoji: $('result-emoji'), resultSub: $('result-sub'),
   chestModal: $('chest-modal'), chestModalBody: $('chest-modal-body'),
   inventoryContent: $('inventory-content'),
@@ -1070,7 +1083,8 @@ function getTrophyBadges() {
       name: 'Maestro de la Colección',
       desc: `Desbloquea ${totalFish} peces`,
       progress: `${unlockedFish}/${totalFish} peces`,
-      unlocked: isCollectionMasterUnlocked()
+      unlocked: isCollectionMasterUnlocked(),
+      pct: totalFish > 0 ? Math.round((unlockedFish / totalFish) * 100) : 0
     },
     {
       id: 'arena_conqueror',
@@ -1078,7 +1092,8 @@ function getTrophyBadges() {
       name: 'Conquistador de Arenas',
       desc: `Llega a la Arena ${totalArenas}`,
       progress: `Arena máxima: ${Math.min(state.arenaMaxReached, totalArenas)}/${totalArenas}`,
-      unlocked: state.arenaMaxReached >= totalArenas
+      unlocked: state.arenaMaxReached >= totalArenas,
+      pct: totalArenas > 0 ? Math.round((Math.min(state.arenaMaxReached, totalArenas) / totalArenas) * 100) : 0
     },
     {
       id: 'cup_hunter',
@@ -1086,7 +1101,8 @@ function getTrophyBadges() {
       name: 'Cazador de Copas',
       desc: `Alcanza ${cupTarget} copas totales`,
       progress: `${Math.min(totalCups, cupTarget)}/${cupTarget} copas`,
-      unlocked: totalCups >= cupTarget
+      unlocked: totalCups >= cupTarget,
+      pct: cupTarget > 0 ? Math.round((Math.min(totalCups, cupTarget) / cupTarget) * 100) : 0
     }
   ];
 }
@@ -2156,7 +2172,7 @@ function applySaveData(data) {
   if (savedAchievement && Number.isFinite(savedAchievement.rewardedForTotal)) {
     state.achievements.collectionMaster.rewardedForTotal = Math.max(0, savedAchievement.rewardedForTotal);
   }
-  ['pescador', 'muelle', 'gladiador', 'inversor'].forEach(id => {
+  ['pescador', 'muelle', 'gladiador', 'inversor', 'superviviente'].forEach(id => {
     const saved = data.achievements?.[id];
     if (saved) {
       if (Array.isArray(saved.phasesClaimed)) {
@@ -2167,6 +2183,8 @@ function applySaveData(data) {
     }
   });
   if (typeof data.ticketsSpentTotal === 'number' && data.ticketsSpentTotal >= 0) state.ticketsSpentTotal = data.ticketsSpentTotal;
+  if (typeof data.survivalMaxWaves === 'number' && data.survivalMaxWaves >= 0) state.survivalMaxWaves = data.survivalMaxWaves;
+  if (typeof data.lastSurvivalDate === 'number' && data.lastSurvivalDate > 0) state.lastSurvivalDate = data.lastSurvivalDate;
   if (data.selectedFish && getFishById(data.selectedFish) && state.unlockedFish.includes(data.selectedFish)) {
     state.selectedFishId = data.selectedFish;
   }
@@ -2211,6 +2229,8 @@ function getSaveData() {
     shopRotation: state.shopRotation,
     achievements: state.achievements,
     ticketsSpentTotal: state.ticketsSpentTotal,
+    survivalMaxWaves: state.survivalMaxWaves,
+    lastSurvivalDate: state.lastSurvivalDate,
     tickets_muelle: state.tickets_muelle,
     timestamp: Date.now()
   };
@@ -3747,6 +3767,72 @@ function selectFish(fishId) {
 function updateBattleButton() {
   const id = state.selectedFishId;
   dom.btnBattle.disabled = !id || !state.unlockedFish.includes(id);
+  updateBattleButtonStyle();
+}
+
+function updateBattleButtonStyle() {
+  const btn = dom.btnBattle;
+  if (!btn) return;
+  btn.classList.toggle('survival', state.battleMode === 'survival');
+
+  const parent = btn.parentElement;
+  if (!parent) return;
+  let cooldownEl = document.getElementById('battle-cooldown-text');
+  if (state.battleMode === 'survival' && state.lastSurvivalDate) {
+    const elapsed = Date.now() - state.lastSurvivalDate;
+    if (elapsed < 86400000) {
+      if (!cooldownEl) {
+        cooldownEl = document.createElement('span');
+        cooldownEl.id = 'battle-cooldown-text';
+        cooldownEl.className = 'battle-cooldown-text';
+        parent.appendChild(cooldownEl);
+      }
+      if (survivalTimerInterval) clearInterval(survivalTimerInterval);
+      const tick = () => {
+        const remaining = 86400000 - (Date.now() - state.lastSurvivalDate);
+        if (remaining <= 0) {
+          cooldownEl.textContent = '✅ Disponible';
+          btn.disabled = false;
+          if (survivalTimerInterval) { clearInterval(survivalTimerInterval); survivalTimerInterval = null; }
+          return;
+        }
+        const h = Math.floor(remaining / 3600000);
+        const m = Math.floor((remaining % 3600000) / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+        cooldownEl.textContent = `Disponible en: ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        btn.disabled = true;
+      };
+      survivalTimerInterval = setInterval(tick, 1000);
+      tick();
+      return;
+    }
+  }
+  if (survivalTimerInterval) { clearInterval(survivalTimerInterval); survivalTimerInterval = null; }
+  if (cooldownEl) cooldownEl.remove();
+  if (state.selectedFishId && state.unlockedFish.includes(state.selectedFishId)) {
+    btn.disabled = false;
+  }
+}
+
+function toggleModeDropdown() {
+  const dd = document.getElementById('mode-dropdown');
+  if (!dd) return;
+  dd.style.display = dd.style.display === 'none' ? 'flex' : 'none';
+}
+
+function closeModeDropdown() {
+  const dd = document.getElementById('mode-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+
+function selectBattleMode(mode) {
+  if (mode !== 'normal' && mode !== 'survival') return;
+  state.battleMode = mode;
+  closeModeDropdown();
+  updateBattleButtonStyle();
+  document.querySelectorAll('.mode-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.mode === mode);
+  });
 }
 
 function updateActionFooter() {
@@ -4313,6 +4399,9 @@ function getAchievementProgress(achId) {
     case 'inversor':
       current = Object.values(state.fishLevels).some(l => l >= MAX_LEVEL) ? 1 : 0;
       break;
+    case 'superviviente':
+      current = state.survivalMaxWaves || 0;
+      break;
   }
   const complete = current >= def.target;
   return { current, target: def.target, canClaim: complete && !a.claimed, isClaimed: a.claimed, complete };
@@ -4426,8 +4515,8 @@ function renderProfileModal() {
           <div class="profile-trophy-texts">
             <div class="profile-trophy-name">${b.name}</div>
             <div class="profile-trophy-desc">${b.desc}</div>
+            <div class="ach-profile-bar"><div class="ach-profile-fill" style="width:${b.pct}%"></div></div>
             <div class="profile-trophy-progress">${b.progress}</div>
-            <span class="profile-trophy-status">${b.unlocked ? 'CONSEGUIDA' : 'BLOQUEADA'}</span>
           </div>
         </div>`;
         const ach = (d) => {
@@ -4459,6 +4548,7 @@ function renderProfileModal() {
         html.push(ach(as[1]));    // Row 3: Señor del Muelle
         html.push(ach(as[2]));    // Row 3: Gladiador del Mar
         html.push(ach(as[3]));    // Row 4: Inversor Marino
+        html.push(ach(as[4]));    // Row 4: Superviviente del Arrecife
         return html.join('');
       })()}
     </div>
@@ -5381,7 +5471,13 @@ function playerAttack(index) {
   checkImpulsoHuida(state.enemy);
   if (state.enemy.currentHp <= 0) {
     triggerEstomagoSinFondo(state.player);
-    state.gameOver = true; setTimeout(() => showResult(true), 800); return;
+    state.gameOver = true;
+    if (state.battleMode === 'survival') {
+      setTimeout(() => handleSurvivalEnemyDefeat(), 800);
+    } else {
+      setTimeout(() => showResult(true), 800);
+    }
+    return;
   }
   applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
   checkKrakenDesatado(state.player);
@@ -5532,9 +5628,235 @@ function animateHit(target) {
 }
 
 function checkGameOver() {
-  if (state.enemy.currentHp <= 0) { state.gameOver = true; setTimeout(() => showResult(true), 800); return true; }
-  if (state.player.currentHp <= 0) { state.gameOver = true; setTimeout(() => showResult(false), 800); return true; }
+  if (state.enemy.currentHp <= 0) {
+    state.gameOver = true;
+    if (state.battleMode === 'survival') {
+      setTimeout(() => handleSurvivalEnemyDefeat(), 800);
+    } else {
+      setTimeout(() => showResult(true), 800);
+    }
+    return true;
+  }
+  if (state.player.currentHp <= 0) {
+    state.gameOver = true;
+    if (state.battleMode === 'survival') {
+      setTimeout(() => handleSurvivalPlayerDefeat(), 800);
+    } else {
+      setTimeout(() => showResult(false), 800);
+    }
+    return true;
+  }
   return false;
+}
+
+/* ===== SUPERVIVENCIA ===== */
+const SURVIVAL_TOTAL_WAVES = 20;
+let survivalTimerInterval = null;
+
+function getSurvivalEnemyLevel(wave) {
+  if (wave <= 5) return wave;
+  if (wave <= 10) return 6 + Math.floor((wave - 6) / 2);
+  if (wave <= 15) return 9 + Math.floor((wave - 11) / 2);
+  if (wave <= 19) return Math.min(10 + Math.floor((wave - 16) / 2), MAX_LEVEL);
+  return MAX_LEVEL + 1;
+}
+
+function getSurvivalWaveGoldReward(wave) {
+  if (wave <= 5) return 20;
+  if (wave <= 10) return 50;
+  if (wave <= 15) return 100;
+  if (wave <= 19) return 200;
+  return 0;
+}
+
+function getSurvivalTotalRewards(wavesCompleted) {
+  let gold = 0, gems = 0;
+  for (let w = 1; w <= wavesCompleted && w <= SURVIVAL_TOTAL_WAVES; w++) {
+    if (w <= 5) gold += 20;
+    else if (w <= 10) gold += 50;
+    else if (w <= 15) gold += 100;
+    else if (w <= 19) gold += 200;
+    else if (w === 20) { gold += 1000; gems += 10; }
+  }
+  return { gold, gems };
+}
+
+async function startSurvivalRun() {
+  if (!state.selectedFishId || state.isAnimating) return false;
+  if (!state.unlockedFish.includes(state.selectedFishId)) return false;
+  if (state.lastSurvivalDate && (Date.now() - state.lastSurvivalDate < 86400000)) {
+    return false;
+  }
+  const prevDate = state.lastSurvivalDate;
+  state.lastSurvivalDate = Date.now();
+  state.survivalWave = 1;
+  const saved = await forceCloudSave('survival_start');
+  if (!saved) {
+    state.lastSurvivalDate = prevDate;
+    state.survivalWave = 0;
+    return false;
+  }
+  return initSurvivalWave(1);
+}
+
+function initSurvivalWave(wave) {
+  const playerFishId = state.selectedFishId;
+  const playerBase = getFishById(playerFishId);
+  const playerLevel = getFishLevel(playerFishId);
+  const playerType = roundFishStats(getLeveledFishType(playerBase, playerLevel));
+
+  const enemyLevel = getSurvivalEnemyLevel(wave);
+  const enemyBase = randomFish();
+  let enemyType = roundFishStats(getLeveledFishType(enemyBase, enemyLevel));
+
+  if (wave === SURVIVAL_TOTAL_WAVES) {
+    enemyType = { ...enemyType, maxHp: enemyType.maxHp * 2 };
+  }
+
+  if (playerBase?.passive?.name === 'Barbillones') playerType.atk += 0.5;
+  if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
+  if (playerBase?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
+  if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
+
+  state.player = {
+    type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp,
+    status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
+    destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
+    buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false,
+    mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
+    impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
+    selfHealUsed: {}
+  };
+  state.enemy = {
+    type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp,
+    status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
+    destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
+    buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false,
+    mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
+    impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
+    selfHealUsed: {}
+  };
+
+  state.isPlayerTurn = true;
+  state.gameOver = false;
+  state.isAnimating = false;
+  state.turnPhase = 'player_first';
+  state.isFirstEnemyTurn = true;
+
+  if (playerBase?.passive?.name === 'Mimetismo Absoluto') {
+    state.player.mimetismoAbsolutoActivo = true;
+    setLogMessage('¡Mimetismo Absoluto activado! Los ataques físicos fallan este turno.', true);
+  }
+  if (playerBase?.passive?.name === 'Rompebarreras') {
+    state.player.rompebarrerasActivo = true;
+    setLogMessage('¡Rompebarreras activado! Podrás atacar dos veces seguidas.', true);
+  }
+  if (playerBase?.passive?.name === 'Emboscada') {
+    state.player.buffs = state.player.buffs || {};
+    state.player.buffs.critChance = (state.player.buffs.critChance || 0) + 0.15;
+  }
+  if (enemyBase?.passive?.name === 'Emboscada') {
+    state.enemy.buffs = state.enemy.buffs || {};
+    state.enemy.buffs.critChance = (state.enemy.buffs.critChance || 0) + 0.15;
+  }
+  if (enemyBase?.passive?.name === 'Mimetismo Absoluto') {
+    state.enemy.mimetismoAbsolutoActivo = true;
+  }
+
+  if (hasEquippedItem(state.selectedFishId, 'aleta_voladora')) { state.player.type = { ...state.player.type, spe: state.player.type.spe + 5 }; }
+  if (hasEquippedItem(state.selectedFishId, 'obj_escama_brillante')) { state.player.type = { ...state.player.type, def: state.player.type.def + 5 }; }
+  if (hasEquippedItem(state.selectedFishId, 'obj_concha_reforzada')) state.player.shield += 20;
+  if (hasEquippedItem(state.selectedFishId, 'obj_perla_arrecife')) {
+    state.player.buffs = state.player.buffs || {};
+    state.player.buffs.defBoost = (state.player.buffs.defBoost || 0) + 3;
+  }
+  if (hasEquippedItem(state.selectedFishId, 'caparazon_tortuga')) { state.player.type = { ...state.player.type, def: state.player.type.def + 4 }; }
+  if (hasEquippedItem(state.selectedFishId, 'tinta_concentrada')) {
+    state.player.buffs = state.player.buffs || {};
+    state.player.buffs.critChance = (state.player.buffs.critChance || 0) + 0.1;
+  }
+  if (playerBase?.passive?.name === 'Cazadora Nocturna') {
+    state.player.buffs = state.player.buffs || {};
+    state.player.buffs.critChance = (state.player.buffs.critChance || 0) + 0.3;
+  }
+
+  renderCombat();
+  showScreen('combat');
+
+  const waveEl = dom.waveIndicator;
+  if (waveEl) {
+    waveEl.style.display = 'block';
+    waveEl.textContent = wave === SURVIVAL_TOTAL_WAVES
+      ? `👑 OLEADA ${wave}/${SURVIVAL_TOTAL_WAVES} — ¡JEFE FINAL!`
+      : `🌊 Oleada ${wave}/${SURVIVAL_TOTAL_WAVES}`;
+  }
+
+  dom.enemySpd.textContent = `SPE: ${state.enemy.type.spe}`;
+  dom.playerSpd.textContent = `SPE: ${state.player.type.spe}`;
+  dom.logMessage.textContent = `🌊 Oleada ${wave}/${SURVIVAL_TOTAL_WAVES} — ¡${state.enemy.type.name} aparece!`;
+  setTimeout(() => startTurn(), 600);
+  return true;
+}
+
+async function handleSurvivalEnemyDefeat() {
+  const waveGold = getSurvivalWaveGoldReward(state.survivalWave);
+  setLogMessage(`¡${state.enemy.type.name} derrotado! +${waveGold} 🪙`, true);
+
+  if (state.survivalWave >= SURVIVAL_TOTAL_WAVES) {
+    state.gameOver = true;
+    state.survivalMaxWaves = Math.max(state.survivalMaxWaves || 0, SURVIVAL_TOTAL_WAVES);
+    await forceCloudSave('survival_complete');
+    await showSurvivalResult(true);
+    return;
+  }
+
+  state.survivalWave++;
+  state.player.currentHp = Math.min(state.player.maxHp, state.player.currentHp + Math.round(state.player.maxHp * 0.25));
+  state.player.status = null;
+  state.player.sangradoTurns = 0;
+  initSurvivalWave(state.survivalWave);
+}
+
+async function handleSurvivalPlayerDefeat() {
+  state.gameOver = true;
+  state.survivalMaxWaves = Math.max(state.survivalMaxWaves || 0, state.survivalWave - 1);
+  await forceCloudSave('survival_death');
+  await showSurvivalResult(false);
+}
+
+async function showSurvivalResult(victory) {
+  const wavesCompleted = victory ? SURVIVAL_TOTAL_WAVES : Math.max(0, state.survivalWave - 1);
+  const { gold, gems } = getSurvivalTotalRewards(wavesCompleted);
+
+  state.coins += gold;
+  state.diamonds += gems;
+  updateCoinDisplay();
+  updateDiamondDisplay();
+  addBattlePassXpFromCombat(victory);
+
+  const waveEl = dom.waveIndicator;
+  if (waveEl) waveEl.style.display = 'none';
+
+  showScreen('result');
+  dom.resultTitle.textContent = victory ? '🌊 ¡SUPERVIVENCIA COMPLETADA!' : '💀 DERROTA EN SUPERVIVENCIA';
+  dom.resultTitle.className = 'result-title ' + (victory ? 'victory' : 'defeat');
+  dom.resultEmoji.textContent = victory ? '🏆' : '💀';
+  dom.resultCups.textContent = `🌊 Oleadas completadas: ${wavesCompleted}/${SURVIVAL_TOTAL_WAVES}`;
+  dom.resultCups.style.color = victory ? '#4facfe' : '#f44336';
+
+  const lines = [];
+  for (let w = 1; w <= Math.min(wavesCompleted, SURVIVAL_TOTAL_WAVES); w++) {
+    const g = getSurvivalWaveGoldReward(w);
+    if (g > 0) lines.push(`Oleada ${w}: +${g} 🪙`);
+  }
+  if (victory) lines.push('Bonus Jefe Final: +1,000 🪙 + 10 💎');
+
+  dom.resultSub.innerHTML = `<div class="survival-rewards-list">
+    ${lines.map(l => `<span class="survival-reward-row">${l}</span>`).join('')}
+    <span class="survival-reward-row total">+${gold} 🪙 +${gems} 💎</span>
+  </div>`;
+
+  signalAchievementUpdate();
 }
 
 /* ===== RESULTADO ===== */
@@ -5578,6 +5900,9 @@ function resetGame() {
   state.player = null; state.enemy = null;
   state.isPlayerTurn = true; state.gameOver = false; state.isAnimating = false;
   state.turnPhase = 'player_first';
+  state.survivalWave = 0;
+  if (survivalTimerInterval) { clearInterval(survivalTimerInterval); survivalTimerInterval = null; }
+  if (dom.waveIndicator) dom.waveIndicator.style.display = 'none';
   renderFightContent(); renderBank(); renderInventory();
   updateCoinDisplay(); updateDiamondDisplay();
   showSection('fight'); showScreen('main');
@@ -6023,7 +6348,36 @@ function setupEvents() {
     e.preventDefault();
     if (!state.selectedFishId || state.isAnimating) return;
     if (!state.unlockedFish.includes(state.selectedFishId)) return;
-    await initCombat();
+    if (state.battleMode === 'survival') {
+      if (state.lastSurvivalDate && (Date.now() - state.lastSurvivalDate < 86400000)) {
+        alert('¡Ya has usado tu intento de Supervivencia hoy! Vuelve en 24 horas.');
+        return;
+      }
+      const started = await startSurvivalRun();
+      if (!started) alert('No se pudo iniciar el Modo Supervivencia. Verifica tu conexión.');
+    } else {
+      await initCombat();
+    }
+  });
+  const modeBtn = document.getElementById('btn-mode-selector');
+  if (modeBtn) {
+    modeBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      toggleModeDropdown();
+    });
+  }
+  document.querySelectorAll('.mode-option').forEach(opt => {
+    opt.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      selectBattleMode(opt.dataset.mode);
+    });
+  });
+  document.addEventListener('pointerdown', e => {
+    const dd = document.getElementById('mode-dropdown');
+    const mb = document.getElementById('btn-mode-selector');
+    if (dd && dd.style.display !== 'none' && !dd.contains(e.target) && mb && !mb.contains(e.target)) {
+      closeModeDropdown();
+    }
   });
   const actionFishBtn = document.getElementById('action-fish-btn');
   if (actionFishBtn) actionFishBtn.addEventListener('pointerdown', e => { e.preventDefault(); showFishDetail(state.selectedFishId); });

@@ -115,10 +115,15 @@
         <div class="action-center">
           <button id="btn-battle" class="btn-battle" disabled>Batalla</button>
         </div>
-        <button id="btn-switch-fish" class="btn-switch-fish" disabled aria-label="Cambiar pez">
-          <span class="btn-switch-fish-lock">🔒</span>
-          ⚔️
-        </button>
+        <div class="mode-selector-wrapper">
+          <button id="btn-mode-selector" class="btn-switch-fish" aria-label="Seleccionar modo">
+            ⚔️
+          </button>
+          <div id="mode-dropdown" class="mode-dropdown" style="display:none">
+            <button class="mode-option mode-option-normal" data-mode="normal">⚔️ Normal</button>
+            <button class="mode-option mode-option-survival" data-mode="survival">🔥 Supervivencia</button>
+          </div>
+        </div>
       </div>
 
       <div id="fish-modal" class="fish-modal">
@@ -274,6 +279,7 @@
           <div class="fighter-subinfo"><span id="enemy-spd" class="fighter-stat">SPD: --</span></div>
         </div>
 
+        <div id="wave-indicator" class="wave-indicator" style="display:none"></div>
         <div class="battle-log"><p id="log-message">Prepara tu ataque...</p></div>
 
         <div id="player-area" class="fighter-area player-area">
