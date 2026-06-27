@@ -318,6 +318,7 @@ body.modal-open .section.active { overflow: hidden; }
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  touch-action: manipulation;
 }
 .arena-map-card.unlocked {
   background: linear-gradient(180deg, rgba(79,172,254,0.10), rgba(255,255,255,0.04));

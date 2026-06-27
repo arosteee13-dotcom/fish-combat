@@ -3259,8 +3259,7 @@ function renderArenaModal() {
   if (closeBtn) closeBtn.addEventListener('pointerdown', e => { e.preventDefault(); closeArenaModal(); });
 
   body.querySelectorAll('.arena-map-card').forEach(card => {
-    card.addEventListener('pointerdown', e => {
-      e.preventDefault();
+    card.addEventListener('click', e => {
       const arenaId = Number(card.dataset.arenaId || 0);
       const cfg = getArenaConfig(arenaId);
       if (!arenaId || state.cups < cfg.minCups) return;
