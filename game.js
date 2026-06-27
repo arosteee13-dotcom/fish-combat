@@ -5860,6 +5860,14 @@ function checkGameOver() {
 const SURVIVAL_TOTAL_WAVES = 20;
 let survivalTimerInterval = null;
 
+const SURVIVAL_ARENA_BONUS = {
+  1: { gold: 0,  items: [] },
+  2: { gold: 0,  items: [] },
+  3: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.20 }] },
+  4: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.35 }, { id: 'obj_toxina_concentrada', chance: 0.08 }] },
+  5: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.50 }, { id: 'obj_toxina_concentrada', chance: 0.18 }] },
+};
+
 function getSurvivalEnemyLevel(wave) {
   if (wave <= 5) return wave;
   if (wave <= 10) return 6 + Math.floor((wave - 6) / 2);
@@ -5868,24 +5876,28 @@ function getSurvivalEnemyLevel(wave) {
   return MAX_LEVEL + 1;
 }
 
-function getSurvivalWaveGoldReward(wave) {
-  if (wave <= 5) return 20;
-  if (wave <= 10) return 50;
-  if (wave <= 15) return 100;
-  if (wave <= 19) return 200;
-  return 0;
+function getSurvivalTotalRewards(wavesCompleted) {
+  const arena = state.currentArena || 1;
+  const bonus = SURVIVAL_ARENA_BONUS[arena] || SURVIVAL_ARENA_BONUS[1];
+  const gold = wavesCompleted * 50 + bonus.gold;
+  const gems = wavesCompleted >= SURVIVAL_TOTAL_WAVES ? 10 : 0;
+  return { gold, gems };
 }
 
-function getSurvivalTotalRewards(wavesCompleted) {
-  let gold = 0, gems = 0;
-  for (let w = 1; w <= wavesCompleted && w <= SURVIVAL_TOTAL_WAVES; w++) {
-    if (w <= 5) gold += 20;
-    else if (w <= 10) gold += 50;
-    else if (w <= 15) gold += 100;
-    else if (w <= 19) gold += 200;
-    else if (w === 20) { gold += 1000; gems += 10; }
+function getSurvivalItemDrops(wavesCompleted) {
+  const arena = state.currentArena || 1;
+  const bonus = SURVIVAL_ARENA_BONUS[arena] || SURVIVAL_ARENA_BONUS[1];
+  const waveFactor = wavesCompleted / SURVIVAL_TOTAL_WAVES;
+  const dropped = [];
+  for (const entry of bonus.items) {
+    const item = ITEMS.find(i => i.id === entry.id);
+    if (!item) continue;
+    if (Math.random() < entry.chance * waveFactor) {
+      state.items.push(item.id);
+      dropped.push(item);
+    }
   }
-  return { gold, gems };
+  return dropped;
 }
 
 async function startSurvivalRun() {
@@ -6006,8 +6018,7 @@ function initSurvivalWave(wave) {
 }
 
 async function handleSurvivalEnemyDefeat() {
-  const waveGold = getSurvivalWaveGoldReward(state.survivalWave);
-  setLogMessage(`¡${state.enemy.type.name} derrotado! +${waveGold} 🪙`, true);
+  setLogMessage(`¡${state.enemy.type.name} derrotado!`, true);
 
   if (state.survivalWave >= SURVIVAL_TOTAL_WAVES) {
     state.gameOver = true;
@@ -6033,12 +6044,16 @@ async function handleSurvivalPlayerDefeat() {
 
 async function showSurvivalResult(victory) {
   const wavesCompleted = victory ? SURVIVAL_TOTAL_WAVES : Math.max(0, state.survivalWave - 1);
+  const arena = state.currentArena || 1;
+  const bonus = SURVIVAL_ARENA_BONUS[arena] || SURVIVAL_ARENA_BONUS[1];
   const { gold, gems } = getSurvivalTotalRewards(wavesCompleted);
+  const items = getSurvivalItemDrops(wavesCompleted);
 
   state.coins += gold;
   state.diamonds += gems;
   updateCoinDisplay();
   updateDiamondDisplay();
+  if (items.length) renderInventory();
   addBattlePassXpFromCombat(victory);
 
   const waveEl = dom.waveIndicator;
@@ -6051,16 +6066,19 @@ async function showSurvivalResult(victory) {
   dom.resultCups.textContent = `🌊 Oleadas completadas: ${wavesCompleted}/${SURVIVAL_TOTAL_WAVES}`;
   dom.resultCups.style.color = victory ? '#4facfe' : '#f44336';
 
-  const lines = [];
-  for (let w = 1; w <= Math.min(wavesCompleted, SURVIVAL_TOTAL_WAVES); w++) {
-    const g = getSurvivalWaveGoldReward(w);
-    if (g > 0) lines.push(`Oleada ${w}: +${g} 🪙`);
-  }
-  if (victory) lines.push('Bonus Jefe Final: +1,000 🪙 + 10 💎');
+  const itemLines = items.length
+    ? items.map(it => `+${it.emoji} ${it.name}`)
+    : [];
+  const parts = [`+${gold} 🪙`];
+  if (gems) parts.push(`+${gems} 💎`);
+  if (itemLines.length) itemLines.forEach(l => parts.push(l));
 
   dom.resultSub.innerHTML = `<div class="survival-rewards-list">
-    ${lines.map(l => `<span class="survival-reward-row">${l}</span>`).join('')}
-    <span class="survival-reward-row total">+${gold} 🪙 +${gems} 💎</span>
+    <span class="survival-reward-row">💰 Recompensa base: ${wavesCompleted} × 50 = ${wavesCompleted * 50} 🪙</span>
+    ${bonus.gold ? `<span class="survival-reward-row">🏟️ Bonus de arena: +${bonus.gold} 🪙</span>` : ''}
+    ${itemLines.length ? `<span class="survival-reward-row">🎁 Objetos obtenidos:</span>` : ''}
+    ${itemLines.map(l => `<span class="survival-reward-row item">${l}</span>`).join('')}
+    <span class="survival-reward-row total">${parts.join(' · ')}</span>
   </div>`;
 
   signalAchievementUpdate();
