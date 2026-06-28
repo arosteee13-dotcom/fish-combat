@@ -35,7 +35,7 @@ const FISH_TYPES = [
     maxHp: 14, atk: 6, def: 4, spa: 5, spd: 3, spe: 1,
     growth: { maxHp: 1.5, atk: 0.6, def: 0.4, spa: 0.5, spd: 0.3, spe: 0.1 },
     attacks: [
-      { name: 'Pinchazo', power: 25, emoji: '📍', categoria: 'Fisico' },
+      { name: 'Pinchazo', power: 25, emoji: '📍', categoria: 'Fisico', efecto: { probabilidad: 0.3, estado: 'spa_reduction', turns: 2, amount: 0.15 } },
       { name: 'Disparo de Agua', power: 25, emoji: '💦', categoria: 'Fisico' }
     ],
     passive: {
@@ -155,7 +155,7 @@ const FISH_TYPES = [
     growth: { maxHp: 1.0, atk: 0.4, def: 0.5, spa: 0.3, spd: 0.3, spe: 0.5 },
     attacks: [
       { name: 'Coletazo Plano', power: 20, emoji: '🥞', categoria: 'Fisico' },
-      { name: 'Sacudida de Arena', power: 25, emoji: '🏖️', categoria: 'Fisico' }
+      { name: 'Sacudida de Arena', power: 25, emoji: '🏖️', categoria: 'Fisico', efecto: { probabilidad: 0.3, estado: 'dodge_reduction', turns: 2, amount: 0.15 } }
     ],
     passive: {
       name: 'Mimetismo Plano',
@@ -273,7 +273,7 @@ const FISH_TYPES = [
     maxHp: 9, atk: 6, def: 3, spa: 2, spd: 3, spe: 8,
     growth: { maxHp: 0.9, atk: 0.6, def: 0.3, spa: 0.2, spd: 0.3, spe: 0.8 },
     attacks: [
-      { name: 'Embestida Fina', power: 15, emoji: '🏃', categoria: 'Fisico' },
+      { name: 'Embestida Fina', power: 15, emoji: '🏃', categoria: 'Fisico', efecto: { probabilidad: 0.3, estado: 'dodge_reduction', turns: 2, amount: 0.15 } },
       { name: 'Estocada de Pico', power: 25, emoji: '🗡️', categoria: 'Fisico' }
     ],
     passive: {
@@ -699,7 +699,7 @@ const FISH_TYPES = [
     growth: { maxHp: 0.6, atk: 1.2, def: 0.4, spa: 0.3, spd: 0.4, spe: 1.1 },
     attacks: [
       { name: 'Estocada Invisible', power: 80, emoji: '🗡️', categoria: 'Fisico', ignoraDefensa: 0.2 },
-      { name: 'Colmillo Relámpago', power: 55, emoji: '⚡', categoria: 'Fisico' }
+      { name: 'Colmillo Relámpago', power: 55, emoji: '⚡', categoria: 'Fisico', efecto: { probabilidad: 0.3, estado: 'spa_reduction', turns: 2, amount: 0.15 } }
     ],
     passive: {
       name: 'Emboscada',
@@ -1576,14 +1576,16 @@ async function upgradeFish(fishId) {
 }
 
 /* ===== DAMAGE FORMULA ===== */
-function calculateDamage(power, attacker, defender, categoria, attackerStatus, defenderBuffs, attackerAtkReduction, defenderSpdReduction, atk, attackerBuffs) {
+function calculateDamage(power, attacker, defender, categoria, attackerStatus, defenderBuffs, attackerDebuffs, defenderDebuffs, atk, attackerBuffs) {
   const atkDef = attackerStatus === 'quemado' && categoria === 'Fisico' ? Math.round(attacker.atk * 0.8) : attacker.atk;
   let A = categoria === 'Fisico' ? atkDef : attacker.spa;
-  if (categoria === 'Fisico' && attackerAtkReduction) A = Math.round(A * (1 - attackerAtkReduction));
+  if (categoria === 'Fisico' && attackerDebuffs?.atkReduction) A = Math.round(A * (1 - attackerDebuffs.atkReduction));
+  if (categoria === 'Especial' && attackerDebuffs?.spaReduction) A = Math.round(A * (1 - attackerDebuffs.spaReduction));
   if (categoria === 'Fisico' && attackerBuffs?.atkBoost) A += attackerBuffs.atkBoost;
   if (categoria === 'Especial' && attackerBuffs?.spaBoost) A += attackerBuffs.spaBoost;
   let D = categoria === 'Fisico' ? defender.def : defender.spd;
-  if (categoria === 'Especial' && defenderSpdReduction) D = Math.round(D * (1 - defenderSpdReduction));
+  if (categoria === 'Especial' && defenderDebuffs?.spdReduction) D = Math.round(D * (1 - defenderDebuffs.spdReduction));
+  if (categoria === 'Fisico' && defenderDebuffs?.defReduction) D = Math.max(1, D - defenderDebuffs.defReduction);
   if (categoria === 'Fisico' && defenderBuffs?.defBoost) D += defenderBuffs.defBoost;
   if (categoria === 'Especial' && defenderBuffs?.spdBoost) D += defenderBuffs.spdBoost;
   if (categoria === 'Fisico') {
@@ -1617,7 +1619,7 @@ function getEffectiveSpeed(fighter) {
   let spe = fighter.type.spe;
   if (fighter.status === 'veneno_grave') spe = Math.round(spe * 0.9);
   if (fighter.status === 'paralizado') spe = Math.round(spe / 2);
-  if (fighter.debuff?.type === 'spe_reduction') spe = Math.max(1, spe - (fighter.debuff.amount || 1));
+  if (fighter.debuffs?.speReduction) spe = Math.max(1, spe - fighter.debuffs.speReduction);
   if (fighter.buffs?.speBoost) spe += fighter.buffs.speBoost;
   if (fighter.impulsoHuidaActivo) spe = Math.round(spe * 1.2);
   return spe;
@@ -1655,27 +1657,44 @@ function applySecondaryEffect(atk, defender) {
   }
 
   if (!atk.efecto) return;
-  if (atk.efecto.estado === 'precision_reducida' || atk.efecto.estado === 'spe_reduction') {
+  if (atk.efecto.estado === 'precision_reducida' || atk.efecto.estado === 'spe_reduction'
+    || atk.efecto.estado === 'atk_reduction' || atk.efecto.estado === 'spd_reduction'
+    || atk.efecto.estado === 'def_reduction' || atk.efecto.estado === 'spa_reduction'
+    || atk.efecto.estado === 'dodge_reduction') {
+    const prob = atk.efecto.probabilidad !== undefined ? atk.efecto.probabilidad : 1;
+    if (Math.random() >= prob) return;
     if (checkStatusImmunity(defender)) return;
-    if (atk.efecto.estado === 'precision_reducida') {
-      defender.debuff = { type: 'precision_reducida', turns: atk.efecto.turns || 2 };
+    defender.debuffs = defender.debuffs || {};
+    const estado = atk.efecto.estado;
+    const turns = atk.efecto.turns || 2;
+    const amount = atk.efecto.amount;
+    const labels = {
+      atk_reduction: ['atkReduction', 'ATF', 'porcentual'],
+      def_reduction: ['defReduction', 'DEF', 'plano'],
+      spa_reduction: ['spaReduction', 'SAT', 'porcentual'],
+      spd_reduction: ['spdReduction', 'DFE', 'porcentual'],
+      spe_reduction: ['speReduction', 'SPE', 'plano'],
+      dodge_reduction: ['dodgeReduction', 'EVA', 'porcentual'],
+      precision_reducida: ['precisionReducida', 'PRE', 'booleano'],
+    };
+    const [prop, label, tipo] = labels[estado] || [];
+    if (estado === 'precision_reducida') {
+      defender.debuffs.precisionReducida = true;
+      defender.debuffs.precisionTurns = turns;
       setLogMessage(`¡${defender.type.name} tiene precisión reducida!`, true);
+    } else if (tipo === 'plano') {
+      const val = amount || 1;
+      const existing = defender.debuffs[prop] || 0;
+      defender.debuffs[prop] = existing + val;
+      defender.debuffs[prop.replace('Reduction', 'Turns')] = turns;
+      setLogMessage(`¡${defender.type.name} redujo su ${label} -${val}!`, true);
     } else {
-      defender.debuff = { type: 'spe_reduction', turns: atk.efecto.turns || 2, amount: atk.efecto.amount || 1 };
-      setLogMessage(`¡${defender.type.name} redujo su velocidad -${atk.efecto.amount || 1}!`, true);
+      const val = amount || 0.15;
+      const existing = defender.debuffs[prop] || 0;
+      defender.debuffs[prop] = Math.min(1, existing + val);
+      defender.debuffs[prop.replace('Reduction', 'Turns')] = turns;
+      setLogMessage(`¡${defender.type.name} redujo su ${label} -${Math.round(val * 100)}%!`, true);
     }
-    return;
-  }
-  if (atk.efecto.estado === 'atk_reduction') {
-    if (checkStatusImmunity(defender)) return;
-    defender.atkReduction = atk.efecto.amount || 0.15;
-    setLogMessage(`¡${defender.type.name} está intimidado! ATF -${Math.round((atk.efecto.amount || 0.15) * 100)}%`, true);
-    return;
-  }
-  if (atk.efecto.estado === 'spd_reduction') {
-    if (checkStatusImmunity(defender)) return;
-    defender.spdReduction = atk.efecto.amount || 0.15;
-    setLogMessage(`¡${defender.type.name} perdió defensa especial! DFE -${Math.round((atk.efecto.amount || 0.15) * 100)}%`, true);
     return;
   }
   if (atk.efecto.estado === 'sangrado') {
@@ -1774,7 +1793,10 @@ function triggerPassive(defFighter, atkFighter, categoria) {
   }
   if (base.passive.name === 'Piel Toxínica' && categoria === 'Fisico') {
     if (Math.random() < 0.3) {
-      atkFighter.atkReduction = 0.10;
+      atkFighter.debuffs = atkFighter.debuffs || {};
+      const existing = atkFighter.debuffs.atkReduction || 0;
+      atkFighter.debuffs.atkReduction = existing + 0.10;
+      atkFighter.debuffs.atkTurns = 99;
       setLogMessage(`¡Piel Toxínica de ${defFighter.type.name}! ATF del rival -10%`, true);
     }
   }
@@ -1819,6 +1841,7 @@ function checkDodge(defenderFighter, categoria, attackerFighter) {
     chance += 0.05 * mult;
   }
   if (defenderFighter.buffs?.dodgeBoost) chance += defenderFighter.buffs.dodgeBoost;
+  if (defenderFighter.debuffs?.dodgeReduction) chance = Math.max(0, chance - defenderFighter.debuffs.dodgeReduction);
   if (chance > 0 && Math.random() < chance) {
     const src = base?.passive?.name || 'con evasión aumentada';
     setLogMessage(`¡${defenderFighter.type.name} activó ${src} y esquivó el ataque!`, true);
@@ -1828,7 +1851,7 @@ function checkDodge(defenderFighter, categoria, attackerFighter) {
 }
 
 function checkPrecision(attacker) {
-  if (attacker.debuff && attacker.debuff.type === 'precision_reducida' && Math.random() < 0.2) {
+  if (attacker.debuffs?.precisionReducida && Math.random() < 0.2) {
     const base = getFishById(attacker.type.id);
     if (base?.passive?.name === 'Luz Guía') return false;
     setLogMessage(`¡${attacker.type.name} falló por la arena!`, true);
@@ -1860,15 +1883,54 @@ function checkKrakenDesatado(fighter) {
   }
 }
 
-function decrementDebuff(fighter) {
-  if (!fighter.debuff) return;
-  fighter.debuff.turns--;
-  if (fighter.debuff.turns <= 0) {
-    const type = fighter.debuff.type;
-    fighter.debuff = null;
-    if (type === 'spe_reduction') setLogMessage(`${fighter.type.name} recuperó la velocidad.`, true);
-    else setLogMessage(`${fighter.type.name} recuperó la precisión.`, true);
+function decrementDebuffs(fighter) {
+  if (!fighter.debuffs) return;
+  if (fighter.debuffs.atkTurns !== undefined) fighter.debuffs.atkTurns--;
+  if (fighter.debuffs.defTurns !== undefined) fighter.debuffs.defTurns--;
+  if (fighter.debuffs.spaTurns !== undefined) fighter.debuffs.spaTurns--;
+  if (fighter.debuffs.spdTurns !== undefined) fighter.debuffs.spdTurns--;
+  if (fighter.debuffs.speTurns !== undefined) fighter.debuffs.speTurns--;
+  if (fighter.debuffs.dodgeTurns !== undefined) fighter.debuffs.dodgeTurns--;
+  if (fighter.debuffs.precisionTurns !== undefined) fighter.debuffs.precisionTurns--;
+
+  if (fighter.debuffs.atkTurns !== undefined && fighter.debuffs.atkTurns <= 0) {
+    delete fighter.debuffs.atkReduction;
+    delete fighter.debuffs.atkTurns;
+    setLogMessage(`${fighter.type.name} recuperó el ATF.`, true);
   }
+  if (fighter.debuffs.defTurns !== undefined && fighter.debuffs.defTurns <= 0) {
+    delete fighter.debuffs.defReduction;
+    delete fighter.debuffs.defTurns;
+    setLogMessage(`${fighter.type.name} recuperó la DEF.`, true);
+  }
+  if (fighter.debuffs.spaTurns !== undefined && fighter.debuffs.spaTurns <= 0) {
+    delete fighter.debuffs.spaReduction;
+    delete fighter.debuffs.spaTurns;
+    setLogMessage(`${fighter.type.name} recuperó el SAT.`, true);
+  }
+  if (fighter.debuffs.spdTurns !== undefined && fighter.debuffs.spdTurns <= 0) {
+    delete fighter.debuffs.spdReduction;
+    delete fighter.debuffs.spdTurns;
+    setLogMessage(`${fighter.type.name} recuperó la DFE.`, true);
+  }
+  if (fighter.debuffs.speTurns !== undefined && fighter.debuffs.speTurns <= 0) {
+    delete fighter.debuffs.speReduction;
+    delete fighter.debuffs.speTurns;
+    setLogMessage(`${fighter.type.name} recuperó la velocidad.`, true);
+  }
+  if (fighter.debuffs.dodgeTurns !== undefined && fighter.debuffs.dodgeTurns <= 0) {
+    delete fighter.debuffs.dodgeReduction;
+    delete fighter.debuffs.dodgeTurns;
+    setLogMessage(`${fighter.type.name} recuperó la evasión.`, true);
+  }
+  if (fighter.debuffs.precisionTurns !== undefined && fighter.debuffs.precisionTurns <= 0) {
+    delete fighter.debuffs.precisionReducida;
+    delete fighter.debuffs.precisionTurns;
+    setLogMessage(`${fighter.type.name} recuperó la precisión.`, true);
+  }
+  if (!fighter.debuffs.atkReduction && !fighter.debuffs.defReduction && !fighter.debuffs.spaReduction
+    && !fighter.debuffs.spdReduction && !fighter.debuffs.speReduction && !fighter.debuffs.dodgeReduction
+    && !fighter.debuffs.precisionReducida) fighter.debuffs = null;
 }
 
 function applyBuff(atk, user) {
@@ -2118,7 +2180,10 @@ function checkDestelloAdvertencia(defender, attacker) {
   if (!base || base.passive?.name !== 'Destello de Advertencia') return;
   if (defender.currentHp < defender.maxHp / 2) {
     defender.destelloActivado = true;
-    attacker.atkReduction = 0.2;
+    attacker.debuffs = attacker.debuffs || {};
+    const existing = attacker.debuffs.atkReduction || 0;
+    attacker.debuffs.atkReduction = existing + 0.2;
+    attacker.debuffs.atkTurns = 99;
     setLogMessage(`¡Los anillos de ${defender.type.name} brillan! ATF del rival -20%`, true);
   }
 }
@@ -2147,7 +2212,10 @@ function triggerOnHitPassive(attacker, defender, atk, dmg) {
   if (base.passive.name === 'Onda Expansiva' && atk.categoria === 'Especial') {
     if (Math.random() < 0.5) {
       const amount = Math.max(1, Math.round(defender.type.spe * 0.15));
-      defender.debuff = { type: 'spe_reduction', turns: 1, amount };
+      defender.debuffs = defender.debuffs || {};
+      const existing = defender.debuffs.speReduction || 0;
+      defender.debuffs.speReduction = existing + amount;
+      defender.debuffs.speTurns = 1;
       setLogMessage(`¡Onda Expansiva! Velocidad del rival -${amount}`, true);
     }
   }
@@ -2172,10 +2240,17 @@ function updateStatusDisplay() {
   let pText = '', pCls = 'status-tag';
   if (pStatus && statusLabels[pStatus]) { pText = `[${statusLabels[pStatus]}]`; pCls += ' ' + pStatus; }
   if (state.player.sangradoTurns > 0) pText += (pText ? ' ' : '') + '[SAN]';
-  if (state.player.debuff) {
+  if (state.player.debuffs) {
     if (!pCls.includes('status-tag ')) pCls += ' cegado';
-    const icon = state.player.debuff.type === 'spe_reduction' ? '🐢' : '👁️‍🗨️';
-    pText += (pText ? ' ' : '') + icon;
+    const icons = [];
+    if (state.player.debuffs.atkReduction) icons.push('🗡️↓');
+    if (state.player.debuffs.defReduction) icons.push('🛡️↓');
+    if (state.player.debuffs.spaReduction) icons.push('🔥↓');
+    if (state.player.debuffs.spdReduction) icons.push('✨↓');
+    if (state.player.debuffs.speReduction) icons.push('🐢');
+    if (state.player.debuffs.precisionReducida) icons.push('👁️‍🗨️');
+    if (state.player.debuffs.dodgeReduction) icons.push('💨↓');
+    if (icons.length) pText += (pText ? ' ' : '') + icons.join(' ');
   }
   if (state.player.buffs?.atkBoost) pText += (pText ? ' ' : '') + '⚔️';
   if (state.player.buffs?.spaBoost) pText += (pText ? ' ' : '') + '🔥';
@@ -2188,10 +2263,17 @@ function updateStatusDisplay() {
   let eText = '', eCls = 'status-tag';
   if (eStatus && statusLabels[eStatus]) { eText = `[${statusLabels[eStatus]}]`; eCls += ' ' + eStatus; }
   if (state.enemy.sangradoTurns > 0) eText += (eText ? ' ' : '') + '[SAN]';
-  if (state.enemy.debuff) {
+  if (state.enemy.debuffs) {
     if (!eCls.includes('status-tag ')) eCls += ' cegado';
-    const icon = state.enemy.debuff.type === 'spe_reduction' ? '🐢' : '👁️‍🗨️';
-    eText += (eText ? ' ' : '') + icon;
+    const icons = [];
+    if (state.enemy.debuffs.atkReduction) icons.push('🗡️↓');
+    if (state.enemy.debuffs.defReduction) icons.push('🛡️↓');
+    if (state.enemy.debuffs.spaReduction) icons.push('🔥↓');
+    if (state.enemy.debuffs.spdReduction) icons.push('✨↓');
+    if (state.enemy.debuffs.speReduction) icons.push('🐢');
+    if (state.enemy.debuffs.precisionReducida) icons.push('👁️‍🗨️');
+    if (state.enemy.debuffs.dodgeReduction) icons.push('💨↓');
+    if (icons.length) eText += (eText ? ' ' : '') + icons.join(' ');
   }
   if (state.enemy.buffs?.atkBoost) eText += (eText ? ' ' : '') + '⚔️';
   if (state.enemy.buffs?.spaBoost) eText += (eText ? ' ' : '') + '🔥';
@@ -5835,8 +5917,8 @@ async function initCombat() {
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
   if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
-  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
-  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
+  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, debuffs: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
+  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, debuffs: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.isAnimating = false;
@@ -5884,7 +5966,9 @@ async function initCombat() {
     setLogMessage(`¡Caparazón de Tortuga aumenta la defensa! (+${15 * mult}%)${mult > 1 ? ' (×2 Escudo Remoto)' : ''}`, true);
   }
   if (hasEquippedItem(state.selectedFishId, 'tinta_concentrada')) {
-    state.enemy.debuff = { type: 'precision_reducida', turns: 2 };
+    state.enemy.debuffs = state.enemy.debuffs || {};
+    state.enemy.debuffs.precisionReducida = true;
+    state.enemy.debuffs.precisionTurns = 2;
     setLogMessage(`¡Tinta Concentrada reduce la precisión del rival!`, true);
   }
 
@@ -6015,7 +6099,7 @@ function startTurn() {
       applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
       if (checkGameOver()) return;
       applyPassiveHealing(state.player);
-      decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
       setTimeout(() => doEnemyAttack(), 1200);
     } else if (checkParalysis(state.player, state.player.type.name)) {
       state.isPlayerTurn = false; state.isAnimating = true;
@@ -6023,7 +6107,7 @@ function startTurn() {
       applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
       if (checkGameOver()) return;
       applyPassiveHealing(state.player);
-      decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
       setTimeout(() => doEnemyAttack(), 1200);
     } else if (checkRetroceder(state.player, state.player.type.name)) {
       state.isPlayerTurn = false; state.isAnimating = true;
@@ -6031,7 +6115,7 @@ function startTurn() {
       applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
       if (checkGameOver()) return;
       applyPassiveHealing(state.player);
-      decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
       setTimeout(() => doEnemyAttack(), 1200);
     }
   } else {
@@ -6042,19 +6126,19 @@ function startTurn() {
       applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
       if (checkGameOver()) return;
       applyPassiveHealing(state.enemy);
-      decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+      decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
       setTimeout(() => startTurn(), 1200);
     } else if (checkParalysis(state.enemy, state.enemy.type.name)) {
       applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
       if (checkGameOver()) return;
       applyPassiveHealing(state.enemy);
-      decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+      decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
       setTimeout(() => startTurn(), 1200);
     } else if (checkRetroceder(state.enemy, state.enemy.type.name)) {
       applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
       if (checkGameOver()) return;
       applyPassiveHealing(state.enemy);
-      decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+      decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
       setTimeout(() => startTurn(), 1200);
     } else {
       setTimeout(() => doEnemyAttack(), 1200);
@@ -6073,24 +6157,24 @@ function playerAttack(index) {
     applySelfBuff(atk, state.player);
     applySecondaryEffect(atk, state.enemy);
     applyPassiveHealing(state.player);
-    decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
+    decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
     afterPlayerAction();
     return;
   }
 
   if (checkPrecision(state.player)) {
     applyPassiveHealing(state.player);
-    decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
+    decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
     afterPlayerAction();
     return;
   }
   if (checkDodge(state.enemy, atk.categoria, state.player)) {
     applyPassiveHealing(state.player);
-    decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
+    decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
     afterPlayerAction();
     return;
   }
-  let dmg = calculateDamage(atk.power, state.player.type, state.enemy.type, atk.categoria, state.player.status, state.enemy.buffs, state.player.atkReduction, state.enemy.spdReduction, atk, state.player.buffs);
+  let dmg = calculateDamage(atk.power, state.player.type, state.enemy.type, atk.categoria, state.player.status, state.enemy.buffs, state.player.debuffs, state.enemy.debuffs, atk, state.player.buffs);
   if (state.player.frenesiActivo && atk.categoria === 'Fisico') {
     dmg = Math.round(dmg * 1.15);
     state.player.frenesiActivo = false;
@@ -6134,7 +6218,7 @@ function playerAttack(index) {
   checkKrakenDesatado(state.player);
   if (checkGameOver()) return;
   applyPassiveHealing(state.player);
-  decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
+  decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
   afterPlayerAction();
 }
 
@@ -6174,7 +6258,7 @@ function chooseEnemyAttack() {
   const sortedByPower = [...attacks].sort((a, b) => b.power - a.power);
 
   for (const atk of sortedByPower) {
-    const dmg = calculateDamage(atk.power, enemy.type, player.type, atk.categoria, enemy.status, player.buffs, enemy.atkReduction, player.spdReduction, atk, enemy.buffs);
+    const dmg = calculateDamage(atk.power, enemy.type, player.type, atk.categoria, enemy.status, player.buffs, enemy.debuffs, player.debuffs, atk, enemy.buffs);
     if (dmg >= player.currentHp) return atk;
   }
 
@@ -6189,7 +6273,7 @@ function chooseEnemyAttack() {
 
   const statusAtk = attacks.find(atk => {
     if (!atk.efecto) return false;
-    if (atk.efecto.estado === 'precision_reducida') return !player.debuff;
+    if (atk.efecto.estado === 'precision_reducida') return !player.debuffs;
     return !player.status || player.status !== atk.efecto.estado;
   });
   if (statusAtk && state.isFirstEnemyTurn) {
@@ -6213,7 +6297,7 @@ function doEnemyAttack() {
     applySelfBuff(atk, state.enemy);
     applySecondaryEffect(atk, state.player);
     applyPassiveHealing(state.enemy);
-    decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+    decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
     afterEnemyAction();
     return;
   }
@@ -6225,17 +6309,17 @@ function doEnemyAttack() {
       setLogMessage(`¡Frenesí Protector de ${state.player.type.name}! ATF +15% en el próximo ataque`, true);
     }
     applyPassiveHealing(state.enemy);
-    decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+    decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
     afterEnemyAction();
     return;
   }
   if (checkDodge(state.player, atk.categoria, state.enemy)) {
     applyPassiveHealing(state.enemy);
-    decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+    decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
     afterEnemyAction();
     return;
   }
-  let dmg = calculateDamage(atk.power, state.enemy.type, state.player.type, atk.categoria, state.enemy.status, state.player.buffs, state.enemy.atkReduction, state.player.spdReduction, atk, state.enemy.buffs);
+  let dmg = calculateDamage(atk.power, state.enemy.type, state.player.type, atk.categoria, state.enemy.status, state.player.buffs, state.enemy.debuffs, state.player.debuffs, atk, state.enemy.buffs);
   dmg = applyDefensivePassives(dmg, state.player, atk.categoria);
   if (state.player.shield > 0) {
     const absorbed = Math.min(state.player.shield, dmg);
@@ -6274,7 +6358,7 @@ function doEnemyAttack() {
   checkKrakenDesatado(state.enemy);
   if (checkGameOver()) return;
   applyPassiveHealing(state.enemy);
-  decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+  decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
   afterEnemyAction();
 }
 
@@ -6433,7 +6517,7 @@ function initSurvivalWave(wave) {
   state.player = {
     type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp,
     status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
-    destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
+    destelloActivado: false, debuffs: null,
     buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
@@ -6442,7 +6526,7 @@ function initSurvivalWave(wave) {
   state.enemy = {
     type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp,
     status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
-    destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
+    destelloActivado: false, debuffs: null,
     buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
@@ -6648,7 +6732,7 @@ function initFeverWave(wave, mode) {
   const playerFields = {
     type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp,
     status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
-    destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
+    destelloActivado: false, debuffs: null,
     buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
@@ -6657,7 +6741,7 @@ function initFeverWave(wave, mode) {
   const enemyFields = {
     type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp,
     status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
-    destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
+    destelloActivado: false, debuffs: null,
     buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
