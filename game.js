@@ -834,8 +834,8 @@ const FISH_TYPES = [
     maxHp: 6, atk: 5, def: 4, spa: 4, spd: 5, spe: 12,
     growth: { maxHp: 0.6, atk: 0.5, def: 0.4, spa: 0.4, spd: 0.5, spe: 1.2 },
     attacks: [
-      { name: 'Embestida Gélida', power: 30, emoji: '❄️', categoria: 'Fisico' },
-      { name: 'Corriente Ártica', power: 40, emoji: '🌊', categoria: 'Fisico', efecto: { probabilidad: 0.1, estado: 'spe_reduction', turns: 2, amount: 1 } }
+      { name: 'Embestida Gélida', power: 30, emoji: '❄️', categoria: 'Fisico', frio: true },
+      { name: 'Corriente Ártica', power: 40, emoji: '🌊', categoria: 'Fisico', frio: true, efecto: { probabilidad: 0.1, estado: 'spe_reduction', turns: 2, amount: 1 } }
     ],
     passive: {
       name: 'Sangre Anticongelante',
@@ -852,11 +852,45 @@ const FISH_TYPES = [
     growth: { maxHp: 0.5, atk: 0.4, def: 0.6, spa: 0.7, spd: 0.8, spe: 1.0 },
     attacks: [
       { name: 'Mordisco Pálido', power: 35, emoji: '🦷', categoria: 'Fisico' },
-      { name: 'Destello Glacial', power: 45, emoji: '💡', categoria: 'Especial', efecto: { probabilidad: 0.3, estado: 'precision_reducida', turns: 2 } }
+      { name: 'Destello Glacial', power: 45, emoji: '💡', categoria: 'Especial', frio: true, efecto: { probabilidad: 0.3, estado: 'precision_reducida', turns: 2 } }
     ],
     passive: {
       name: 'Cuerpo Translúcido',
       description: 'Reduce un 15% el daño del primer ataque recibido en el combate.'
+    }
+  },
+  {
+    id: 'pez_hielo_antartico',
+    name: 'Pez Hielo Antártico',
+    rarity: 'common',
+    imgPath: 'img/peces/pez_hielo_antartico.png',
+    emoji: '🧊',
+    maxHp: 10, atk: 4, def: 4, spa: 5, spd: 5, spe: 6,
+    growth: { maxHp: 1.0, atk: 0.4, def: 0.4, spa: 0.5, spd: 0.5, spe: 0.6 },
+    attacks: [
+      { name: 'Mordisco Gélido', power: 20, emoji: '🦷', categoria: 'Fisico', frio: true, efecto: { probabilidad: 0.25, estado: 'spe_reduction', turns: 2, amount: 1 } },
+      { name: 'Camuflaje Glacial', power: 0, emoji: '❄️', categoria: 'Efecto', efecto: { estado: 'dodge_boost', turns: 2, amount: 0.2 } }
+    ],
+    passive: {
+      name: 'Sangre Transparente',
+      description: 'Es inmune a la ralentización por frío y, en Aguas Heladas, gana +10% de esquiva.'
+    }
+  },
+  {
+    id: 'krill_antartico',
+    name: 'Krill Antártico',
+    rarity: 'common',
+    imgPath: 'img/peces/krill_antartico.png',
+    emoji: '🦐',
+    maxHp: 8, atk: 3, def: 3, spa: 4, spd: 4, spe: 9,
+    growth: { maxHp: 0.8, atk: 0.3, def: 0.3, spa: 0.4, spd: 0.4, spe: 0.9 },
+    attacks: [
+      { name: 'Pinchazo de Antena', power: 15, emoji: '📍', categoria: 'Fisico', priority: 1 },
+      { name: 'Nado en Desbandada', power: 0, emoji: '🌊', categoria: 'Efecto', efecto: { estado: 'dodge_boost', turns: 2, amount: 0.25 } }
+    ],
+    passive: {
+      name: 'Efecto Enjambre',
+      description: 'Cada vez que esquiva un ataque del rival, recupera 1 PS.'
     }
   },
   {
@@ -868,7 +902,7 @@ const FISH_TYPES = [
     maxHp: 7, atk: 6, def: 5, spa: 10, spd: 7, spe: 11,
     growth: { maxHp: 0.7, atk: 0.6, def: 0.5, spa: 1.0, spd: 0.7, spe: 1.1 },
     attacks: [
-      { name: 'Chorros de Tinta Fría', power: 50, emoji: '🖤', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'sangrado', turns: 2 } },
+      { name: 'Chorros de Tinta Fría', power: 50, emoji: '🖤', categoria: 'Especial', frio: true, efecto: { probabilidad: 1, estado: 'sangrado', turns: 2 } },
       { name: 'Constricción Abisal', power: 45, emoji: '🌀', categoria: 'Fisico' }
     ],
     passive: {
@@ -894,6 +928,23 @@ const FISH_TYPES = [
     }
   },
   {
+    id: 'tiburon_salmon',
+    name: 'Tiburón Salmón',
+    rarity: 'rare',
+    imgPath: 'img/peces/tiburon_salmon.png',
+    emoji: '🦈',
+    maxHp: 13, atk: 7, def: 5, spa: 2, spd: 4, spe: 7,
+    growth: { maxHp: 1.3, atk: 0.7, def: 0.5, spa: 0.2, spd: 0.4, spe: 0.7 },
+    attacks: [
+      { name: 'Arpón de Escamas', power: 30, emoji: '🗡️', categoria: 'Fisico' },
+      { name: 'Frenesí Polar', power: 0, emoji: '❄️', categoria: 'Efecto', selfBuff: { stat: 'atk', amount: 1, turns: 2 } }
+    ],
+    passive: {
+      name: 'Endotermia',
+      description: 'En Aguas Heladas, sus ataques físicos infligen un 10% más de daño.'
+    }
+  },
+  {
     id: 'leopardo_marino',
     name: 'Leopardo Marino',
     rarity: 'epic',
@@ -911,6 +962,40 @@ const FISH_TYPES = [
     }
   },
   {
+    id: 'beluga',
+    name: 'Beluga',
+    rarity: 'epic',
+    imgPath: 'img/peces/beluga.png',
+    emoji: '🐋',
+    maxHp: 14, atk: 3, def: 6, spa: 7, spd: 7, spe: 5,
+    growth: { maxHp: 1.4, atk: 0.3, def: 0.6, spa: 0.7, spd: 0.7, spe: 0.5 },
+    attacks: [
+      { name: 'Canto de Ecolocalización', power: 25, emoji: '🎵', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'spd_flat_reduction', turns: 2, amount: 1 } },
+      { name: 'Melón Flexible', power: 0, emoji: '🫧', categoria: 'Efecto', selfBuff: { stat: 'specialGuard', amount: 0.5, turns: 1 } }
+    ],
+    passive: {
+      name: 'Ecolocalización Abierta',
+      description: 'Sus ataques sonoros nunca fallan y atraviesan la evasión o el camuflaje del rival.'
+    }
+  },
+  {
+    id: 'elefante_marino_sur',
+    name: 'Elefante Marino del Sur',
+    rarity: 'epic',
+    imgPath: 'img/peces/elefante_marino_sur.png',
+    emoji: '🦭',
+    maxHp: 19, atk: 6, def: 7, spa: 2, spd: 5, spe: 2,
+    growth: { maxHp: 1.9, atk: 0.6, def: 0.7, spa: 0.2, spd: 0.5, spe: 0.2 },
+    attacks: [
+      { name: 'Plastón Submarino', power: 35, emoji: '💥', categoria: 'Fisico', efecto: { probabilidad: 0.2, estado: 'aturdido' } },
+      { name: 'Rugido Tronador', power: 0, emoji: '📣', categoria: 'Efecto', efecto: { estado: 'atk_reduction', turns: 2, amount: 0.15 } }
+    ],
+    passive: {
+      name: 'Capa de Grasa',
+      description: 'Reduce a la mitad el daño recibido por ataques helados o congelantes.'
+    }
+  },
+  {
     id: 'tiburon_groenlandia',
     name: 'Tiburón de Groenlandia',
     rarity: 'legendary',
@@ -919,7 +1004,7 @@ const FISH_TYPES = [
     maxHp: 22, atk: 8, def: 6, spa: 2, spd: 6, spe: 1,
     growth: { maxHp: 2.2, atk: 0.8, def: 0.6, spa: 0.2, spd: 0.6, spe: 0.1 },
     attacks: [
-      { name: 'Mordisco Glacial', power: 40, emoji: '🦷', categoria: 'Fisico' },
+      { name: 'Mordisco Glacial', power: 40, emoji: '🦷', categoria: 'Fisico', frio: true },
       { name: 'Letargo Milenario', power: 0, emoji: '😴', categoria: 'Efecto', selfBuff: { stat: 'sleep', amount: 0.5, turns: 1 } }
     ],
     passive: {
@@ -965,7 +1050,7 @@ const FISH_TYPES = [
     id: 'calamar_vampiro',
     name: 'Calamar Vampiro',
     rarity: 'epic',
-    imgPath: 'img/peces/calamar_cristal.png',
+    imgPath: 'img/peces/calamar_vampiro.png',
     emoji: '🦑',
     maxHp: 9, atk: 4, def: 4, spa: 9, spd: 6, spe: 7,
     growth: { maxHp: 0.9, atk: 0.4, def: 0.4, spa: 0.9, spd: 0.6, spe: 0.7 },
@@ -1731,6 +1816,10 @@ function calculateDamage(power, attacker, defender, categoria, attackerStatus, d
     result = Math.round(result * 1.15);
     setLogMessage(`¡Manto Rojo de ${attacker.name}! Daño especial +15%`, true);
   }
+  if (atkBase?.passive?.name === 'Endotermia' && categoria === 'Fisico' && state.currentArena === 5) {
+    result = Math.max(1, Math.round(result * 1.1));
+    setLogMessage(`¡Endotermia de ${attacker.name}! Daño físico +10% en Aguas Heladas`, true);
+  }
   if (atkFighter?.buffs?.critChance && Math.random() < atkFighter.buffs.critChance) {
     result = Math.round(result * 2);
     setLogMessage(`¡${attacker.name} asesta un GOLPE CRÍTICO! Daño x2`, true);
@@ -1782,14 +1871,14 @@ function applySecondaryEffect(atk, defender) {
   if (!atk.efecto) return;
   if (atk.efecto.estado === 'precision_reducida' || atk.efecto.estado === 'spe_reduction'
     || atk.efecto.estado === 'atk_reduction' || atk.efecto.estado === 'spd_reduction'
-    || atk.efecto.estado === 'def_reduction' || atk.efecto.estado === 'spa_reduction'
+    || atk.efecto.estado === 'spd_flat_reduction' || atk.efecto.estado === 'def_reduction' || atk.efecto.estado === 'spa_reduction'
     || atk.efecto.estado === 'dodge_reduction') {
     const prob = atk.efecto.probabilidad !== undefined ? atk.efecto.probabilidad : 1;
     if (Math.random() >= prob) return;
     if (checkStatusImmunity(defender)) return;
     if (atk.efecto.estado === 'spe_reduction') {
       const baseFish = getFishById(defender.type?.id || defender.id);
-      if (baseFish?.passive?.name === 'Criogenia Criogénica') {
+      if (baseFish?.passive?.name === 'Criogenia Criogénica' || baseFish?.passive?.name === 'Sangre Transparente') {
         setLogMessage(`¡${defender.type.name} resiste la ralentización gracias a Criogenia Criogénica!`, true);
         return;
       }
@@ -1803,6 +1892,7 @@ function applySecondaryEffect(atk, defender) {
       def_reduction: ['defReduction', 'DEF', 'plano'],
       spa_reduction: ['spaReduction', 'SAT', 'porcentual'],
       spd_reduction: ['spdReduction', 'DFE', 'porcentual'],
+      spd_flat_reduction: ['spdFlatReduction', 'DFE', 'plano'],
       spe_reduction: ['speReduction', 'SPE', 'plano'],
       dodge_reduction: ['dodgeReduction', 'EVA', 'porcentual'],
       precision_reducida: ['precisionReducida', 'PRE', 'booleano'],
@@ -1943,11 +2033,19 @@ function triggerPassive(defFighter, atkFighter, categoria) {
   }
 }
 
+function getAttackPriority(atk) {
+  return atk?.priority || 0;
+}
+
+function getMaxAttackPriority(fighter) {
+  return Math.max(0, ...(fighter?.type?.attacks || []).map(getAttackPriority));
+}
+
 function checkDodge(defenderFighter, categoria, attackerFighter) {
   const base = getFishById(defenderFighter.type.id);
   if (categoria === 'Especial' && attackerFighter) {
     const atkBase = getFishById(attackerFighter.type.id);
-    if (atkBase?.passive?.name === 'Luz Guía') return false;
+    if (atkBase?.passive?.name === 'Luz Guía' || atkBase?.passive?.name === 'Ecolocalización Abierta') return false;
   }
   if (base?.passive?.name === 'Fotóforos Defensivos' && !defenderFighter.fotoforosUsado) {
     defenderFighter.fotoforosUsado = true;
@@ -1972,6 +2070,7 @@ function checkDodge(defenderFighter, categoria, attackerFighter) {
       if (base.passive.name === 'Salto Retráctil') chance = 0.2;
     }
     if (base.passive.name === 'Mimetismo de Roca') chance = 0.1;
+    if (base.passive.name === 'Sangre Transparente' && state.currentArena === 5) chance += 0.1;
     if (base.passive.name === 'Hipnosis Cromática' && categoria === 'Especial' && !defenderFighter.hipnosisUsado) {
       defenderFighter.hipnosisUsado = true;
       if (Math.random() < 0.25) {
@@ -1989,6 +2088,11 @@ function checkDodge(defenderFighter, categoria, attackerFighter) {
   if (chance > 0 && Math.random() < chance) {
     const src = base?.passive?.name || 'con evasión aumentada';
     setLogMessage(`¡${defenderFighter.type.name} activó ${src} y esquivó el ataque!`, true);
+    if (base?.passive?.name === 'Efecto Enjambre') {
+      defenderFighter.currentHp = Math.min(defenderFighter.maxHp, defenderFighter.currentHp + 1);
+      setLogMessage(`¡Efecto Enjambre de ${defenderFighter.type.name}! Recupera +1 PS al esquivar.`, true);
+      updateHpBars();
+    }
     return true;
   }
   return false;
@@ -1997,7 +2101,7 @@ function checkDodge(defenderFighter, categoria, attackerFighter) {
 function checkPrecision(attacker) {
   if (attacker.debuffs?.precisionReducida && Math.random() < 0.2) {
     const base = getFishById(attacker.type.id);
-    if (base?.passive?.name === 'Luz Guía') return false;
+    if (base?.passive?.name === 'Luz Guía' || base?.passive?.name === 'Ecolocalización Abierta') return false;
     setLogMessage(`¡${attacker.type.name} falló por la arena!`, true);
     return true;
   }
@@ -2033,6 +2137,7 @@ function decrementDebuffs(fighter) {
   if (fighter.debuffs.defTurns !== undefined) fighter.debuffs.defTurns--;
   if (fighter.debuffs.spaTurns !== undefined) fighter.debuffs.spaTurns--;
   if (fighter.debuffs.spdTurns !== undefined) fighter.debuffs.spdTurns--;
+  if (fighter.debuffs.spdFlatTurns !== undefined) fighter.debuffs.spdFlatTurns--;
   if (fighter.debuffs.speTurns !== undefined) fighter.debuffs.speTurns--;
   if (fighter.debuffs.dodgeTurns !== undefined) fighter.debuffs.dodgeTurns--;
   if (fighter.debuffs.precisionTurns !== undefined) fighter.debuffs.precisionTurns--;
@@ -2057,6 +2162,11 @@ function decrementDebuffs(fighter) {
     delete fighter.debuffs.spdTurns;
     setLogMessage(`${fighter.type.name} recuperó la DFE.`, true);
   }
+  if (fighter.debuffs.spdFlatTurns !== undefined && fighter.debuffs.spdFlatTurns <= 0) {
+    delete fighter.debuffs.spdFlatReduction;
+    delete fighter.debuffs.spdFlatTurns;
+    setLogMessage(`${fighter.type.name} recuperó la DFE.`, true);
+  }
   if (fighter.debuffs.speTurns !== undefined && fighter.debuffs.speTurns <= 0) {
     delete fighter.debuffs.speReduction;
     delete fighter.debuffs.speTurns;
@@ -2073,7 +2183,7 @@ function decrementDebuffs(fighter) {
     setLogMessage(`${fighter.type.name} recuperó la precisión.`, true);
   }
   if (!fighter.debuffs.atkReduction && !fighter.debuffs.defReduction && !fighter.debuffs.spaReduction
-    && !fighter.debuffs.spdReduction && !fighter.debuffs.speReduction && !fighter.debuffs.dodgeReduction
+    && !fighter.debuffs.spdReduction && !fighter.debuffs.spdFlatReduction && !fighter.debuffs.speReduction && !fighter.debuffs.dodgeReduction
     && !fighter.debuffs.precisionReducida) fighter.debuffs = null;
 }
 
@@ -2125,6 +2235,11 @@ function applyBuff(atk, user) {
       setLogMessage(`¡${user.type.name} entra en Letargo Milenario!`, true);
       return;
     }
+    if (atk.selfBuff.stat === 'specialGuard') {
+      user.buffs = { ...(user.buffs || {}), specialGuard: atk.selfBuff.amount || 0.5, specialGuardTurns: atk.selfBuff.turns || 1 };
+      setLogMessage(`¡${user.type.name} adapta su Melón Flexible! El próximo ataque especial hará la mitad de daño.`, true);
+      return;
+    }
     if (atk.name === 'Rastro de Sangre') {
       const opponent = user === state.player ? state.enemy : state.player;
       if (opponent.currentHp >= opponent.maxHp) {
@@ -2156,6 +2271,12 @@ function applyBuff(atk, user) {
       user.buffs = { ...(user.buffs || {}), atkBoost: existing + (atk.selfBuff.amount || 1), atkTurns: atk.selfBuff.turns || 2 };
       setLogMessage(`¡${user.type.name} aumentó su ataque +${atk.selfBuff.amount || 1}!`, true);
     }
+    if (atk.name === 'Frenesí Polar') {
+      const existing = user.buffs?.speBoost || 0;
+      user.buffs = { ...(user.buffs || {}), speBoost: existing + 1, speTurns: atk.selfBuff.turns || 2 };
+      user.debuffs = { ...(user.debuffs || {}), defReduction: (user.debuffs?.defReduction || 0) + 1, defTurns: atk.selfBuff.turns || 2 };
+      setLogMessage(`¡${user.type.name} entra en Frenesí Polar! SPE +1 y DEF -1`, true);
+    }
     if (atk.selfBuff.stat === 'def') {
       const existing = user.buffs?.defBoost || 0;
       user.buffs = { ...(user.buffs || {}), defBoost: existing + (atk.selfBuff.amount || 1), defTurns: atk.selfBuff.turns || 2 };
@@ -2182,6 +2303,7 @@ function decrementBuffs(fighter) {
   if (fighter.buffs.debuffImmuneTurns !== undefined) fighter.buffs.debuffImmuneTurns--;
   if (fighter.buffs.critTurns !== undefined) fighter.buffs.critTurns--;
   if (fighter.buffs.granSaltoTurns !== undefined) fighter.buffs.granSaltoTurns--;
+  if (fighter.buffs.specialGuardTurns !== undefined) fighter.buffs.specialGuardTurns--;
   if (fighter.buffs.defTurns !== undefined && fighter.buffs.defTurns <= 0) {
     delete fighter.buffs.defBoost;
     delete fighter.buffs.defTurns;
@@ -2220,21 +2342,38 @@ function decrementBuffs(fighter) {
     delete fighter.buffs.granSalto;
     delete fighter.buffs.granSaltoTurns;
   }
+  if (fighter.buffs.specialGuardTurns !== undefined && fighter.buffs.specialGuardTurns <= 0) {
+    delete fighter.buffs.specialGuard;
+    delete fighter.buffs.specialGuardTurns;
+  }
   if (fighter.buffs.spdTurns !== undefined && fighter.buffs.spdTurns <= 0) {
     delete fighter.buffs.spdBoost;
     delete fighter.buffs.spdTurns;
     setLogMessage(`${fighter.type.name} perdió el bono de DEF especial.`, true);
   }
-  if (!fighter.buffs.defBoost && !fighter.buffs.atkBoost && !fighter.buffs.spaBoost && !fighter.buffs.speBoost && !fighter.buffs.dodgeBoost && !fighter.buffs.debuffImmuneTurns && !fighter.buffs.critChance && !fighter.buffs.spdBoost && !fighter.buffs.granSalto) fighter.buffs = null;
+  if (!fighter.buffs.defBoost && !fighter.buffs.atkBoost && !fighter.buffs.spaBoost && !fighter.buffs.speBoost && !fighter.buffs.dodgeBoost && !fighter.buffs.debuffImmuneTurns && !fighter.buffs.critChance && !fighter.buffs.spdBoost && !fighter.buffs.granSalto && !fighter.buffs.specialGuard) fighter.buffs = null;
 }
 
-function applyDefensivePassives(dmg, defender, categoria) {
+function applyDefensivePassives(dmg, defender, atk) {
+  const categoria = atk?.categoria;
   const base = getFishById(defender.type.id);
   if (base?.passive?.name === 'Mimetismo Absoluto' && defender.mimetismoAbsolutoActivo) {
     defender.mimetismoAbsolutoActivo = false;
     setLogMessage(`¡${defender.type.name} se esconde! Es inmune al daño en el primer turno.`, true);
     trackMission('passive_shield');
     return 0;
+  }
+  if (categoria === 'Especial' && defender.buffs?.specialGuard) {
+    delete defender.buffs.specialGuard;
+    delete defender.buffs.specialGuardTurns;
+    if (!defender.buffs.defBoost && !defender.buffs.atkBoost && !defender.buffs.spaBoost && !defender.buffs.speBoost && !defender.buffs.dodgeBoost && !defender.buffs.debuffImmuneTurns && !defender.buffs.critChance && !defender.buffs.spdBoost && !defender.buffs.granSalto && !defender.buffs.specialGuard) defender.buffs = null;
+    setLogMessage(`¡${defender.type.name} desvía el ataque especial con Melón Flexible!`, true);
+    return Math.max(1, Math.round(dmg * 0.5));
+  }
+  if (base?.passive?.name === 'Capa de Grasa' && atk?.frio) {
+    dmg = Math.max(1, Math.round(dmg * 0.5));
+    setLogMessage(`¡${defender.type.name} amortigua el frío con Capa de Grasa!`, true);
+    return dmg;
   }
   if (categoria !== 'Fisico') return dmg;
   if (base && base.passive) {
@@ -2449,7 +2588,7 @@ function updateStatusDisplay() {
     if (state.player.debuffs.atkReduction) icons.push('🗡️↓');
     if (state.player.debuffs.defReduction) icons.push('🛡️↓');
     if (state.player.debuffs.spaReduction) icons.push('🔥↓');
-    if (state.player.debuffs.spdReduction) icons.push('✨↓');
+    if (state.player.debuffs.spdReduction || state.player.debuffs.spdFlatReduction) icons.push('✨↓');
     if (state.player.debuffs.speReduction) icons.push('🐢');
     if (state.player.debuffs.precisionReducida) icons.push('👁️‍🗨️');
     if (state.player.debuffs.dodgeReduction) icons.push('💨↓');
@@ -2460,6 +2599,7 @@ function updateStatusDisplay() {
   if (state.player.buffs?.defBoost) pText += (pText ? ' ' : '') + '🛡️';
   if (state.player.buffs?.speBoost) pText += (pText ? ' ' : '') + '⚡';
   if (state.player.buffs?.debuffImmuneTurns > 0) pText += (pText ? ' ' : '') + '🔒';
+  if (state.player.buffs?.specialGuard) pText += (pText ? ' ' : '') + '🫧';
   dom.playerStatus.textContent = pText;
   dom.playerStatus.className = pCls;
 
@@ -2473,7 +2613,7 @@ function updateStatusDisplay() {
     if (state.enemy.debuffs.atkReduction) icons.push('🗡️↓');
     if (state.enemy.debuffs.defReduction) icons.push('🛡️↓');
     if (state.enemy.debuffs.spaReduction) icons.push('🔥↓');
-    if (state.enemy.debuffs.spdReduction) icons.push('✨↓');
+    if (state.enemy.debuffs.spdReduction || state.enemy.debuffs.spdFlatReduction) icons.push('✨↓');
     if (state.enemy.debuffs.speReduction) icons.push('🐢');
     if (state.enemy.debuffs.precisionReducida) icons.push('👁️‍🗨️');
     if (state.enemy.debuffs.dodgeReduction) icons.push('💨↓');
@@ -2484,6 +2624,7 @@ function updateStatusDisplay() {
   if (state.enemy.buffs?.defBoost) eText += (eText ? ' ' : '') + '🛡️';
   if (state.enemy.buffs?.speBoost) eText += (eText ? ' ' : '') + '⚡';
   if (state.enemy.buffs?.debuffImmuneTurns > 0) eText += (eText ? ' ' : '') + '🔒';
+  if (state.enemy.buffs?.specialGuard) eText += (eText ? ' ' : '') + '🫧';
   dom.enemyStatus.textContent = eText;
   dom.enemyStatus.className = eCls;
 }
@@ -4104,9 +4245,14 @@ const ARENA_FISH = {
   5: [
     { fishId: 'bacalao' },
     { fishId: 'pez_hielo' },
+    { fishId: 'pez_hielo_antartico' },
+    { fishId: 'krill_antartico' },
     { fishId: 'calamar_cristal' },
     { fishId: 'narval' },
+    { fishId: 'tiburon_salmon' },
     { fishId: 'leopardo_marino' },
+    { fishId: 'beluga' },
+    { fishId: 'elefante_marino_sur' },
     { fishId: 'orca' },
     { fishId: 'medusa_melena_artica' }
   ],
@@ -4479,9 +4625,19 @@ function getAttackEffectDescriptions(atk) {
       parts.push({ text: 'Esquiva el próximo ataque rival', type: 'buff' });
     } else if (atk.selfBuff.stat === 'sleep') {
       parts.push({ text: 'Duermes un turno y luego recuperas la mitad de tu vida', type: 'buff' });
+    } else if (atk.selfBuff.stat === 'specialGuard') {
+      parts.push({ text: 'El próximo ataque especial rival hace la mitad de daño', type: 'buff' });
     } else {
       parts.push({ text: `Aumenta tu ${stat} +${atk.selfBuff.amount} durante ${atk.selfBuff.turns} turnos`, type: 'buff' });
     }
+  }
+
+  if (atk.priority > 0) {
+    parts.push({ text: 'Prioridad alta: actúa antes que los ataques normales', type: 'buff' });
+  }
+
+  if (atk.name === 'Frenesí Polar') {
+    parts.push({ text: 'También aumenta tu Velocidad +1 y reduce tu DEF -1 durante 2 turnos', type: 'buff' });
   }
 
   if (atk.selfDebuff?.stat === 'atk') {
@@ -4516,6 +4672,9 @@ function getAttackEffectDescriptions(atk) {
         break;
       case 'spd_reduction':
         parts.push({ text: `Reduce la DFE del rival -${Math.round((e.amount || 0.15) * 100)}%`, type: 'debuff' });
+        break;
+      case 'spd_flat_reduction':
+        parts.push({ text: `Reduce la DFE del rival -${e.amount || 1} durante ${e.turns || 2} turnos`, type: 'debuff' });
         break;
       case 'def_boost':
         parts.push({ text: `Aumenta tu Defensa Física +${e.amount || 2} (${e.turns || 2} turnos)`, type: 'buff' });
@@ -6327,12 +6486,16 @@ function checkSleep(fighter, name) {
 function startTurn() {
   if (state.gameOver) return;
   state.isAnimating = false;
+  state.pendingPlayerAttack = null;
+  state.pendingEnemyAttack = chooseEnemyAttack();
   state.player.sangradoAttacked = false;
   state.enemy.sangradoAttacked = false;
   updateStatusDisplay();
   const ps = getEffectiveSpeed(state.player), es = getEffectiveSpeed(state.enemy);
   const pPar = state.player.status === 'paralizado';
   const ePar = state.enemy.status === 'paralizado';
+  const playerMaxPriority = getMaxAttackPriority(state.player);
+  const enemyPriority = getAttackPriority(state.pendingEnemyAttack);
   let playerFirst;
   if (pPar && !ePar) playerFirst = false;
   else if (ePar && !pPar) playerFirst = true;
@@ -6341,6 +6504,44 @@ function startTurn() {
   if (ePar && !pPar) turnMsg = ' (enemigo paralizado pierde iniciativa)';
   else if (pPar && !ePar) turnMsg = ' (estás paralizado, pierdes iniciativa)';
   else turnMsg = ps > es ? ` (${ps} SPE vs ${es} SPE)` : ' (misma velocidad)';
+  if (playerMaxPriority > 0 || enemyPriority > 0) {
+    state.turnPhase = 'priority_choice'; state.isPlayerTurn = true;
+    setLogMessage(enemyPriority > 0 ? `¡${state.enemy.type.name} prepara un ataque prioritario! Elige tu jugada.${turnMsg}` : `¡Elige tu jugada! Un ataque prioritario puede cambiar el orden.${turnMsg}`);
+    updateAttackButtons();
+    if (checkSleep(state.player, state.player.type.name)) {
+      state.isPlayerTurn = false; state.isAnimating = true;
+      updateAttackButtons();
+      applyPassiveHealing(state.player);
+      decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      if (checkGameOver()) return;
+      setTimeout(() => doEnemyAttack(state.pendingEnemyAttack), 1200);
+    } else if (checkStun(state.player, state.player.type.name)) {
+      state.isPlayerTurn = false; state.isAnimating = true;
+      updateAttackButtons();
+      applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
+      if (checkGameOver()) return;
+      applyPassiveHealing(state.player);
+      decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      setTimeout(() => doEnemyAttack(state.pendingEnemyAttack), 1200);
+    } else if (checkParalysis(state.player, state.player.type.name)) {
+      state.isPlayerTurn = false; state.isAnimating = true;
+      updateAttackButtons();
+      applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
+      if (checkGameOver()) return;
+      applyPassiveHealing(state.player);
+      decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      setTimeout(() => doEnemyAttack(state.pendingEnemyAttack), 1200);
+    } else if (checkRetroceder(state.player, state.player.type.name)) {
+      state.isPlayerTurn = false; state.isAnimating = true;
+      updateAttackButtons();
+      applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
+      if (checkGameOver()) return;
+      applyPassiveHealing(state.player);
+      decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      setTimeout(() => doEnemyAttack(state.pendingEnemyAttack), 1200);
+    }
+    return;
+  }
   if (playerFirst) {
     state.turnPhase = 'player_first'; state.isPlayerTurn = true;
     setLogMessage(`¡Tu turno!${turnMsg}`);
@@ -6412,9 +6613,25 @@ function startTurn() {
 
 function playerAttack(index) {
   if (!state.isPlayerTurn || state.gameOver || state.isAnimating) return;
+  const atk = state.player.type.attacks[index];
+  if (state.turnPhase === 'priority_choice') {
+    const enemyAtk = state.pendingEnemyAttack || chooseEnemyAttack();
+    const playerPriority = getAttackPriority(atk);
+    const enemyPriority = getAttackPriority(enemyAtk);
+    const playerActsFirst = playerPriority > enemyPriority || (playerPriority === enemyPriority && getEffectiveSpeed(state.player) >= getEffectiveSpeed(state.enemy));
+    if (!playerActsFirst) {
+      state.pendingEnemyAttack = enemyAtk;
+      state.pendingPlayerAttack = index;
+      state.turnPhase = 'enemy_first_selected';
+      state.isPlayerTurn = false;
+      state.isAnimating = true;
+      updateAttackButtons();
+      setTimeout(() => doEnemyAttack(enemyAtk), 300);
+      return;
+    }
+  }
   state.isAnimating = true; state.isPlayerTurn = false;
   updateAttackButtons();
-  const atk = state.player.type.attacks[index];
 
   if (state.turnPhase === 'player_first') applyOpeningCritPassive(state.player);
 
@@ -6446,7 +6663,7 @@ function playerAttack(index) {
     state.player.frenesiActivo = false;
     setLogMessage(`¡Frenesí Protector de ${state.player.type.name}! Daño +15%`, true);
   }
-  dmg = applyDefensivePassives(dmg, state.enemy, atk.categoria);
+  dmg = applyDefensivePassives(dmg, state.enemy, atk);
   state.enemy.currentHp = Math.max(0, state.enemy.currentHp - dmg);
   state.player.sangradoAttacked = true;
   checkResistenciaMarina(state.enemy);
@@ -6497,6 +6714,12 @@ function afterPlayerAction() {
     setLogMessage('¡Rompebarreras! Puedes atacar de nuevo.', true);
     return;
   }
+  if (state.turnPhase === 'priority_choice') {
+    const enemyAtk = state.pendingEnemyAttack;
+    state.pendingEnemyAttack = null;
+    setTimeout(() => doEnemyAttack(enemyAtk), 1200);
+    return;
+  }
   if (state.turnPhase === 'player_first') setTimeout(() => doEnemyAttack(), 1200);
   else setTimeout(() => startTurn(), 1000);
 }
@@ -6507,6 +6730,18 @@ function afterEnemyAction() {
     state.isAnimating = true;
     setTimeout(() => doEnemyAttack(), 800);
     return;
+  }
+  if (state.turnPhase === 'enemy_first_selected') {
+    const pendingIndex = state.pendingPlayerAttack;
+    state.pendingPlayerAttack = null;
+    state.pendingEnemyAttack = null;
+    state.turnPhase = 'player_counter';
+    if (pendingIndex !== null && pendingIndex !== undefined && !state.gameOver) {
+      state.isAnimating = false;
+      state.isPlayerTurn = true;
+      setTimeout(() => playerAttack(pendingIndex), 350);
+      return;
+    }
   }
   if (state.turnPhase === 'enemy_first') {
     state.isPlayerTurn = true; state.isAnimating = false; state.turnPhase = 'player_counter';
@@ -6560,11 +6795,43 @@ function chooseEnemyAttack() {
   return sortedByPower[0];
 }
 
-function doEnemyAttack() {
+function doEnemyAttack(forcedAttack) {
   if (state.gameOver) return;
-  const atk = chooseEnemyAttack();
+  const atk = forcedAttack || state.pendingEnemyAttack || chooseEnemyAttack();
 
-  if (state.turnPhase === 'enemy_first') applyOpeningCritPassive(state.enemy);
+  if (checkSleep(state.enemy, state.enemy.type.name)) {
+    applyPassiveHealing(state.enemy); updateHpBars(); updateStatusDisplay();
+    if (checkGameOver()) return;
+    decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+    afterEnemyAction();
+    return;
+  }
+  if (checkStun(state.enemy, state.enemy.type.name)) {
+    applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
+    if (checkGameOver()) return;
+    applyPassiveHealing(state.enemy);
+    decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+    afterEnemyAction();
+    return;
+  }
+  if (checkParalysis(state.enemy, state.enemy.type.name)) {
+    applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
+    if (checkGameOver()) return;
+    applyPassiveHealing(state.enemy);
+    decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+    afterEnemyAction();
+    return;
+  }
+  if (checkRetroceder(state.enemy, state.enemy.type.name)) {
+    applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
+    if (checkGameOver()) return;
+    applyPassiveHealing(state.enemy);
+    decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+    afterEnemyAction();
+    return;
+  }
+
+  if (state.turnPhase === 'enemy_first' || state.turnPhase === 'enemy_first_selected') applyOpeningCritPassive(state.enemy);
 
   if (atk.categoria === 'Efecto') {
     applyBuff(atk, state.enemy);
@@ -6594,7 +6861,7 @@ function doEnemyAttack() {
     return;
   }
   let dmg = calculateDamage(atk.power, state.enemy.type, state.player.type, atk.categoria, state.enemy.status, state.player.buffs, state.enemy.debuffs, state.player.debuffs, atk, state.enemy.buffs);
-  dmg = applyDefensivePassives(dmg, state.player, atk.categoria);
+  dmg = applyDefensivePassives(dmg, state.player, atk);
   if (state.player.shield > 0) {
     const absorbed = Math.min(state.player.shield, dmg);
     state.player.shield -= absorbed;
