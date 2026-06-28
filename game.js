@@ -240,7 +240,7 @@ const FISH_TYPES = [
     growth: { maxHp: 1.4, atk: 0.3, def: 0.6, spa: 0.2, spd: 0.6, spe: 0.1 },
     attacks: [
       { name: 'Presión de Ventosa', power: 20, emoji: '🔄', categoria: 'Fisico' },
-      { name: 'Absorber Hidro', power: 15, emoji: '💧', categoria: 'Especial', drain: 0.5 }
+      { name: 'Absorber Hidro', power: 15, emoji: '💧', categoria: 'Especial', drain: 2 }
     ],
     passive: {
       name: 'Regeneración Celular',
