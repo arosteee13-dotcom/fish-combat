@@ -6052,13 +6052,38 @@ function renderMaterialesTab() {
           ? `<span class="inv-equipped-info">🔗 ${imgTagSmall(fishImg, fishName, fishEmoji)} ${fishName}</span>`
           : '<span>📭 Libre</span>'}
       </div>`;
+    let touchStartX;
+    let touchStartY;
+    let touchMoved = false;
     card.addEventListener('pointerdown', e => {
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
+      touchMoved = false;
+      card.setPointerCapture(e.pointerId);
+    });
+    card.addEventListener('pointermove', e => {
+      if (touchStartX === undefined || touchStartY === undefined) return;
+      const deltaX = Math.abs(e.clientX - touchStartX);
+      const deltaY = Math.abs(e.clientY - touchStartY);
+      if (deltaX > 10 || deltaY > 10) touchMoved = true;
+    });
+    card.addEventListener('pointerup', e => {
+      if (touchMoved) {
+        touchStartX = undefined;
+        touchStartY = undefined;
+        return;
+      }
       e.preventDefault();
       if (!equippedOn) {
         openEquipModal(item.id);
       } else {
         openUnequipModal(item.id, equippedOn[0]);
       }
+    });
+    card.addEventListener('pointercancel', () => {
+      touchMoved = true;
+      touchStartX = undefined;
+      touchStartY = undefined;
     });
     grid.appendChild(card);
   });
