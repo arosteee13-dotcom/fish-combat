@@ -1690,6 +1690,7 @@ function applySecondaryEffect(atk, defender) {
     if (defender.sangradoTurns > 0) return;
     defender.sangradoTurns = (atk.efecto.turns || 3);
     setLogMessage(`¡${defender.type.name} está sangrando! -6% PS/turno`, true);
+    triggerStatusFlash(defender === state.enemy ? dom.enemyArea : dom.playerArea, 'red');
     return;
   }
   if (atk.efecto.estado === 'quemado') {
@@ -1704,6 +1705,7 @@ function applySecondaryEffect(atk, defender) {
     if (Math.random() < atk.efecto.probabilidad) {
       defender.status = 'quemado';
       setLogMessage(`¡${defender.type.name} queda QUE!`, true);
+      triggerStatusFlash(defender === state.enemy ? dom.enemyArea : dom.playerArea, 'red');
     }
     return;
   }
@@ -1715,6 +1717,7 @@ function applySecondaryEffect(atk, defender) {
       defender.status = 'envenenado';
       defender.poisonTurns = 1;
       setLogMessage(`¡${defender.type.name} queda ENV!`, true);
+      triggerStatusFlash(defender === state.enemy ? dom.enemyArea : dom.playerArea, 'red');
     }
     return;
   }
@@ -1727,10 +1730,13 @@ function applySecondaryEffect(atk, defender) {
     const labels = { paralizado: 'PAR', aturdido: 'STN', retroceder: 'RET' };
     const label = labels[atk.efecto.estado] || atk.efecto.estado;
     setLogMessage(`¡${defender.type.name} queda ${label}!`, true);
+    const flashType = atk.efecto.estado === 'paralizado' ? 'white' : 'red';
+    triggerStatusFlash(defender === state.enemy ? dom.enemyArea : dom.playerArea, flashType);
   }
   if (atk.name === 'Látigo de Neurotoxinas' && Math.random() < 0.2) {
     defender.status = 'aturdido';
     setLogMessage(`¡${defender.type.name} queda aturdido por el dolor!`, true);
+    triggerStatusFlash(defender === state.enemy ? dom.enemyArea : dom.playerArea, 'white');
   }
 }
 
@@ -1743,6 +1749,7 @@ function triggerPassive(defFighter, atkFighter, categoria) {
     if (Math.random() < 0.3) {
       atkFighter.status = 'envenenado';
       setLogMessage(`¡Púas Tóxicas de ${defFighter.type.name} ha envenenado al rival!`, true);
+      triggerStatusFlash(atkFighter === state.enemy ? dom.enemyArea : dom.playerArea, 'red');
     }
   }
   if (base.passive.name === 'Tentáculos Pegajosos' && categoria === 'Fisico') {
@@ -1757,6 +1764,7 @@ function triggerPassive(defFighter, atkFighter, categoria) {
     if (Math.random() < 0.15) {
       atkFighter.status = 'paralizado';
       setLogMessage(`¡Filamentos Urticantes de ${defFighter.type.name} ha paralizado al rival!`, true);
+      triggerStatusFlash(atkFighter === state.enemy ? dom.enemyArea : dom.playerArea, 'white');
     }
   }
   if (base.passive.name === 'Reflejo Mucoso' && categoria === 'Especial') {
@@ -1779,6 +1787,7 @@ function triggerPassive(defFighter, atkFighter, categoria) {
     if (checkStatusImmunity(atkFighter)) return;
     atkFighter.status = 'envenenado';
     setLogMessage(`¡Tentáculos Flotantes de ${defFighter.type.name} envenenan a ${atkFighter.type.name}!`, true);
+    triggerStatusFlash(atkFighter === state.enemy ? dom.enemyArea : dom.playerArea, 'red');
   }
 }
 
@@ -2079,12 +2088,14 @@ function triggerEstomagoSinFondo(fighter) {
 
 function applyPassiveHealing(fighter) {
   if (fighter.currentHp <= 0 || fighter.currentHp >= fighter.maxHp) return;
+  let healed = false;
   const base = getFishById(fighter.type.id);
   if (base && base.passive) {
     if (base.passive.name === 'Regeneración Celular') {
       const heal = 0.5;
       fighter.currentHp = Math.min(fighter.maxHp, fighter.currentHp + heal);
       setLogMessage(`¡${fighter.type.name} regeneró +${heal} PS! (${base.passive.name})`, true);
+      healed = true;
     }
   }
   if (fighter.type.id === state.selectedFishId && hasEquippedItem(state.selectedFishId, 'fragmento_coral')) {
@@ -2092,6 +2103,12 @@ function applyPassiveHealing(fighter) {
     const heal = Math.max(1, Math.round(fighter.maxHp * 0.05 * mult));
     fighter.currentHp = Math.min(fighter.maxHp, fighter.currentHp + heal);
     setLogMessage(`¡${fighter.type.name} recupera +${heal} PS! (Fragmento de Coral${mult > 1 ? ' ×2 Escudo Remoto' : ''})`, true);
+    healed = true;
+  }
+  if (healed) {
+    const target = fighter === state.enemy ? dom.enemyArea : dom.playerArea;
+    showFloatingText(target, '+' + Math.ceil(fighter.currentHp) + '❤️', 'heal');
+    triggerStatusFlash(target, 'green');
   }
 }
 
@@ -6262,10 +6279,34 @@ function doEnemyAttack() {
 }
 
 function animateHit(target) {
-  target.classList.remove('shake', 'flash-damage');
-  void target.offsetWidth;
-  target.classList.add('shake', 'flash-damage');
-  setTimeout(() => target.classList.remove('shake', 'flash-damage'), 500);
+  const emoji = target.querySelector('.fighter-img-wrap');
+  if (emoji) {
+    emoji.classList.remove('flash-red');
+    void emoji.offsetWidth;
+    emoji.classList.add('flash-red');
+    setTimeout(() => emoji.classList.remove('flash-red'), 450);
+  }
+}
+
+/* ===== VFX HELPERS ===== */
+function triggerStatusFlash(target, type) {
+  const emoji = target.querySelector('.fighter-img-wrap');
+  if (!emoji) return;
+  const cls = type === 'white' ? 'flash-white' : type === 'green' ? 'flash-green' : 'flash-red';
+  emoji.classList.remove('flash-red', 'flash-white', 'flash-green');
+  void emoji.offsetWidth;
+  emoji.classList.add(cls);
+  setTimeout(() => emoji.classList.remove(cls), type === 'green' ? 350 : 250);
+}
+
+function showFloatingText(target, text, type) {
+  const container = target.querySelector('.fighter-img-wrap');
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = 'floating-text ' + (type || 'dmg');
+  el.textContent = text;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 1050);
 }
 
 function checkGameOver() {
@@ -6759,15 +6800,58 @@ async function showResult(victory) {
   if (cupChange > 0) {
     for (let i = 0; i < cupChange; i++) trackMission('earn_cups_fish');
   }
+
+  /* === LIMPIEZA DE FX PREVIOS === */
+  const oldFishCeleb = dom.screenResult.querySelector('.result-fish-celebration');
+  if (oldFishCeleb) oldFishCeleb.remove();
+  const oldOverlay = dom.screenResult.querySelector('.defeat-overlay');
+  if (oldOverlay) oldOverlay.remove();
+
   showScreen('result');
+
+  /* === OVERLAY DE DERROTA === */
+  if (!victory) {
+    const overlay = document.createElement('div');
+    overlay.className = 'defeat-overlay';
+    dom.screenResult.insertBefore(overlay, dom.screenResult.firstChild);
+  }
+
+  /* === CELEBRACIÓN === */
+  if (victory) {
+    const celebFish = document.createElement('img');
+    celebFish.className = 'result-fish-celebration';
+    celebFish.src = state.player.type.imgPath;
+    celebFish.alt = state.player.type.name;
+    celebFish.onerror = function() { this.remove(); };
+    dom.resultEmoji.parentNode.insertBefore(celebFish, dom.resultEmoji);
+  }
+
   dom.resultTitle.textContent = victory ? '¡VICTORIA!' : 'DERROTA';
   dom.resultTitle.className = 'result-title ' + (victory ? 'victory' : 'defeat');
   dom.resultEmoji.textContent = victory ? '🏆' : '💀';
   dom.resultCups.textContent = `${victory ? '+' + arenaCups.win : arenaCups.lose} 🏆`;
   dom.resultCups.style.color = victory ? '#4facfe' : '#f44336';
-  dom.resultSub.textContent = victory
-    ? `¡${state.player.type.name} ha vencido a ${state.enemy.type.name}! +${reward} 🪙`
-    : `${state.enemy.type.name} ha derrotado a ${state.player.type.name}... +${reward} 🪙`;
+
+  /* === CONTADOR DE MONEDAS ANIMADO === */
+  const fishName = state.player.type.name;
+  const enemyName = state.enemy.type.name;
+  if (victory) {
+    dom.resultSub.innerHTML = `¡${fishName} ha vencido a ${enemyName}! +<span id="coin-counter">0</span> 🪙`;
+  } else {
+    dom.resultSub.textContent = `${enemyName} ha derrotado a ${fishName}... +${reward} 🪙`;
+  }
+
+  if (victory && reward > 0) {
+    const counterEl = document.getElementById('coin-counter');
+    let current = 0;
+    const step = Math.max(1, Math.floor(reward / 20));
+    const interval = setInterval(() => {
+      current = Math.min(current + step, reward);
+      if (counterEl) counterEl.textContent = current;
+      if (current >= reward) clearInterval(interval);
+    }, 50);
+  }
+
   await forceCloudSave('combat_end');
   signalAchievementUpdate();
 }
@@ -6780,6 +6864,8 @@ function resetGame() {
   state.survivalWave = 0;
   if (survivalTimerInterval) { clearInterval(survivalTimerInterval); survivalTimerInterval = null; }
   if (dom.waveIndicator) dom.waveIndicator.style.display = 'none';
+  const resultScreen = dom.screenResult;
+  resultScreen.querySelectorAll('.result-fish-celebration, .defeat-overlay').forEach(el => el.remove());
   renderFightContent(); renderBank(); renderInventory();
   updateCoinDisplay(); updateDiamondDisplay();
   showSection('fight'); showScreen('main');

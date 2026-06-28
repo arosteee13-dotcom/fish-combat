@@ -2157,7 +2157,7 @@ body.modal-open .section.active { overflow: hidden; }
 .fighter-stat { font-size: 0.7rem; color: rgba(255,255,255,0.35); font-weight: 600; }
 .hp-bar { width: 100%; height: 0.7rem; background: rgba(255,255,255,0.12); border-radius: 10px; overflow: hidden; margin-bottom: 0.3rem; }
 .hp-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease, background 0.5s ease; background: #4caf50; }
-.fighter-img-wrap { width: 4.5rem; height: 4.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.fighter-img-wrap { width: 4.5rem; height: 4.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
 .fighter-img-wrap .fish-img { width: 4.5rem; height: 4.5rem; }
 .fighter-img-wrap .img-fallback { font-size: 4rem; }
 .enemy-area .fighter-img-wrap { justify-content: flex-end; }
@@ -2189,11 +2189,26 @@ body.modal-open .section.active { overflow: hidden; }
 .result-sub { font-size: 1rem; color: rgba(255,255,255,0.5); }
 .result-cups { font-size: 1.4rem; font-weight: 800; color: #4facfe; }
 
-/* ===== ANIMATIONS ===== */
-@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
-@keyframes flash-damage { 0%,100%{opacity:1} 50%{opacity:0.3} }
-.shake { animation: shake 0.4s ease; }
-.flash-damage { animation: flash-damage 0.4s ease; }
+/* ===== STATUS FLASH ===== */
+@keyframes flash-red { 0%,100%{filter:none} 50%{filter:brightness(0.4) sepia(1) hue-rotate(-50deg) saturate(6)} }
+.flash-red { animation: flash-red 0.2s ease; }
+@keyframes flash-white { 0%,100%{filter:none} 50%{filter:brightness(2.5) saturate(0)} }
+.flash-white { animation: flash-white 0.2s ease; }
+@keyframes flash-green { 0%,100%{filter:none} 50%{filter:brightness(1.6) sepia(1) hue-rotate(90deg) saturate(2)} }
+.flash-green { animation: flash-green 0.3s ease; }
+
+/* ===== FLOATING TEXT ===== */
+.floating-text { position:absolute; top:-10px; left:50%; transform:translateX(-50%); font-size:1.1rem; font-weight:900; pointer-events:none; animation:float-up 1s ease-out forwards; z-index:100; text-shadow:0 2px 4px rgba(0,0,0,0.5); white-space:nowrap; }
+.floating-text.heal { color:#4caf50; }
+.floating-text.dmg { color:#f44336; }
+@keyframes float-up { 0%{opacity:1;transform:translateX(-50%) translateY(0)} 100%{opacity:0;transform:translateX(-50%) translateY(-50px)} }
+
+/* ===== VICTORY / DEFEAT FX ===== */
+.result-fish-celebration { width:4rem; height:4rem; margin-bottom:0.5rem; animation:celebrate-bounce 0.6s ease infinite; }
+@keyframes celebrate-bounce { 0%,100%{transform:translateY(0) scale(1)} 30%{transform:translateY(-14px) scale(1.15)} 50%{transform:translateY(-6px) scale(1.05)} 70%{transform:translateY(-2px)} }
+
+.defeat-overlay { position:absolute; inset:0; background:radial-gradient(circle at center,rgba(120,0,0,0) 0%,rgba(80,0,0,0.45) 100%); pointer-events:none; animation:fade-to-red 1s ease forwards; }
+@keyframes fade-to-red { from{opacity:0} to{opacity:1} }
 
 /* ===== EL MUELLE DE LA SUERTE ===== */
 .muelle-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 1rem 1rem; }
