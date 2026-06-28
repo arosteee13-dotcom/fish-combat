@@ -919,7 +919,7 @@ const FISH_TYPES = [
     maxHp: 13, atk: 3, def: 10, spa: 6, spd: 14, spe: 2,
     growth: { maxHp: 1.3, atk: 0.3, def: 1.0, spa: 0.6, spd: 1.4, spe: 0.2 },
     attacks: [
-      { name: 'Erupción Térmica', power: 50, emoji: '♨️', categoria: 'Especial', efecto: { probabilidad: 0.4, estado: 'quemadura', turns: 3 } },
+      { name: 'Erupción Térmica', power: 50, emoji: '♨️', categoria: 'Especial', efecto: { probabilidad: 0.4, estado: 'quemado', turns: 3 } },
       { name: 'Nutrientes Hidrotermales', power: 35, emoji: '🌿', categoria: 'Especial', drain: 0.5 }
     ],
     passive: {
@@ -953,7 +953,7 @@ const FISH_TYPES = [
     maxHp: 7, atk: 11, def: 5, spa: 9, spd: 6, spe: 12,
     growth: { maxHp: 0.7, atk: 1.1, def: 0.5, spa: 0.9, spd: 0.6, spe: 1.2 },
     attacks: [
-      { name: 'Mordedura Ígnea', power: 60, emoji: '🔥', categoria: 'Fisico', efecto: { probabilidad: 0.4, estado: 'quemadura', turns: 3 } },
+      { name: 'Mordedura Ígnea', power: 60, emoji: '🔥', categoria: 'Fisico', efecto: { probabilidad: 0.4, estado: 'quemado', turns: 3 } },
       { name: 'Cola Abrasadora', power: 75, emoji: '🌋', categoria: 'Fisico' }
     ],
     passive: {
@@ -1571,7 +1571,7 @@ async function upgradeFish(fishId) {
 
 /* ===== DAMAGE FORMULA ===== */
 function calculateDamage(power, attacker, defender, categoria, attackerStatus, defenderBuffs, attackerAtkReduction, defenderSpdReduction, atk, attackerBuffs) {
-  const atkDef = attackerStatus === 'quemado' && categoria === 'Fisico' ? Math.round(attacker.atk / 2) : attacker.atk;
+  const atkDef = attackerStatus === 'quemado' && categoria === 'Fisico' ? Math.round(attacker.atk * 0.8) : attacker.atk;
   let A = categoria === 'Fisico' ? atkDef : attacker.spa;
   if (categoria === 'Fisico' && attackerAtkReduction) A = Math.round(A * (1 - attackerAtkReduction));
   if (categoria === 'Fisico' && attackerBuffs?.atkBoost) A += attackerBuffs.atkBoost;
@@ -1610,6 +1610,7 @@ function calculateDamage(power, attacker, defender, categoria, attackerStatus, d
 function getEffectiveSpeed(fighter) {
   let spe = fighter.type.spe;
   if (fighter.status === 'veneno_grave') spe = Math.round(spe * 0.9);
+  if (fighter.status === 'paralizado') spe = Math.round(spe / 2);
   if (fighter.debuff?.type === 'spe_reduction') spe = Math.max(1, spe - (fighter.debuff.amount || 1));
   if (fighter.buffs?.speBoost) spe += fighter.buffs.speBoost;
   if (fighter.impulsoHuidaActivo) spe = Math.round(spe * 1.2);
@@ -1675,14 +1676,40 @@ function applySecondaryEffect(atk, defender) {
     if (!hasToxina) {
       if (checkStatusImmunity(defender)) return;
       const baseFish = getFishById(defender.type?.id || defender.id);
-      if (baseFish?.passive?.name === 'Escamas Majestuosas') {
-        setLogMessage(`¡${defender.type.name} es inmune al sangrado por sus Escamas Majestuosas!`, true);
+      if (baseFish?.passive?.name === 'Escamas Majestuosas' || baseFish?.passive?.name === 'Simbiosis Extremófila') {
+        setLogMessage(`¡${defender.type.name} es inmune al sangrado por ${baseFish.passive.name}!`, true);
         return;
       }
     }
     if (defender.sangradoTurns > 0) return;
     defender.sangradoTurns = (atk.efecto.turns || 3);
-    setLogMessage(`¡${defender.type.name} está sangrando! -1 PS/turno`, true);
+    setLogMessage(`¡${defender.type.name} está sangrando! -6% PS/turno`, true);
+    return;
+  }
+  if (atk.efecto.estado === 'quemado') {
+    if (!hasToxina) {
+      if (checkStatusImmunity(defender)) return;
+      const baseFish = getFishById(defender.type?.id || defender.id);
+      if (baseFish?.passive?.name === 'Escamas Majestuosas' || baseFish?.passive?.name === 'Simbiosis Extremófila') {
+        setLogMessage(`¡${defender.type.name} es inmune a la quemadura por ${baseFish.passive.name}!`, true);
+        return;
+      }
+    }
+    if (Math.random() < atk.efecto.probabilidad) {
+      defender.status = 'quemado';
+      setLogMessage(`¡${defender.type.name} queda QUE!`, true);
+    }
+    return;
+  }
+  if (atk.efecto.estado === 'envenenado') {
+    if (!hasToxina) {
+      if (checkStatusImmunity(defender)) return;
+    }
+    if (Math.random() < atk.efecto.probabilidad) {
+      defender.status = 'envenenado';
+      defender.poisonTurns = 1;
+      setLogMessage(`¡${defender.type.name} queda ENV!`, true);
+    }
     return;
   }
   if (!hasToxina) {
@@ -1691,7 +1718,7 @@ function applySecondaryEffect(atk, defender) {
   if (defender.status !== null) return;
   if (Math.random() < atk.efecto.probabilidad) {
     defender.status = atk.efecto.estado;
-    const labels = { paralizado: 'PAR', envenenado: 'ENV', quemado: 'QUE', aturdido: 'STN' };
+    const labels = { paralizado: 'PAR', aturdido: 'STN', retroceder: 'RET' };
     const label = labels[atk.efecto.estado] || atk.efecto.estado;
     setLogMessage(`¡${defender.type.name} queda ${label}!`, true);
   }
@@ -1977,8 +2004,8 @@ function applyStatusDamage(fighter) {
   const base = getFishById(fighter.type.id);
   const pielCuero = base && base.passive && base.passive.name === 'Piel de Cuero';
   const pielAncestral = base && base.passive && base.passive.name === 'Piel Ancestral';
-  if (fighter.status === 'envenenado' || fighter.status === 'quemado') {
-    let dmg = 1;
+  if (fighter.status === 'quemado') {
+    let dmg = Math.max(1, Math.floor(fighter.maxHp * 0.05));
     if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
     if (pielAncestral) dmg = Math.max(1, Math.round(dmg * 0.85));
     if (fighter.shield > 0) {
@@ -1988,8 +2015,21 @@ function applyStatusDamage(fighter) {
     }
     fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     if (isEnemy) trackMission('poison_bleed_damage');
-    const labels = { envenenado: 'ENV', quemado: 'QUE' };
-    setLogMessage(`${fighter.type.name} sufre daño por ${labels[fighter.status]} (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}${pielAncestral ? ' (Piel Ancestral -15%)' : ''}`, true);
+    setLogMessage(`${fighter.type.name} sufre daño por QUE (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}${pielAncestral ? ' (Piel Ancestral -15%)' : ''}`, true);
+  }
+  if (fighter.status === 'envenenado') {
+    let dmg = Math.max(1, Math.floor(fighter.maxHp * 0.03 * fighter.poisonTurns));
+    fighter.poisonTurns++;
+    if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+    if (pielAncestral) dmg = Math.max(1, Math.round(dmg * 0.85));
+    if (fighter.shield > 0) {
+      const absorbed = Math.min(fighter.shield, dmg);
+      fighter.shield -= absorbed;
+      dmg -= absorbed;
+    }
+    fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
+    if (isEnemy) trackMission('poison_bleed_damage');
+    setLogMessage(`${fighter.type.name} sufre daño por ENV (-${dmg} PS, acumulado ${fighter.poisonTurns - 1}x)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}${pielAncestral ? ' (Piel Ancestral -15%)' : ''}`, true);
   }
   if (fighter.status === 'veneno_grave') {
     let dmg = 2;
@@ -2005,18 +2045,20 @@ function applyStatusDamage(fighter) {
     setLogMessage(`${fighter.type.name} sufre daño por Veneno Grave (-${dmg} PS)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}${pielAncestral ? ' (Piel Ancestral -15%)' : ''}`, true);
   }
   if (fighter.sangradoTurns > 0) {
-    let dmg = 1;
-    if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
-    if (pielAncestral) dmg = Math.max(1, Math.round(dmg * 0.85));
-    if (fighter.shield > 0) {
-      const absorbed = Math.min(fighter.shield, dmg);
-      fighter.shield -= absorbed;
-      dmg -= absorbed;
+    if (fighter.sangradoAttacked) {
+      let dmg = Math.max(1, Math.floor(fighter.maxHp * 0.06));
+      if (pielCuero) dmg = Math.max(1, Math.floor(dmg / 2));
+      if (pielAncestral) dmg = Math.max(1, Math.round(dmg * 0.85));
+      if (fighter.shield > 0) {
+        const absorbed = Math.min(fighter.shield, dmg);
+        fighter.shield -= absorbed;
+        dmg -= absorbed;
+      }
+      fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
+      if (isEnemy) trackMission('poison_bleed_damage');
+      setLogMessage(`${fighter.type.name} sufre daño por SAN (-${dmg} PS, ${fighter.sangradoTurns - 1} turnos restantes)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}${pielAncestral ? ' (Piel Ancestral -15%)' : ''}`, true);
     }
-    fighter.currentHp = Math.max(0, fighter.currentHp - dmg);
     fighter.sangradoTurns--;
-    if (isEnemy) trackMission('poison_bleed_damage');
-    setLogMessage(`${fighter.type.name} sufre daño por Sangrado (-${dmg} PS, ${fighter.sangradoTurns} turnos restantes)${pielCuero ? ' (Piel de Cuero reduce a la mitad)' : ''}${pielAncestral ? ' (Piel Ancestral -15%)' : ''}`, true);
   }
 }
 
@@ -2102,7 +2144,7 @@ function updateStatusDisplay() {
   const eStatus = state.enemy.status;
   dom.playerStatus = dom.playerStatus || document.getElementById('player-status');
   dom.enemyStatus = dom.enemyStatus || document.getElementById('enemy-status');
-  const statusLabels = { paralizado: 'PAR', envenenado: 'ENV', quemado: 'QUE', veneno_grave: 'GRA', aturdido: 'STN' };
+  const statusLabels = { paralizado: 'PAR', envenenado: 'ENV', quemado: 'QUE', veneno_grave: 'GRA', aturdido: 'STN', retroceder: 'RET' };
 
   let pText = '', pCls = 'status-tag';
   if (pStatus && statusLabels[pStatus]) { pText = `[${statusLabels[pStatus]}]`; pCls += ' ' + pStatus; }
@@ -5768,8 +5810,8 @@ async function initCombat() {
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
   if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
-  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
-  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
+  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
+  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.isAnimating = false;
@@ -5896,7 +5938,7 @@ function setLogMessage(msg, important) {
 
 /* ===== TURNOS ===== */
 function checkParalysis(fighter, name) {
-  if (fighter.status === 'paralizado' && Math.random() < 0.5) {
+  if (fighter.status === 'paralizado' && Math.random() < 0.25) {
     setLogMessage(`¡${name} está paralizado y no puede atacar!`, true);
     return true;
   }
@@ -5912,9 +5954,20 @@ function checkStun(fighter, name) {
   return false;
 }
 
+function checkRetroceder(fighter, name) {
+  if (fighter.status === 'retroceder') {
+    fighter.status = null;
+    setLogMessage(`¡${name} retrocede y pierde el turno!`, true);
+    return true;
+  }
+  return false;
+}
+
 function startTurn() {
   if (state.gameOver) return;
   state.isAnimating = false;
+  state.player.sangradoAttacked = false;
+  state.enemy.sangradoAttacked = false;
   updateStatusDisplay();
   const ps = getEffectiveSpeed(state.player), es = getEffectiveSpeed(state.enemy);
   const pPar = state.player.status === 'paralizado';
@@ -5947,6 +6000,14 @@ function startTurn() {
       applyPassiveHealing(state.player);
       decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
       setTimeout(() => doEnemyAttack(), 1200);
+    } else if (checkRetroceder(state.player, state.player.type.name)) {
+      state.isPlayerTurn = false; state.isAnimating = true;
+      updateAttackButtons();
+      applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
+      if (checkGameOver()) return;
+      applyPassiveHealing(state.player);
+      decrementDebuff(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      setTimeout(() => doEnemyAttack(), 1200);
     }
   } else {
     state.turnPhase = 'enemy_first'; state.isPlayerTurn = false; state.isAnimating = true;
@@ -5959,6 +6020,12 @@ function startTurn() {
       decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
       setTimeout(() => startTurn(), 1200);
     } else if (checkParalysis(state.enemy, state.enemy.type.name)) {
+      applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
+      if (checkGameOver()) return;
+      applyPassiveHealing(state.enemy);
+      decrementDebuff(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+      setTimeout(() => startTurn(), 1200);
+    } else if (checkRetroceder(state.enemy, state.enemy.type.name)) {
       applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
       if (checkGameOver()) return;
       applyPassiveHealing(state.enemy);
@@ -6006,6 +6073,7 @@ function playerAttack(index) {
   }
   dmg = applyDefensivePassives(dmg, state.enemy, atk.categoria);
   state.enemy.currentHp = Math.max(0, state.enemy.currentHp - dmg);
+  state.player.sangradoAttacked = true;
   checkResistenciaMarina(state.enemy);
   checkKrakenDesatado(state.enemy);
   if (atk.categoria === 'Fisico') trackMission('fisico_attacks');
@@ -6151,6 +6219,7 @@ function doEnemyAttack() {
     dmg -= absorbed;
   }
   state.player.currentHp = Math.max(0, state.player.currentHp - dmg);
+  state.enemy.sangradoAttacked = true;
   checkResistenciaMarina(state.player);
   checkKrakenDesatado(state.player);
   if (dmg > 0) setLogMessage(`¡${state.enemy.type.name} usa ${atk.name}! -${dmg} HP`, true);
@@ -6316,7 +6385,7 @@ function initSurvivalWave(wave) {
     type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp,
     status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
     destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
-    buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false,
+    buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
     selfHealUsed: {}
@@ -6325,7 +6394,7 @@ function initSurvivalWave(wave) {
     type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp,
     status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
     destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
-    buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false,
+    buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
     selfHealUsed: {}
@@ -6531,7 +6600,7 @@ function initFeverWave(wave, mode) {
     type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp,
     status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
     destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
-    buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false,
+    buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
     selfHealUsed: {}
@@ -6540,7 +6609,7 @@ function initFeverWave(wave, mode) {
     type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp,
     status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false,
     destelloActivado: false, atkReduction: null, spdReduction: null, debuff: null,
-    buffs: null, sangradoTurns: 0, frenesiActivo: false, quiebroUsado: false,
+    buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
     selfHealUsed: {}
