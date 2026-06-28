@@ -1478,6 +1478,12 @@ function sortByRarity(a, b) { return RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rar
 /* ===== LEVEL SYSTEM ===== */
 function getFishLevel(fishId) { return state.fishLevels[fishId] || 1; }
 
+function getInitialFishLevel(fishId) {
+  const arena = ARENA_FISH_MAP[fishId] || 1;
+  const INITIAL_LEVEL_BY_ARENA = { 1: 1, 2: 3, 3: 6, 4: 9, 5: 12, 6: 15 };
+  return INITIAL_LEVEL_BY_ARENA[arena] || 1;
+}
+
 function getFishCups(fishId) { return state.fishCups[fishId] || 0; }
 function getTotalCups() { return state.unlockedFish.reduce((sum, id) => sum + getFishCups(id), 0); }
 
@@ -5368,6 +5374,7 @@ async function buyDailyOfferFish(fishId, price) {
   const prevCoins = state.coins;
   state.coins -= price;
   state.unlockedFish.push(fishId);
+  state.fishLevels[fishId] = getInitialFishLevel(fishId);
   const saved = await forceCloudSave('buy_fish');
   if (!saved) {
     state.coins = prevCoins;
@@ -5455,11 +5462,12 @@ async function showChestReveal(chest, gold, diamonds, fish, compensation) {
   if (fishData) {
     if (fishData.isNew) {
       state.unlockedFish.push(fish.id);
+      state.fishLevels[fish.id] = getInitialFishLevel(fish.id);
       renderBank();
       checkCollectionMasterAchievement();
     } else {
       const lvl = getFishLevel(fish.id);
-      if (lvl < 10) state.fishLevels[fish.id] = lvl + 1;
+      if (lvl < MAX_LEVEL) state.fishLevels[fish.id] = lvl + 1;
     }
   }
   await forceCloudSave('buy_chest');
@@ -7157,6 +7165,7 @@ function revealMuelleHole(index) {
   } else if (hole.type === 'fish') {
     if (!state.unlockedFish.includes(m.fishPrize.id)) {
       state.unlockedFish.push(m.fishPrize.id);
+      state.fishLevels[m.fishPrize.id] = getInitialFishLevel(m.fishPrize.id);
       m.fishAlreadyOwned = false;
       signalAchievementUpdate();
     } else {
