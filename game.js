@@ -3444,6 +3444,77 @@ function updateArenaDisplay() {
 function updateArenaBackground() {
   const cfg = getArenaConfig(state.currentArena);
   document.getElementById('app').className = cfg.cssClass;
+  updateAmbientFish();
+}
+
+/* ===== PEZ AMBIENTAL (ARENA 1) ===== */
+const ARENA1_FISH_IDS = ['clownfish','pufferfish','salmonete','blenio','cabracho','anemona','cangrejo','lenguado','pulpo','sepia','quisquilla','berberecho','pez_aguja','medusa_aguamala','estrella','anguila'];
+const MAX_AMBIENT_FISH = 4;
+let ambientFishInterval = null;
+let ambientFishCount = 0;
+
+function getAmbientFishPool() {
+  return ARENA1_FISH_IDS.filter(id => state.unlockedFish.includes(id));
+}
+
+function updateAmbientFish() {
+  if (state.currentArena === 1 && state.screen === 'main') {
+    startAmbientFish();
+  } else {
+    stopAmbientFish();
+  }
+}
+
+function startAmbientFish() {
+  if (ambientFishInterval) return;
+  const pool = getAmbientFishPool();
+  if (pool.length === 0) return;
+  const spawn = () => {
+    if (ambientFishCount < MAX_AMBIENT_FISH) spawnAmbientFish();
+  };
+  spawn();
+  ambientFishInterval = setInterval(spawn, 2500 + Math.random() * 3500);
+}
+
+function stopAmbientFish() {
+  if (ambientFishInterval) {
+    clearInterval(ambientFishInterval);
+    ambientFishInterval = null;
+  }
+  document.querySelectorAll('.ambient-fish').forEach(el => el.remove());
+  ambientFishCount = 0;
+}
+
+function spawnAmbientFish() {
+  const pool = getAmbientFishPool();
+  if (pool.length === 0 || ambientFishCount >= MAX_AMBIENT_FISH) return;
+  const fishId = pool[Math.floor(Math.random() * pool.length)];
+  const fish = FISH_TYPES.find(f => f.id === fishId);
+  if (!fish) return;
+
+  const layer = document.getElementById('ambient-fish-layer');
+  if (!layer) return;
+
+  const el = document.createElement('div');
+  el.className = 'ambient-fish';
+  const img = document.createElement('img');
+  img.src = fish.imgPath;
+  img.alt = fish.name;
+  img.draggable = false;
+  el.appendChild(img);
+
+  const dirRight = Math.random() > 0.5;
+  const y = 12 + Math.random() * 55;
+  const dur = 16 + Math.random() * 12;
+  const scale = 0.3 + Math.random() * 0.35;
+
+  el.style.top = y + '%';
+  el.style.transform = 'scale(' + scale + ')';
+  el.style.animation = (dirRight ? 'fish-swim-right' : 'fish-swim-left') + ' ' + dur + 's linear forwards';
+  img.style.transform = dirRight ? 'scaleX(1)' : 'scaleX(-1)';
+  layer.appendChild(el);
+  ambientFishCount++;
+  el.addEventListener('animationend', () => { el.remove(); ambientFishCount = Math.max(0, ambientFishCount - 1); }, { once: true });
 }
 
 /* ===== ARENA MODAL ===== */
@@ -3636,6 +3707,7 @@ function showScreen(screenName) {
   if (map[screenName]) map[screenName].classList.add('active');
   state.screen = screenName || '';
   scheduleAutosave();
+  updateAmbientFish();
 }
 
 /* ===== NAVEGACIÓN ===== */
