@@ -913,18 +913,69 @@ const FISH_TYPES = [
   {
     id: 'tiburon_groenlandia',
     name: 'Tiburón de Groenlandia',
-    rarity: 'epic',
+    rarity: 'legendary',
     imgPath: 'img/peces/tiburon_groenlandia.png',
     emoji: '🦈',
-    maxHp: 20, atk: 14, def: 15, spa: 6, spd: 14, spe: 2,
-    growth: { maxHp: 2.0, atk: 1.4, def: 1.5, spa: 0.6, spd: 1.4, spe: 0.2 },
+    maxHp: 22, atk: 8, def: 6, spa: 2, spd: 6, spe: 1,
+    growth: { maxHp: 2.2, atk: 0.8, def: 0.6, spa: 0.2, spd: 0.6, spe: 0.1 },
     attacks: [
-      { name: 'Mandíbula Ancestral', power: 70, emoji: '🦴', categoria: 'Fisico', efecto: { probabilidad: 1, estado: 'def_reduction', turns: 3, amount: 2 } },
-      { name: 'Piel Blindada', power: 0, emoji: '🛡️', categoria: 'Efecto', selfBuff: { stat: 'spd', amount: 3, turns: 99 } }
+      { name: 'Mordisco Glacial', power: 40, emoji: '🦷', categoria: 'Fisico' },
+      { name: 'Letargo Milenario', power: 0, emoji: '😴', categoria: 'Efecto', selfBuff: { stat: 'sleep', amount: 0.5, turns: 1 } }
     ],
     passive: {
-      name: 'Longevidad Criogénica',
-      description: 'Una masa de vida blindada. Recupera un 5% de su vida máxima al final de cada turno.'
+      name: 'Criogenia Criogénica',
+      description: 'Es inmune a los efectos de congelación o ralentización, y su salud máxima aumenta un 10% extra.'
+    }
+  },
+  {
+    id: 'pulpo_dumbo',
+    name: 'Pulpo Dumbo',
+    rarity: 'common',
+    imgPath: 'img/peces/pulpo_dumbo.png',
+    emoji: '🐙',
+    maxHp: 11, atk: 3, def: 5, spa: 5, spd: 8, spe: 3,
+    growth: { maxHp: 1.1, atk: 0.3, def: 0.5, spa: 0.5, spd: 0.8, spe: 0.3 },
+    attacks: [
+      { name: 'Aleteo Impulsor', power: 20, emoji: '🪽', categoria: 'Fisico', selfBuff: { stat: 'spe', amount: 1, turns: 2 } },
+      { name: 'Tinta de la Penumbra', power: 0, emoji: '🖤', categoria: 'Efecto', efecto: { probabilidad: 1, estado: 'precision_reducida', turns: 2 } }
+    ],
+    passive: {
+      name: 'Navegación Flotante',
+      description: 'Al inicio del combate, reduce en 1 punto el ataque del rival porque sus movimientos suaves lo confunden.'
+    }
+  },
+  {
+    id: 'isopodo_gigante',
+    name: 'Isópodo Gigante',
+    rarity: 'rare',
+    imgPath: 'img/peces/isopodo_gigante.png',
+    emoji: '🪲',
+    maxHp: 15, atk: 5, def: 9, spa: 1, spd: 4, spe: 1,
+    growth: { maxHp: 1.5, atk: 0.5, def: 0.9, spa: 0.1, spd: 0.4, spe: 0.1 },
+    attacks: [
+      { name: 'Mordisco Carroñero', power: 25, emoji: '🦷', categoria: 'Fisico' },
+      { name: 'Enroque', power: 0, emoji: '🛡️', categoria: 'Efecto', selfBuff: { stat: 'def', amount: 1, turns: 2 }, selfDebuff: { stat: 'atk', amount: 1, turns: 2 } }
+    ],
+    passive: {
+      name: 'Caparazón Quitinoso',
+      description: 'Los ataques físicos del rival le hacen un 20% menos de daño.'
+    }
+  },
+  {
+    id: 'calamar_vampiro',
+    name: 'Calamar Vampiro',
+    rarity: 'epic',
+    imgPath: 'img/peces/calamar_cristal.png',
+    emoji: '🦑',
+    maxHp: 9, atk: 4, def: 4, spa: 9, spd: 6, spe: 7,
+    growth: { maxHp: 0.9, atk: 0.4, def: 0.4, spa: 0.9, spd: 0.6, spe: 0.7 },
+    attacks: [
+      { name: 'Manto Invertido', power: 30, emoji: '🌑', categoria: 'Especial' },
+      { name: 'Luz Bioluminiscente', power: 0, emoji: '✨', categoria: 'Efecto', efecto: { probabilidad: 1, estado: 'spd_reduction', turns: 3, amount: 0.15 } }
+    ],
+    passive: {
+      name: 'Fotóforos Defensivos',
+      description: 'Cuando el rival le va a atacar, brilla con luz propia desorientándolo, lo que hace que el enemigo falle su primer ataque del combate un 30% de las veces.'
     }
   },
   {
@@ -1736,6 +1787,13 @@ function applySecondaryEffect(atk, defender) {
     const prob = atk.efecto.probabilidad !== undefined ? atk.efecto.probabilidad : 1;
     if (Math.random() >= prob) return;
     if (checkStatusImmunity(defender)) return;
+    if (atk.efecto.estado === 'spe_reduction') {
+      const baseFish = getFishById(defender.type?.id || defender.id);
+      if (baseFish?.passive?.name === 'Criogenia Criogénica') {
+        setLogMessage(`¡${defender.type.name} resiste la ralentización gracias a Criogenia Criogénica!`, true);
+        return;
+      }
+    }
     defender.debuffs = defender.debuffs || {};
     const estado = atk.efecto.estado;
     const turns = atk.efecto.turns || 2;
@@ -1890,6 +1948,13 @@ function checkDodge(defenderFighter, categoria, attackerFighter) {
   if (categoria === 'Especial' && attackerFighter) {
     const atkBase = getFishById(attackerFighter.type.id);
     if (atkBase?.passive?.name === 'Luz Guía') return false;
+  }
+  if (base?.passive?.name === 'Fotóforos Defensivos' && !defenderFighter.fotoforosUsado) {
+    defenderFighter.fotoforosUsado = true;
+    if (Math.random() < 0.3) {
+      setLogMessage(`¡${defenderFighter.type.name} brilla con Fotóforos Defensivos y el ataque falla!`, true);
+      return true;
+    }
   }
   if (defenderFighter.buffs?.granSalto) {
     delete defenderFighter.buffs.granSalto;
@@ -2054,6 +2119,12 @@ function applyBuff(atk, user) {
       setLogMessage(`¡${user.type.name} usa Gran Salto! Esquivará el próximo ataque.`, true);
       return;
     }
+    if (atk.selfBuff.stat === 'sleep') {
+      user.status = 'dormido';
+      user.sleepRecoverPct = atk.selfBuff.amount || 0.5;
+      setLogMessage(`¡${user.type.name} entra en Letargo Milenario!`, true);
+      return;
+    }
     if (atk.name === 'Rastro de Sangre') {
       const opponent = user === state.player ? state.enemy : state.player;
       if (opponent.currentHp >= opponent.maxHp) {
@@ -2094,6 +2165,10 @@ function applyBuff(atk, user) {
       const existing = user.buffs?.spaBoost || 0;
       user.buffs = { ...(user.buffs || {}), spaBoost: existing + (atk.selfBuff.amount || 1), spaTurns: atk.selfBuff.turns || 2 };
       setLogMessage(`¡${user.type.name} aumentó su ataque especial +${atk.selfBuff.amount || 1}!`, true);
+    }
+    if (atk.selfDebuff?.stat === 'atk') {
+      user.debuffs = { ...(user.debuffs || {}), atkReduction: Math.min(1, atk.selfDebuff.amount || 1), atkTurns: atk.selfDebuff.turns || 2 };
+      setLogMessage(`¡${user.type.name} se encierra en Enroque! Su ATF caerá en el siguiente turno.`, true);
     }
   }
 
@@ -2174,6 +2249,11 @@ function applyDefensivePassives(dmg, defender, categoria) {
       dmg = Math.max(1, Math.round(dmg * 0.8));
       setLogMessage(`¡${defender.type.name} activó Quiebro Elegante! Daño físico -20%`, true);
       trackMission('passive_shield');
+      return dmg;
+    }
+    if (base.passive.name === 'Caparazón Quitinoso') {
+      dmg = Math.max(1, Math.round(dmg * 0.8));
+      setLogMessage(`¡${defender.type.name} reduce el daño físico con Caparazón Quitinoso!`, true);
       return dmg;
     }
     if (base.passive.name === 'Escudo de Escamas') {
@@ -2346,6 +2426,10 @@ function triggerOnHitPassive(attacker, defender, atk, dmg) {
     defender.shield = 0;
     setLogMessage(`¡Sorpresa Abismal! ${attacker.type.name} destruye el escudo de ${defender.type.name}.`, true);
   }
+  if (base.passive.name === 'Mordisco Carroñero' && atk.name === 'Mordisco Carroñero' && dmg > 0 && defender.currentHp < defender.maxHp) {
+    attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + 2);
+    setLogMessage(`¡Mordisco Carroñero de ${attacker.type.name}! Recupera +2 PS si el rival está herido.`, true);
+  }
 }
 
 function updateStatusDisplay() {
@@ -2353,11 +2437,12 @@ function updateStatusDisplay() {
   const eStatus = state.enemy.status;
   dom.playerStatus = dom.playerStatus || document.getElementById('player-status');
   dom.enemyStatus = dom.enemyStatus || document.getElementById('enemy-status');
-  const statusLabels = { paralizado: 'PAR', envenenado: 'ENV', quemado: 'QUE', veneno_grave: 'GRA', aturdido: 'STN', retroceder: 'RET' };
+  const statusLabels = { paralizado: 'PAR', envenenado: 'ENV', quemado: 'QUE', veneno_grave: 'GRA', aturdido: 'STN', retroceder: 'RET', dormido: 'SLP' };
 
   let pText = '', pCls = 'status-tag';
   if (pStatus && statusLabels[pStatus]) { pText = `[${statusLabels[pStatus]}]`; pCls += ' ' + pStatus; }
   if (state.player.sangradoTurns > 0) pText += (pText ? ' ' : '') + '[SAN]';
+  if (pStatus === 'dormido') pText += (pText ? ' ' : '') + '[SLP]';
   if (state.player.debuffs) {
     if (!pCls.includes('status-tag ')) pCls += ' cegado';
     const icons = [];
@@ -2381,6 +2466,7 @@ function updateStatusDisplay() {
   let eText = '', eCls = 'status-tag';
   if (eStatus && statusLabels[eStatus]) { eText = `[${statusLabels[eStatus]}]`; eCls += ' ' + eStatus; }
   if (state.enemy.sangradoTurns > 0) eText += (eText ? ' ' : '') + '[SAN]';
+  if (eStatus === 'dormido') eText += (eText ? ' ' : '') + '[SLP]';
   if (state.enemy.debuffs) {
     if (!eCls.includes('status-tag ')) eCls += ' cegado';
     const icons = [];
@@ -4004,11 +4090,15 @@ const ARENA_FISH = {
   4: [
     { fishId: 'pez_linterna' },
     { fishId: 'pez_tripode' },
+    { fishId: 'pulpo_dumbo' },
     { fishId: 'pez_demonio' },
     { fishId: 'tiburon_anguila' },
     { fishId: 'pez_vibora' },
+    { fishId: 'isopodo_gigante' },
     { fishId: 'tiburon_duende' },
+    { fishId: 'calamar_vampiro' },
     { fishId: 'engullidor_negro' },
+    { fishId: 'tiburon_groenlandia' },
     { fishId: 'kraken' }
   ],
   5: [
@@ -4017,7 +4107,6 @@ const ARENA_FISH = {
     { fishId: 'calamar_cristal' },
     { fishId: 'narval' },
     { fishId: 'leopardo_marino' },
-    { fishId: 'tiburon_groenlandia' },
     { fishId: 'orca' },
     { fishId: 'medusa_melena_artica' }
   ],
@@ -4388,9 +4477,15 @@ function getAttackEffectDescriptions(atk) {
     const stat = labels[atk.selfBuff.stat] || atk.selfBuff.stat;
     if (atk.selfBuff.stat === 'granSalto') {
       parts.push({ text: 'Esquiva el próximo ataque rival', type: 'buff' });
+    } else if (atk.selfBuff.stat === 'sleep') {
+      parts.push({ text: 'Duermes un turno y luego recuperas la mitad de tu vida', type: 'buff' });
     } else {
       parts.push({ text: `Aumenta tu ${stat} +${atk.selfBuff.amount} durante ${atk.selfBuff.turns} turnos`, type: 'buff' });
     }
+  }
+
+  if (atk.selfDebuff?.stat === 'atk') {
+    parts.push({ text: `Reduce tu ATF -${Math.round((atk.selfDebuff.amount || 1) * 100)}% en tu siguiente turno`, type: 'debuff' });
   }
 
   if (atk.efecto) {
@@ -6217,6 +6312,18 @@ function checkRetroceder(fighter, name) {
   return false;
 }
 
+function checkSleep(fighter, name) {
+  if (fighter.status !== 'dormido') return false;
+  fighter.status = null;
+  fighter.poisonTurns = 0;
+  fighter.sangradoTurns = 0;
+  fighter.sangradoAttacked = false;
+  fighter.currentHp = Math.min(fighter.maxHp, fighter.currentHp + Math.round(fighter.maxHp * (fighter.sleepRecoverPct || 0.5)));
+  fighter.sleepRecoverPct = null;
+  setLogMessage(`¡${name} despierta de Letargo Milenario y recupera parte de su vida!`, true);
+  return true;
+}
+
 function startTurn() {
   if (state.gameOver) return;
   state.isAnimating = false;
@@ -6238,7 +6345,14 @@ function startTurn() {
     state.turnPhase = 'player_first'; state.isPlayerTurn = true;
     setLogMessage(`¡Tu turno!${turnMsg}`);
     updateAttackButtons();
-    if (checkStun(state.player, state.player.type.name)) {
+    if (checkSleep(state.player, state.player.type.name)) {
+      state.isPlayerTurn = false; state.isAnimating = true;
+      updateAttackButtons();
+      applyPassiveHealing(state.player);
+      decrementDebuffs(state.player); decrementBuffs(state.player); updateStatusDisplay();
+      if (checkGameOver()) return;
+      setTimeout(() => doEnemyAttack(), 1200);
+    } else if (checkStun(state.player, state.player.type.name)) {
       state.isPlayerTurn = false; state.isAnimating = true;
       updateAttackButtons();
       applyStatusDamage(state.player); updateHpBars(); updateStatusDisplay();
@@ -6267,7 +6381,12 @@ function startTurn() {
     state.turnPhase = 'enemy_first'; state.isPlayerTurn = false; state.isAnimating = true;
     updateAttackButtons();
     setLogMessage(`¡${state.enemy.type.name} ataca primero!${turnMsg}`, true);
-    if (checkStun(state.enemy, state.enemy.type.name)) {
+    if (checkSleep(state.enemy, state.enemy.type.name)) {
+      applyPassiveHealing(state.enemy); updateHpBars(); updateStatusDisplay();
+      if (checkGameOver()) return;
+      decrementDebuffs(state.enemy); decrementBuffs(state.enemy); updateStatusDisplay();
+      setTimeout(() => startTurn(), 1200);
+    } else if (checkStun(state.enemy, state.enemy.type.name)) {
       applyStatusDamage(state.enemy); updateHpBars(); updateStatusDisplay();
       if (checkGameOver()) return;
       applyPassiveHealing(state.enemy);
