@@ -892,6 +892,142 @@ const FISH_TYPES = [
       name: 'Tentáculos Kilométricos',
       description: 'Cualquier enemigo que ejecute un ataque físico contra la medusa recibe automáticamente un contragolpe de veneno que drena vida en cada turno.'
     }
+  },
+  {
+    id: 'cangrejo_yeti',
+    name: 'Cangrejo Yeti',
+    rarity: 'common',
+    imgPath: 'img/peces/cangrejo_yeti.png',
+    emoji: '🦀',
+    maxHp: 10, atk: 7, def: 12, spa: 4, spd: 10, spe: 5,
+    growth: { maxHp: 1.0, atk: 0.7, def: 1.2, spa: 0.4, spd: 1.0, spe: 0.5 },
+    attacks: [
+      { name: 'Pinza Térmica', power: 40, emoji: '🔥', categoria: 'Fisico', efecto: { probabilidad: 0.2, estado: 'def_reduction', turns: 2, amount: 1 } },
+      { name: 'Abrazo Peludo', power: 0, emoji: '🧶', categoria: 'Efecto', selfBuff: { stat: 'def', amount: 2, turns: 2 } }
+    ],
+    passive: {
+      name: 'Filtrador de Azufre',
+      description: 'Recupera un 5% de su vida máxima al final de cada turno.'
+    }
+  },
+  {
+    id: 'gusano_tubo_gigante',
+    name: 'Gusano de Tubo Gigante',
+    rarity: 'common',
+    imgPath: 'img/peces/gusano_tubo_gigante.png',
+    emoji: '🐛',
+    maxHp: 13, atk: 3, def: 10, spa: 6, spd: 14, spe: 2,
+    growth: { maxHp: 1.3, atk: 0.3, def: 1.0, spa: 0.6, spd: 1.4, spe: 0.2 },
+    attacks: [
+      { name: 'Erupción Térmica', power: 50, emoji: '♨️', categoria: 'Especial', efecto: { probabilidad: 0.4, estado: 'quemadura', turns: 3 } },
+      { name: 'Nutrientes Hidrotermales', power: 35, emoji: '🌿', categoria: 'Especial', drain: 0.5 }
+    ],
+    passive: {
+      name: 'Simbiosis Extremófila',
+      description: 'Inmune a la quemadura y al sangrado.'
+    }
+  },
+  {
+    id: 'pez_caracol_fosa',
+    name: 'Pez Caracol de la Fosa',
+    rarity: 'rare',
+    imgPath: 'img/peces/pez_caracol_fosa.png',
+    emoji: '🐌',
+    maxHp: 9, atk: 5, def: 8, spa: 10, spd: 10, spe: 7,
+    growth: { maxHp: 0.9, atk: 0.5, def: 0.8, spa: 1.0, spd: 1.0, spe: 0.7 },
+    attacks: [
+      { name: 'Baba Corrosiva', power: 55, emoji: '🧪', categoria: 'Especial', efecto: { probabilidad: 0.4, estado: 'spd_reduction', turns: 2, amount: 1 } },
+      { name: 'Presión Abisal', power: 70, emoji: '🌀', categoria: 'Especial' }
+    ],
+    passive: {
+      name: 'Caparazón Hidrotermal',
+      description: 'Reduce un 15% el daño de los ataques físicos recibidos.'
+    }
+  },
+  {
+    id: 'pez_dragon_idianto',
+    name: 'Pez Dragón Idianto',
+    rarity: 'rare',
+    imgPath: 'img/peces/pez_dragon_idianto.png',
+    emoji: '🐉',
+    maxHp: 7, atk: 11, def: 5, spa: 9, spd: 6, spe: 12,
+    growth: { maxHp: 0.7, atk: 1.1, def: 0.5, spa: 0.9, spd: 0.6, spe: 1.2 },
+    attacks: [
+      { name: 'Mordedura Ígnea', power: 60, emoji: '🔥', categoria: 'Fisico', efecto: { probabilidad: 0.4, estado: 'quemadura', turns: 3 } },
+      { name: 'Cola Abrasadora', power: 75, emoji: '🌋', categoria: 'Fisico' }
+    ],
+    passive: {
+      name: 'Velocidad Térmica',
+      description: 'Si ataca primero en el turno, sus ataques hacen un 20% más de daño.'
+    }
+  },
+  {
+    id: 'pulpo_vulcano',
+    name: 'Pulpo Vulcano',
+    rarity: 'epic',
+    imgPath: 'img/peces/pulpo_vulcano.png',
+    emoji: '🐙',
+    maxHp: 9, atk: 6, def: 8, spa: 14, spd: 9, spe: 8,
+    growth: { maxHp: 0.9, atk: 0.6, def: 0.8, spa: 1.4, spd: 0.9, spe: 0.8 },
+    attacks: [
+      { name: 'Tinta Volcánica', power: 65, emoji: '🖤', categoria: 'Especial', efecto: { probabilidad: 0.5, estado: 'precision_reducida', turns: 2 } },
+      { name: 'Tentáculos Fundidos', power: 50, emoji: '🦑', categoria: 'Fisico', efecto: { probabilidad: 0.5, estado: 'spe_reduction', turns: 2, amount: 1 } }
+    ],
+    passive: {
+      name: 'Furia Hidrotermal',
+      description: 'Cuando su vida baja del 50%, su ataque especial aumenta un 30% (1 vez por combate).'
+    }
+  },
+  {
+    id: 'camaron_fosa',
+    name: 'Camarón de la Fosa',
+    rarity: 'epic',
+    imgPath: 'img/peces/camaron_fosa.png',
+    emoji: '🦐',
+    maxHp: 8, atk: 10, def: 7, spa: 5, spd: 7, spe: 14,
+    growth: { maxHp: 0.8, atk: 1.0, def: 0.7, spa: 0.5, spd: 0.7, spe: 1.4 },
+    attacks: [
+      { name: 'Pinza Perforante', power: 60, emoji: '✂️', categoria: 'Fisico', efecto: { probabilidad: 0.5, estado: 'def_reduction', turns: 2, amount: 1 } },
+      { name: 'Danza Abisal', power: 0, emoji: '💃', categoria: 'Efecto', selfBuff: { stat: 'spe', amount: 2, turns: 3 } }
+    ],
+    passive: {
+      name: 'Ojos Adaptados',
+      description: 'Inmune a la reducción de precisión y al aturdimiento.'
+    }
+  },
+  {
+    id: 'pez_linterna_negro',
+    name: 'Pez Linterna Negro',
+    rarity: 'legendary',
+    imgPath: 'img/peces/pez_linterna_negro.png',
+    emoji: '🐟',
+    maxHp: 12, atk: 12, def: 9, spa: 13, spd: 9, spe: 6,
+    growth: { maxHp: 1.2, atk: 1.2, def: 0.9, spa: 1.3, spd: 0.9, spe: 0.6 },
+    attacks: [
+      { name: 'Destello Abismal', power: 80, emoji: '💡', categoria: 'Especial', drain: 0.3 },
+      { name: 'Tinieblas Devoradoras', power: 65, emoji: '🌑', categoria: 'Especial', efecto: { probabilidad: 0.5, estado: 'spd_reduction', turns: 2, amount: 2 } }
+    ],
+    passive: {
+      name: 'Señuelo de Tinieblas',
+      description: 'Al inicio del combate, reduce la Defensa Especial del rival en un 20% durante 3 turnos.'
+    }
+  },
+  {
+    id: 'calamar_magnapinna',
+    name: 'Calamar Magnapinna',
+    rarity: 'legendary',
+    imgPath: 'img/peces/calamar_magnapinna.png',
+    emoji: '🦑',
+    maxHp: 12, atk: 12, def: 9, spa: 14, spd: 11, spe: 9,
+    growth: { maxHp: 1.2, atk: 1.2, def: 0.9, spa: 1.4, spd: 1.1, spe: 0.9 },
+    attacks: [
+      { name: 'Abrazo Abisal', power: 105, emoji: '🦑', categoria: 'Fisico', efecto: { probabilidad: 0.3, estado: 'spe_reduction', turns: 2, amount: 2 } },
+      { name: 'Presión Termobárica', power: 0, emoji: '🌊', categoria: 'Efecto', selfHeal: { pct: 0.15, maxUses: 1 }, selfBuff: { stat: 'spa', amount: 4, turns: 3 } }
+    ],
+    passive: {
+      name: 'Filamentos Sensoriales',
+      description: 'Al inicio del combate, reduce la Velocidad del rival un 15%.'
+    }
   }
 ];
 
@@ -1038,7 +1174,7 @@ const CLOUD_EMAIL_DOMAIN = 'fisharena.local';
 const PROGRESS_COLLECTION = 'usuarios';
 
 /* ===== CONSTANTS ===== */
-const MAX_LEVEL = 12;
+const MAX_LEVEL = 18;
 
 const ACHIEVEMENTS = [
   {
@@ -1097,7 +1233,8 @@ const ARENA_CUP_CHANGES = {
   2: { win: 30, lose: -10 },
   3: { win: 30, lose: -20 },
   4: { win: 30, lose: -25 },
-  5: { win: 30, lose: -30 }
+  5: { win: 30, lose: -30 },
+  6: { win: 30, lose: -35 }
 };
 
 const ARENA_CONFIG = {
@@ -1105,7 +1242,8 @@ const ARENA_CONFIG = {
   2: { name: 'Arrecife de Coral', icon: '🪸', minCups: 300, maxCups: 600, cssClass: 'arena-coral', winGold: 80, loseGold: 15, minLevel: 3, maxLevel: 6 },
   3: { name: 'Mar Abierto', icon: '🌊', minCups: 600, maxCups: 900, cssClass: 'arena-temple', winGold: 120, loseGold: 20, minLevel: 6, maxLevel: 9 },
   4: { name: 'Las Profundidades', icon: '🌌', minCups: 900, maxCups: 1200, cssClass: 'arena-depths', winGold: 200, loseGold: 30, minLevel: 9, maxLevel: 12 },
-  5: { name: 'Aguas Heladas', icon: '❄️', minCups: 1200, maxCups: Infinity, cssClass: 'arena-ice', winGold: 300, loseGold: 40, minLevel: 12, maxLevel: 15 }
+  5: { name: 'Aguas Heladas', icon: '❄️', minCups: 1200, maxCups: 1500, cssClass: 'arena-ice', winGold: 300, loseGold: 40, minLevel: 12, maxLevel: 15 },
+  6: { name: 'Fosas Hidrotermales', icon: '🌋', minCups: 1500, maxCups: Infinity, cssClass: 'arena-hydrothermal', winGold: 400, loseGold: 50, minLevel: 15, maxLevel: 18 }
 };
 
 /* ===== GAME STATE ===== */
@@ -1395,10 +1533,10 @@ function getItemMultiplier(fishId, itemId) {
 
 /* ===== UPGRADE ===== */
 const UPGRADE_COST_TABLE = {
-  common:   [0, 50, 150, 400, 1000, 2000, 4000, 8000, 15000, 30000, 60000, 120000],
-  rare:     [0, 150, 350, 750, 1500, 3000, 6000, 12000, 22000, 45000, 90000, 180000],
-  epic:     [0, 400, 900, 2000, 4500, 8000, 15000, 25000, 45000, 80000, 160000, 320000],
-  legendary:[0, 1000, 2500, 5000, 10000, 18000, 30000, 50000, 80000, 120000, 240000, 480000]
+  common:   [0, 50, 150, 400, 1000, 2000, 4000, 8000, 15000, 30000, 60000, 120000, 200000, 350000, 550000, 800000, 1100000, 1500000],
+  rare:     [0, 150, 350, 750, 1500, 3000, 6000, 12000, 22000, 45000, 90000, 180000, 300000, 500000, 800000, 1200000, 1700000, 2300000],
+  epic:     [0, 400, 900, 2000, 4500, 8000, 15000, 25000, 45000, 80000, 160000, 320000, 500000, 850000, 1300000, 1900000, 2600000, 3500000],
+  legendary:[0, 1000, 2500, 5000, 10000, 18000, 30000, 50000, 80000, 120000, 240000, 480000, 750000, 1200000, 1800000, 2600000, 3600000, 4800000]
 };
 
 function getUpgradeCost(level, rarity) {
@@ -1432,10 +1570,12 @@ async function upgradeFish(fishId) {
 }
 
 /* ===== DAMAGE FORMULA ===== */
-function calculateDamage(power, attacker, defender, categoria, attackerStatus, defenderBuffs, attackerAtkReduction, defenderSpdReduction, atk) {
+function calculateDamage(power, attacker, defender, categoria, attackerStatus, defenderBuffs, attackerAtkReduction, defenderSpdReduction, atk, attackerBuffs) {
   const atkDef = attackerStatus === 'quemado' && categoria === 'Fisico' ? Math.round(attacker.atk / 2) : attacker.atk;
   let A = categoria === 'Fisico' ? atkDef : attacker.spa;
   if (categoria === 'Fisico' && attackerAtkReduction) A = Math.round(A * (1 - attackerAtkReduction));
+  if (categoria === 'Fisico' && attackerBuffs?.atkBoost) A += attackerBuffs.atkBoost;
+  if (categoria === 'Especial' && attackerBuffs?.spaBoost) A += attackerBuffs.spaBoost;
   let D = categoria === 'Fisico' ? defender.def : defender.spd;
   if (categoria === 'Especial' && defenderSpdReduction) D = Math.round(D * (1 - defenderSpdReduction));
   if (categoria === 'Fisico' && defenderBuffs?.defBoost) D += defenderBuffs.defBoost;
@@ -1719,28 +1859,45 @@ function applyBuff(atk, user) {
   }
 }
 
-function applySelfBuff(atk, user) {
-  if (!atk.selfBuff) return;
-  if (atk.selfBuff.stat === 'spe') {
-    const existing = user.buffs?.speBoost || 0;
-    user.buffs = { ...(user.buffs || {}), speBoost: existing + (atk.selfBuff.amount || 1), speTurns: atk.selfBuff.turns || 2 };
-    setLogMessage(`¡${user.type.name} aumentó su velocidad +${atk.selfBuff.amount || 1}!`, true);
+  function applySelfBuff(atk, user) {
+    if (!atk.selfBuff) return;
+    if (atk.selfBuff.stat === 'spe') {
+      const existing = user.buffs?.speBoost || 0;
+      user.buffs = { ...(user.buffs || {}), speBoost: existing + (atk.selfBuff.amount || 1), speTurns: atk.selfBuff.turns || 2 };
+      setLogMessage(`¡${user.type.name} aumentó su velocidad +${atk.selfBuff.amount || 1}!`, true);
+    }
+    if (atk.selfBuff.stat === 'crit') {
+      const chance = atk.selfBuff.amount || 0.25;
+      user.buffs = { ...(user.buffs || {}), critChance: chance, critTurns: atk.selfBuff.turns || 1 };
+      setLogMessage(`¡${user.type.name} se prepara para un golpe crítico! (+${Math.round(chance * 100)}%)`, true);
+    }
+    if (atk.selfBuff.stat === 'spd') {
+      const existing = user.buffs?.spdBoost || 0;
+      user.buffs = { ...(user.buffs || {}), spdBoost: existing + (atk.selfBuff.amount || 1), spdTurns: atk.selfBuff.turns || 2 };
+      setLogMessage(`¡${user.type.name} aumentó su defensa especial +${atk.selfBuff.amount || 1}!`, true);
+    }
+    if (atk.selfBuff.stat === 'atk') {
+      const existing = user.buffs?.atkBoost || 0;
+      user.buffs = { ...(user.buffs || {}), atkBoost: existing + (atk.selfBuff.amount || 1), atkTurns: atk.selfBuff.turns || 2 };
+      setLogMessage(`¡${user.type.name} aumentó su ataque +${atk.selfBuff.amount || 1}!`, true);
+    }
+    if (atk.selfBuff.stat === 'def') {
+      const existing = user.buffs?.defBoost || 0;
+      user.buffs = { ...(user.buffs || {}), defBoost: existing + (atk.selfBuff.amount || 1), defTurns: atk.selfBuff.turns || 2 };
+      setLogMessage(`¡${user.type.name} aumentó su defensa +${atk.selfBuff.amount || 1}!`, true);
+    }
+    if (atk.selfBuff.stat === 'spa') {
+      const existing = user.buffs?.spaBoost || 0;
+      user.buffs = { ...(user.buffs || {}), spaBoost: existing + (atk.selfBuff.amount || 1), spaTurns: atk.selfBuff.turns || 2 };
+      setLogMessage(`¡${user.type.name} aumentó su ataque especial +${atk.selfBuff.amount || 1}!`, true);
+    }
   }
-  if (atk.selfBuff.stat === 'crit') {
-    const chance = atk.selfBuff.amount || 0.25;
-    user.buffs = { ...(user.buffs || {}), critChance: chance, critTurns: atk.selfBuff.turns || 1 };
-    setLogMessage(`¡${user.type.name} se prepara para un golpe crítico! (+${Math.round(chance * 100)}%)`, true);
-  }
-  if (atk.selfBuff.stat === 'spd') {
-    const existing = user.buffs?.spdBoost || 0;
-    user.buffs = { ...(user.buffs || {}), spdBoost: existing + (atk.selfBuff.amount || 1), spdTurns: atk.selfBuff.turns || 2 };
-    setLogMessage(`¡${user.type.name} aumentó su defensa especial +${atk.selfBuff.amount || 1}!`, true);
-  }
-}
 
 function decrementBuffs(fighter) {
   if (!fighter.buffs) return;
   if (fighter.buffs.defTurns !== undefined) fighter.buffs.defTurns--;
+  if (fighter.buffs.atkTurns !== undefined) fighter.buffs.atkTurns--;
+  if (fighter.buffs.spaTurns !== undefined) fighter.buffs.spaTurns--;
   if (fighter.buffs.speTurns !== undefined) fighter.buffs.speTurns--;
   if (fighter.buffs.dodgeTurns !== undefined) fighter.buffs.dodgeTurns--;
   if (fighter.buffs.debuffImmuneTurns !== undefined) fighter.buffs.debuffImmuneTurns--;
@@ -1749,6 +1906,16 @@ function decrementBuffs(fighter) {
     delete fighter.buffs.defBoost;
     delete fighter.buffs.defTurns;
     setLogMessage(`${fighter.type.name} perdió el bono de DEF.`, true);
+  }
+  if (fighter.buffs.atkTurns !== undefined && fighter.buffs.atkTurns <= 0) {
+    delete fighter.buffs.atkBoost;
+    delete fighter.buffs.atkTurns;
+    setLogMessage(`${fighter.type.name} perdió el bono de ATK.`, true);
+  }
+  if (fighter.buffs.spaTurns !== undefined && fighter.buffs.spaTurns <= 0) {
+    delete fighter.buffs.spaBoost;
+    delete fighter.buffs.spaTurns;
+    setLogMessage(`${fighter.type.name} perdió el bono de SpATK.`, true);
   }
   if (fighter.buffs.speTurns !== undefined && fighter.buffs.speTurns <= 0) {
     delete fighter.buffs.speBoost;
@@ -1774,7 +1941,7 @@ function decrementBuffs(fighter) {
     delete fighter.buffs.spdTurns;
     setLogMessage(`${fighter.type.name} perdió el bono de DEF especial.`, true);
   }
-  if (!fighter.buffs.defBoost && !fighter.buffs.speBoost && !fighter.buffs.dodgeBoost && !fighter.buffs.debuffImmuneTurns && !fighter.buffs.critChance && !fighter.buffs.spdBoost) fighter.buffs = null;
+  if (!fighter.buffs.defBoost && !fighter.buffs.atkBoost && !fighter.buffs.spaBoost && !fighter.buffs.speBoost && !fighter.buffs.dodgeBoost && !fighter.buffs.debuffImmuneTurns && !fighter.buffs.critChance && !fighter.buffs.spdBoost) fighter.buffs = null;
 }
 
 function applyDefensivePassives(dmg, defender, categoria) {
@@ -1945,6 +2112,8 @@ function updateStatusDisplay() {
     const icon = state.player.debuff.type === 'spe_reduction' ? '🐢' : '👁️‍🗨️';
     pText += (pText ? ' ' : '') + icon;
   }
+  if (state.player.buffs?.atkBoost) pText += (pText ? ' ' : '') + '⚔️';
+  if (state.player.buffs?.spaBoost) pText += (pText ? ' ' : '') + '🔥';
   if (state.player.buffs?.defBoost) pText += (pText ? ' ' : '') + '🛡️';
   if (state.player.buffs?.speBoost) pText += (pText ? ' ' : '') + '⚡';
   if (state.player.buffs?.debuffImmuneTurns > 0) pText += (pText ? ' ' : '') + '🔒';
@@ -1959,6 +2128,8 @@ function updateStatusDisplay() {
     const icon = state.enemy.debuff.type === 'spe_reduction' ? '🐢' : '👁️‍🗨️';
     eText += (eText ? ' ' : '') + icon;
   }
+  if (state.enemy.buffs?.atkBoost) eText += (eText ? ' ' : '') + '⚔️';
+  if (state.enemy.buffs?.spaBoost) eText += (eText ? ' ' : '') + '🔥';
   if (state.enemy.buffs?.defBoost) eText += (eText ? ' ' : '') + '🛡️';
   if (state.enemy.buffs?.speBoost) eText += (eText ? ' ' : '') + '⚡';
   if (state.enemy.buffs?.debuffImmuneTurns > 0) eText += (eText ? ' ' : '') + '🔒';
@@ -3580,6 +3751,16 @@ const ARENA_FISH = {
     { fishId: 'tiburon_groenlandia' },
     { fishId: 'orca' },
     { fishId: 'medusa_melena_artica' }
+  ],
+  6: [
+    { fishId: 'cangrejo_yeti' },
+    { fishId: 'gusano_tubo_gigante' },
+    { fishId: 'pez_caracol_fosa' },
+    { fishId: 'pez_dragon_idianto' },
+    { fishId: 'pulpo_vulcano' },
+    { fishId: 'camaron_fosa' },
+    { fishId: 'pez_linterna_negro' },
+    { fishId: 'calamar_magnapinna' }
   ]
 };
 
@@ -3590,7 +3771,7 @@ function renderArenaModal() {
     <div class="arena-modal-header arena-detail-header">
       <div>
         <span class="arena-modal-title">🏟️ Mapa Global de Arenas</span>
-        <div class="arena-detail-subtitle">Desliza para ver las 5 zonas</div>
+        <div class="arena-detail-subtitle">Desliza para ver las 6 zonas</div>
       </div>
       <button class="arena-modal-close" id="arena-modal-close-btn">✕</button>
     </div>
@@ -5796,7 +5977,7 @@ function playerAttack(index) {
     afterPlayerAction();
     return;
   }
-  let dmg = calculateDamage(atk.power, state.player.type, state.enemy.type, atk.categoria, state.player.status, state.enemy.buffs, state.player.atkReduction, state.enemy.spdReduction, atk);
+  let dmg = calculateDamage(atk.power, state.player.type, state.enemy.type, atk.categoria, state.player.status, state.enemy.buffs, state.player.atkReduction, state.enemy.spdReduction, atk, state.player.buffs);
   if (state.player.frenesiActivo && atk.categoria === 'Fisico') {
     dmg = Math.round(dmg * 1.15);
     state.player.frenesiActivo = false;
@@ -5879,7 +6060,7 @@ function chooseEnemyAttack() {
   const sortedByPower = [...attacks].sort((a, b) => b.power - a.power);
 
   for (const atk of sortedByPower) {
-    const dmg = calculateDamage(atk.power, enemy.type, player.type, atk.categoria, enemy.status, player.buffs, enemy.atkReduction, player.spdReduction, atk);
+    const dmg = calculateDamage(atk.power, enemy.type, player.type, atk.categoria, enemy.status, player.buffs, enemy.atkReduction, player.spdReduction, atk, enemy.buffs);
     if (dmg >= player.currentHp) return atk;
   }
 
@@ -5940,7 +6121,7 @@ function doEnemyAttack() {
     afterEnemyAction();
     return;
   }
-  let dmg = calculateDamage(atk.power, state.enemy.type, state.player.type, atk.categoria, state.enemy.status, state.player.buffs, state.enemy.atkReduction, state.player.spdReduction, atk);
+  let dmg = calculateDamage(atk.power, state.enemy.type, state.player.type, atk.categoria, state.enemy.status, state.player.buffs, state.enemy.atkReduction, state.player.spdReduction, atk, state.enemy.buffs);
   dmg = applyDefensivePassives(dmg, state.player, atk.categoria);
   if (state.player.shield > 0) {
     const absorbed = Math.min(state.player.shield, dmg);
@@ -6023,6 +6204,7 @@ const SURVIVAL_ARENA_BONUS = {
   3: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.20 }] },
   4: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.35 }, { id: 'obj_toxina_concentrada', chance: 0.08 }] },
   5: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.50 }, { id: 'obj_toxina_concentrada', chance: 0.18 }] },
+  6: { gold: 0,  items: [{ id: 'concha_comun', chance: 0.65 }, { id: 'obj_toxina_concentrada', chance: 0.25 }] },
 };
 
 /* ===== FIEBRE DEL ORO / FIEBRE DE DIAMANTES ===== */
