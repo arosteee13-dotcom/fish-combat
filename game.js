@@ -3945,12 +3945,33 @@ function renderFightContent() {
       <div class="arena-fish-grid">${cardsHtml}</div>
     </div>`;
 
+  const grid = dom.fightContent.querySelector('.arena-fish-grid');
+  let tapStartX = null, tapStartY = null, tapFishId = null;
+
   dom.fightContent.querySelectorAll('.arena-fish-card').forEach(card => {
     card.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      showFishDetail(card.dataset.fishId);
+      tapStartX = e.clientX;
+      tapStartY = e.clientY;
+      tapFishId = card.dataset.fishId;
     });
   });
+
+  if (grid) {
+    grid.addEventListener('pointerup', e => {
+      if (tapFishId && tapStartX !== null) {
+        const dx = Math.abs(e.clientX - tapStartX);
+        const dy = Math.abs(e.clientY - tapStartY);
+        if (dx <= 10 && dy <= 10) {
+          e.preventDefault();
+          showFishDetail(tapFishId);
+        }
+      }
+      tapStartX = null; tapStartY = null; tapFishId = null;
+    });
+    grid.addEventListener('pointercancel', () => {
+      tapStartX = null; tapStartY = null; tapFishId = null;
+    });
+  }
 
   const ad = document.getElementById('arena-display');
   if (ad) {
