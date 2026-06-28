@@ -622,6 +622,74 @@ const FISH_TYPES = [
     }
   },
   {
+    id: 'mola_mola',
+    name: 'Pez Luna',
+    rarity: 'common',
+    imgPath: 'img/peces/pez_luna.png',
+    emoji: '🌕',
+    maxHp: 18, atk: 2, def: 6, spa: 2, spd: 5, spe: 2,
+    growth: { maxHp: 1.8, atk: 0.2, def: 0.6, spa: 0.2, spd: 0.5, spe: 0.2 },
+    attacks: [
+      { name: 'Plancha Pesada', power: 25, emoji: '🪨', categoria: 'Fisico', efecto: { probabilidad: 0.1, estado: 'aturdido' } },
+      { name: 'Baño de Sol', power: 0, emoji: '☀️', categoria: 'Efecto', selfHeal: { flat: 4, maxUses: 1 } }
+    ],
+    passive: {
+      name: 'Escudo de Escamas',
+      description: 'Reduce en 1 punto todo el daño físico que recibe.'
+    }
+  },
+  {
+    id: 'lampuga',
+    name: 'Lampuga',
+    rarity: 'rare',
+    imgPath: 'img/peces/lampuga.png',
+    emoji: '🐟✨',
+    maxHp: 9, atk: 7, def: 4, spa: 3, spd: 4, spe: 8,
+    growth: { maxHp: 0.9, atk: 0.7, def: 0.4, spa: 0.3, spd: 0.4, spe: 0.8 },
+    attacks: [
+      { name: 'Embestida Cromática', power: 30, emoji: '🌈', categoria: 'Fisico' },
+      { name: 'Gran Salto', power: 0, emoji: '🪽', categoria: 'Efecto', selfBuff: { stat: 'granSalto', amount: 1, turns: 2 } }
+    ],
+    passive: {
+      name: 'Aleta Centelleante',
+      description: 'Al entrar al combate, su velocidad aumenta un 10% durante los 2 primeros turnos.'
+    }
+  },
+  {
+    id: 'calamar_poton',
+    name: 'Calamar Potón',
+    rarity: 'epic',
+    imgPath: 'img/peces/calamar_poton.png',
+    emoji: '🦑',
+    maxHp: 10, atk: 5, def: 3, spa: 8, spd: 4, spe: 7,
+    growth: { maxHp: 1.0, atk: 0.5, def: 0.3, spa: 0.8, spd: 0.4, spe: 0.7 },
+    attacks: [
+      { name: 'Tinta Cegadora', power: 20, emoji: '🖤', categoria: 'Especial', efecto: { probabilidad: 1, estado: 'precision_reducida', turns: 2 } },
+      { name: 'Abrazo Constrictor', power: 25, emoji: '🦑', categoria: 'Fisico', efecto: { probabilidad: 1, estado: 'spe_reduction', turns: 2, amount: 1 } }
+    ],
+    passive: {
+      name: 'Manto Rojo',
+      description: 'Cuando su vida baja del 50%, sus ataques especiales hacen un 15% más de daño.'
+    }
+  },
+  {
+    id: 'tiburon_mako',
+    name: 'Tiburón Mako',
+    rarity: 'legendary',
+    imgPath: 'img/peces/tiburon_mako.png',
+    emoji: '🦈',
+    maxHp: 12, atk: 9, def: 4, spa: 4, spd: 4, spe: 10,
+    growth: { maxHp: 1.2, atk: 0.9, def: 0.4, spa: 0.4, spd: 0.4, spe: 1.0 },
+    attacks: [
+      { name: 'Dentellada Veloz', power: 35, emoji: '🦷', categoria: 'Fisico' },
+      { name: 'Rastro de Sangre', power: 0, emoji: '🩸', categoria: 'Efecto' }
+    ],
+    passive: {
+      name: 'Hidrodinámica',
+      description: 'Si el Tiburón Mako ataca antes que el rival, la probabilidad de asestar un golpe crítico aumenta un 20%.'
+    }
+  },
+  {
     id: 'pez_linterna',
     name: 'Pez Linterna',
     rarity: 'common',
@@ -1608,6 +1676,10 @@ function calculateDamage(power, attacker, defender, categoria, attackerStatus, d
     }
   }
   const atkFighter = attacker.id === state.player?.type?.id ? state.player : state.enemy;
+  if (atkBase?.passive?.name === 'Manto Rojo' && categoria === 'Especial' && atkFighter?.currentHp <= atkFighter?.maxHp / 2) {
+    result = Math.round(result * 1.15);
+    setLogMessage(`¡Manto Rojo de ${attacker.name}! Daño especial +15%`, true);
+  }
   if (atkFighter?.buffs?.critChance && Math.random() < atkFighter.buffs.critChance) {
     result = Math.round(result * 2);
     setLogMessage(`¡${attacker.name} asesta un GOLPE CRÍTICO! Daño x2`, true);
@@ -1819,6 +1891,13 @@ function checkDodge(defenderFighter, categoria, attackerFighter) {
     const atkBase = getFishById(attackerFighter.type.id);
     if (atkBase?.passive?.name === 'Luz Guía') return false;
   }
+  if (defenderFighter.buffs?.granSalto) {
+    delete defenderFighter.buffs.granSalto;
+    delete defenderFighter.buffs.granSaltoTurns;
+    if (!defenderFighter.buffs.defBoost && !defenderFighter.buffs.atkBoost && !defenderFighter.buffs.spaBoost && !defenderFighter.buffs.speBoost && !defenderFighter.buffs.dodgeBoost && !defenderFighter.buffs.debuffImmuneTurns && !defenderFighter.buffs.critChance && !defenderFighter.buffs.spdBoost && !defenderFighter.buffs.granSalto) defenderFighter.buffs = null;
+    setLogMessage(`¡${defenderFighter.type.name} usa Gran Salto y esquiva el ataque!`, true);
+    return true;
+  }
   let chance = 0;
   if (base?.passive) {
     if (categoria === 'Fisico') {
@@ -1941,7 +2020,7 @@ function applyBuff(atk, user) {
       setLogMessage(`¡${user.type.name} no puede usar ${atkName} de nuevo!`, true);
       return;
     }
-    const heal = Math.max(1, Math.floor(user.maxHp * atk.selfHeal.pct));
+    const heal = atk.selfHeal.flat !== undefined ? atk.selfHeal.flat : Math.max(1, Math.floor(user.maxHp * atk.selfHeal.pct));
     user.currentHp = Math.min(user.maxHp, user.currentHp + heal);
     user.selfHealUsed[atkName] = true;
     setLogMessage(`¡${user.type.name} usa ${atkName}! Recupera +${heal} PS`, true);
@@ -1965,6 +2044,27 @@ function applyBuff(atk, user) {
 
   function applySelfBuff(atk, user) {
     if (!atk.selfBuff) return;
+    if (atk.selfBuff.stat === 'granSalto') {
+      if (user.granSaltoUsado) {
+        setLogMessage(`¡${user.type.name} no puede usar Gran Salto de nuevo!`, true);
+        return;
+      }
+      user.granSaltoUsado = true;
+      user.buffs = { ...(user.buffs || {}), granSalto: true, granSaltoTurns: atk.selfBuff.turns || 2 };
+      setLogMessage(`¡${user.type.name} usa Gran Salto! Esquivará el próximo ataque.`, true);
+      return;
+    }
+    if (atk.name === 'Rastro de Sangre') {
+      const opponent = user === state.player ? state.enemy : state.player;
+      if (opponent.currentHp >= opponent.maxHp) {
+        setLogMessage(`¡${user.type.name} usa Rastro de Sangre, pero el rival sigue al 100%!`, true);
+        return;
+      }
+      const existing = user.buffs?.atkBoost || 0;
+      user.buffs = { ...(user.buffs || {}), atkBoost: existing + 1, atkTurns: 99 };
+      setLogMessage(`¡${user.type.name} olfatea la sangre y aumenta su ATF!`, true);
+      return;
+    }
     if (atk.selfBuff.stat === 'spe') {
       const existing = user.buffs?.speBoost || 0;
       user.buffs = { ...(user.buffs || {}), speBoost: existing + (atk.selfBuff.amount || 1), speTurns: atk.selfBuff.turns || 2 };
@@ -2006,6 +2106,7 @@ function decrementBuffs(fighter) {
   if (fighter.buffs.dodgeTurns !== undefined) fighter.buffs.dodgeTurns--;
   if (fighter.buffs.debuffImmuneTurns !== undefined) fighter.buffs.debuffImmuneTurns--;
   if (fighter.buffs.critTurns !== undefined) fighter.buffs.critTurns--;
+  if (fighter.buffs.granSaltoTurns !== undefined) fighter.buffs.granSaltoTurns--;
   if (fighter.buffs.defTurns !== undefined && fighter.buffs.defTurns <= 0) {
     delete fighter.buffs.defBoost;
     delete fighter.buffs.defTurns;
@@ -2040,12 +2141,16 @@ function decrementBuffs(fighter) {
     delete fighter.buffs.critTurns;
     setLogMessage(`${fighter.type.name} perdió la preparación de golpe crítico.`, true);
   }
+  if (fighter.buffs.granSaltoTurns !== undefined && fighter.buffs.granSaltoTurns <= 0) {
+    delete fighter.buffs.granSalto;
+    delete fighter.buffs.granSaltoTurns;
+  }
   if (fighter.buffs.spdTurns !== undefined && fighter.buffs.spdTurns <= 0) {
     delete fighter.buffs.spdBoost;
     delete fighter.buffs.spdTurns;
     setLogMessage(`${fighter.type.name} perdió el bono de DEF especial.`, true);
   }
-  if (!fighter.buffs.defBoost && !fighter.buffs.atkBoost && !fighter.buffs.spaBoost && !fighter.buffs.speBoost && !fighter.buffs.dodgeBoost && !fighter.buffs.debuffImmuneTurns && !fighter.buffs.critChance && !fighter.buffs.spdBoost) fighter.buffs = null;
+  if (!fighter.buffs.defBoost && !fighter.buffs.atkBoost && !fighter.buffs.spaBoost && !fighter.buffs.speBoost && !fighter.buffs.dodgeBoost && !fighter.buffs.debuffImmuneTurns && !fighter.buffs.critChance && !fighter.buffs.spdBoost && !fighter.buffs.granSalto) fighter.buffs = null;
 }
 
 function applyDefensivePassives(dmg, defender, categoria) {
@@ -2069,6 +2174,11 @@ function applyDefensivePassives(dmg, defender, categoria) {
       dmg = Math.max(1, Math.round(dmg * 0.8));
       setLogMessage(`¡${defender.type.name} activó Quiebro Elegante! Daño físico -20%`, true);
       trackMission('passive_shield');
+      return dmg;
+    }
+    if (base.passive.name === 'Escudo de Escamas') {
+      dmg = Math.max(1, dmg - 1);
+      setLogMessage(`¡${defender.type.name} reduce el daño físico con Escudo de Escamas!`, true);
       return dmg;
     }
   }
@@ -2196,6 +2306,14 @@ function checkImpulsoHuida(fighter) {
     fighter.impulsoHuidaActivo = true;
     setLogMessage(`¡${fighter.type.name} activa Impulso de Huida! VEL +20%`, true);
   }
+}
+
+function applyOpeningCritPassive(fighter) {
+  const base = getFishById(fighter.type.id);
+  if (!base || base.passive?.name !== 'Hidrodinámica') return;
+  const existing = fighter.buffs?.critChance || 0;
+  fighter.buffs = { ...(fighter.buffs || {}), critChance: existing + 0.2, critTurns: Math.max(fighter.buffs?.critTurns || 0, 1) };
+  setLogMessage(`¡${fighter.type.name} activa Hidrodinámica! +20% crítico al atacar primero`, true);
 }
 
 function triggerOnHitPassive(attacker, defender, atk, dmg) {
@@ -3877,7 +3995,11 @@ const ARENA_FISH = {
     { fishId: 'remora' },
     { fishId: 'barracuda' },
     { fishId: 'pez_vela' },
-    { fishId: 'carabela_portuguesa' }
+      { fishId: 'carabela_portuguesa' },
+      { fishId: 'mola_mola' },
+      { fishId: 'lampuga' },
+      { fishId: 'calamar_poton' },
+      { fishId: 'tiburon_mako' }
   ],
   4: [
     { fishId: 'pez_linterna' },
@@ -4248,15 +4370,27 @@ function getAttackEffectDescriptions(atk) {
   }
 
   if (atk.selfHeal) {
-    const pct = Math.round(atk.selfHeal.pct * 100);
     const usesLabel = atk.selfHeal.maxUses === 1 ? ' (1 uso por combate)' : '';
-    parts.push({ text: `Recupera ${pct}% de los PS máximos${usesLabel}`, type: 'buff' });
+    if (atk.selfHeal.flat !== undefined) {
+      parts.push({ text: `Recupera ${atk.selfHeal.flat} PS${usesLabel}`, type: 'buff' });
+    } else {
+      const pct = Math.round(atk.selfHeal.pct * 100);
+      parts.push({ text: `Recupera ${pct}% de los PS máximos${usesLabel}`, type: 'buff' });
+    }
+  }
+
+  if (atk.name === 'Rastro de Sangre') {
+    parts.push({ text: 'Si el rival no está al 100% de vida, aumenta el ATF del Mako para el resto del combate', type: 'buff' });
   }
 
   if (atk.selfBuff) {
-    const labels = { spe: 'Velocidad' };
+    const labels = { spe: 'Velocidad', granSalto: 'Gran Salto' };
     const stat = labels[atk.selfBuff.stat] || atk.selfBuff.stat;
-    parts.push({ text: `Aumenta tu ${stat} +${atk.selfBuff.amount} durante ${atk.selfBuff.turns} turnos`, type: 'buff' });
+    if (atk.selfBuff.stat === 'granSalto') {
+      parts.push({ text: 'Esquiva el próximo ataque rival', type: 'buff' });
+    } else {
+      parts.push({ text: `Aumenta tu ${stat} +${atk.selfBuff.amount} durante ${atk.selfBuff.turns} turnos`, type: 'buff' });
+    }
   }
 
   if (atk.efecto) {
@@ -5917,8 +6051,8 @@ async function initCombat() {
   if (enemyBase?.passive?.name === 'Barbillones') enemyType.atk += 0.5;
   if (playerBaseFish?.passive?.name === 'Fuga Serpenteante') playerType.spe += 1;
   if (enemyBase?.passive?.name === 'Fuga Serpenteante') enemyType.spe += 1;
-  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, debuffs: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
-  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, debuffs: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {} };
+  state.player = { type: playerType, currentHp: playerType.maxHp, maxHp: playerType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, debuffs: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {}, granSaltoUsado: false };
+  state.enemy = { type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp, status: null, shield: 0, mimetismoUsado: false, hipnosisUsado: false, destelloActivado: false, debuffs: null, buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false, mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false, impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false, selfHealUsed: {}, granSaltoUsado: false };
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.isAnimating = false;
@@ -5930,6 +6064,17 @@ async function initCombat() {
 
   if (playerBaseFish?.passive?.name === 'Rompebarreras') state.player.rompebarrerasActivo = true;
   if (enemyBase?.passive?.name === 'Rompebarreras') state.enemy.rompebarrerasActivo = true;
+
+  if (playerBaseFish?.passive?.name === 'Aleta Centelleante') {
+    const bonus = Math.max(1, Math.round(playerType.spe * 0.1));
+    state.player.buffs = { ...(state.player.buffs || {}), speBoost: (state.player.buffs?.speBoost || 0) + bonus, speTurns: 2 };
+    setLogMessage(`¡${playerBaseFish.name} activa Aleta Centelleante! SPE +${bonus}`, true);
+  }
+  if (enemyBase?.passive?.name === 'Aleta Centelleante') {
+    const bonus = Math.max(1, Math.round(enemyType.spe * 0.1));
+    state.enemy.buffs = { ...(state.enemy.buffs || {}), speBoost: (state.enemy.buffs?.speBoost || 0) + bonus, speTurns: 2 };
+    setLogMessage(`¡${enemyBase.name} activa Aleta Centelleante! SPE +${bonus}`, true);
+  }
 
   if (playerBaseFish?.passive?.name === 'Emboscada') {
     state.player.buffs = { ...(state.player.buffs || {}), critChance: 0.3, critTurns: 1 };
@@ -6152,6 +6297,8 @@ function playerAttack(index) {
   updateAttackButtons();
   const atk = state.player.type.attacks[index];
 
+  if (state.turnPhase === 'player_first') applyOpeningCritPassive(state.player);
+
   if (atk.categoria === 'Efecto') {
     applyBuff(atk, state.player);
     applySelfBuff(atk, state.player);
@@ -6268,6 +6415,12 @@ function chooseEnemyAttack() {
     if (playerPhysicalAttacks > 0) return buffAtk;
   }
 
+  const granSaltoAtk = attacks.find(a => a.name === 'Gran Salto' && !enemy.granSaltoUsado);
+  if (granSaltoAtk && enemy.currentHp <= enemy.maxHp * 0.5) return granSaltoAtk;
+
+  const rastroAtk = attacks.find(a => a.name === 'Rastro de Sangre');
+  if (rastroAtk && enemy.currentHp < enemy.maxHp) return rastroAtk;
+
   const healAtk = attacks.find(a => a.selfHeal && !enemy.selfHealUsed?.[a.name] && enemy.currentHp <= enemy.maxHp * 0.5);
   if (healAtk) return healAtk;
 
@@ -6291,6 +6444,8 @@ function chooseEnemyAttack() {
 function doEnemyAttack() {
   if (state.gameOver) return;
   const atk = chooseEnemyAttack();
+
+  if (state.turnPhase === 'enemy_first') applyOpeningCritPassive(state.enemy);
 
   if (atk.categoria === 'Efecto') {
     applyBuff(atk, state.enemy);
@@ -6521,7 +6676,7 @@ function initSurvivalWave(wave) {
     buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
-    selfHealUsed: {}
+    selfHealUsed: {}, granSaltoUsado: false
   };
   state.enemy = {
     type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp,
@@ -6530,7 +6685,7 @@ function initSurvivalWave(wave) {
     buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
-    selfHealUsed: {}
+    selfHealUsed: {}, granSaltoUsado: false
   };
 
   state.isPlayerTurn = true;
@@ -6546,6 +6701,16 @@ function initSurvivalWave(wave) {
   if (playerBase?.passive?.name === 'Rompebarreras') {
     state.player.rompebarrerasActivo = true;
     setLogMessage('¡Rompebarreras activado! Podrás atacar dos veces seguidas.', true);
+  }
+  if (playerBase?.passive?.name === 'Aleta Centelleante') {
+    const bonus = Math.max(1, Math.round(playerType.spe * 0.1));
+    state.player.buffs = { ...(state.player.buffs || {}), speBoost: (state.player.buffs?.speBoost || 0) + bonus, speTurns: 2 };
+    setLogMessage(`¡${playerBase.name} activa Aleta Centelleante! SPE +${bonus}`, true);
+  }
+  if (enemyBase?.passive?.name === 'Aleta Centelleante') {
+    const bonus = Math.max(1, Math.round(enemyType.spe * 0.1));
+    state.enemy.buffs = { ...(state.enemy.buffs || {}), speBoost: (state.enemy.buffs?.speBoost || 0) + bonus, speTurns: 2 };
+    setLogMessage(`¡${enemyBase.name} activa Aleta Centelleante! SPE +${bonus}`, true);
   }
   if (playerBase?.passive?.name === 'Emboscada') {
     state.player.buffs = state.player.buffs || {};
@@ -6736,7 +6901,7 @@ function initFeverWave(wave, mode) {
     buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
-    selfHealUsed: {}
+    selfHealUsed: {}, granSaltoUsado: false
   };
   const enemyFields = {
     type: enemyType, currentHp: enemyType.maxHp, maxHp: enemyType.maxHp,
@@ -6745,7 +6910,7 @@ function initFeverWave(wave, mode) {
     buffs: null, sangradoTurns: 0, poisonTurns: 0, sangradoAttacked: false, frenesiActivo: false, quiebroUsado: false,
     mimetismoAbsolutoActivo: false, resistenciaMarinaActivo: false,
     impulsoHuidaActivo: false, rompebarrerasActivo: false, krakenActivo: false,
-    selfHealUsed: {}
+    selfHealUsed: {}, granSaltoUsado: false
   };
 
   if (state.equippedItems.length > 0) {
@@ -6759,6 +6924,16 @@ function initFeverWave(wave, mode) {
 
   state.player = playerFields;
   state.enemy = enemyFields;
+  if (playerBase?.passive?.name === 'Aleta Centelleante') {
+    const bonus = Math.max(1, Math.round(playerType.spe * 0.1));
+    state.player.buffs = { ...(state.player.buffs || {}), speBoost: (state.player.buffs?.speBoost || 0) + bonus, speTurns: 2 };
+    setLogMessage(`¡${playerBase.name} activa Aleta Centelleante! SPE +${bonus}`, true);
+  }
+  if (enemyBase?.passive?.name === 'Aleta Centelleante') {
+    const bonus = Math.max(1, Math.round(enemyType.spe * 0.1));
+    state.enemy.buffs = { ...(state.enemy.buffs || {}), speBoost: (state.enemy.buffs?.speBoost || 0) + bonus, speTurns: 2 };
+    setLogMessage(`¡${enemyBase.name} activa Aleta Centelleante! SPE +${bonus}`, true);
+  }
   state.isPlayerTurn = true;
   state.gameOver = false;
   state.turnPhase = 'player_first';
@@ -7046,8 +7221,11 @@ function muelleShuffleBoard(arr) {
 }
 
 function getMuelleFishPrize() {
-  const locked = FISH_TYPES.filter(f => !state.unlockedFish.includes(f.id));
-  const pool = locked.length > 0 ? locked : FISH_TYPES;
+  const arenaPool = getArenaFishPool(state.currentArena)
+    .map(e => getFishById(e.fishId))
+    .filter(Boolean);
+  const locked = arenaPool.filter(f => !state.unlockedFish.includes(f.id));
+  const pool = locked.length > 0 ? locked : arenaPool;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
