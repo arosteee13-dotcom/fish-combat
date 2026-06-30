@@ -80,14 +80,28 @@ function cargarPlantillaEquipo(equipo, callback) {
 
 function cargarYMostrarOficina(equipo) {
     if (!equipo) return;
+    if (!window.entrenadorUsuario) window.entrenadorUsuario = "Tú";
     cargarPlantillaEquipo(equipo, function (plantilla) {
         plantillaActual = plantilla || crearPlantillaGenerica(equipo.jugadores || 22);
         generarCalendarioCompleto();
         generarPlantillasIniciales();
+        inicializarStaminaGlobal();
         renderizarOficina();
         inicializarClasificacion();
         mostrarPantalla("pantalla-oficina");
     });
+}
+
+function inicializarStaminaGlobal() {
+    function init(j) { if (j.stamina === undefined || j.stamina === null) j.stamina = 100; }
+    plantillaActual.forEach(init);
+    for (var eq in mercadoTodasLasPlantillas) {
+        (mercadoTodasLasPlantillas[eq] || []).forEach(init);
+    }
+    for (var i = 0; i < laLigaClasificacion.length; i++) {
+        var club = laLigaClasificacion[i];
+        if (club.jugadores) club.jugadores.forEach(init);
+    }
 }
 
 function abrirModalPlantilla(equipo) {
@@ -1028,6 +1042,7 @@ function abrirPlantillaRival(nombreClub) {
             '<div style="text-align:center;padding:16px">' +
                 '<img src="' + (datosClub.escudo || "") + '" style="width:64px;height:64px;object-fit:contain;margin-bottom:8px" onerror="this.style.display=\'none\'">' +
                 '<h3 style="font-size:16px;margin:4px 0 8px;color:#111">' + nombreClub + '</h3>' +
+                '<div style="font-size:12px;color:#555;margin-bottom:4px">🧑‍🏫 ' + (nombreClub === (equipoSeleccionado && equipoSeleccionado.nombre) ? (window.entrenadorUsuario || "Tú") + ' 🟢' : (entrenadoresLiga[nombreClub] || "Sin entrenador")) + '</div>' +
                 '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px;color:#555;margin-top:8px">' +
                     '<div><strong style="color:#111;font-size:18px">' + posTexto + 'º</strong><br>Posición</div>' +
                     '<div><strong style="color:#111;font-size:18px">' + (datosClub.pj || 0) + '</strong><br>Partidos</div>' +
@@ -1206,22 +1221,26 @@ function abrirPlantillaRival(nombreClub) {
         // Alineación tab: tactical field with best 11
         (function () {
             // Detect best formation based on squad
-            var formacion = "4-3-3";
-            var contar = { POR: 0, LD: 0, LI: 0, DFC: 0, MCD: 0, MC: 0, MCO: 0, MI: 0, MD: 0, ED: 0, EI: 0, DC: 0 };
-            jugadores.forEach(function (j) {
-                var p = (j.posicion || "").toUpperCase();
-                if (contar[p] !== undefined) contar[p]++;
-            });
-            var totalDef = contar.LD + contar.LI + contar.DFC;
-            var totalMed = contar.MCD + contar.MC + contar.MCO + contar.MI + contar.MD;
-            var totalDel = contar.ED + contar.EI + contar.DC;
-            // Pick formation matching squad depth
-            if (totalDef >= 5 && totalMed >= 4 && totalDel >= 2) formacion = "5-3-2";
-            else if (totalDef >= 4 && totalMed >= 3 && totalDel >= 3) formacion = "4-3-3";
-            else if (totalDef >= 4 && totalMed >= 4 && totalDel >= 2) formacion = "4-4-2";
-            else if (totalDef >= 3 && totalMed >= 5 && totalDel >= 2) formacion = "3-5-2";
-            else if (totalDef >= 5 && totalMed >= 3 && totalDel >= 1) formacion = "5-4-1";
-            else if (totalDef >= 4 && totalMed >= 2 && totalDel >= 3) formacion = "4-2-3-1";
+            var formacion = formacionesEquipos[nombreClub];
+            if (!formacion) {
+                formacion = "4-3-3";
+                var contar = { POR: 0, LD: 0, LI: 0, DFC: 0, MCD: 0, MC: 0, MCO: 0, MI: 0, MD: 0, ED: 0, EI: 0, DC: 0 };
+                jugadores.forEach(function (j) {
+                    var p = (j.posicion || "").toUpperCase();
+                    if (contar[p] !== undefined) contar[p]++;
+                });
+                var totalDef = contar.LD + contar.LI + contar.DFC;
+                var totalMed = contar.MCD + contar.MC + contar.MCO + contar.MI + contar.MD;
+                var totalDel = contar.ED + contar.EI + contar.DC;
+                if (totalDef >= 5 && totalMed >= 4 && totalDel >= 2) formacion = "5-3-2";
+                else if (totalDef >= 4 && totalMed >= 3 && totalDel >= 3) formacion = "4-3-3";
+                else if (totalDef >= 4 && totalMed >= 4 && totalDel >= 2) formacion = "4-4-2";
+                else if (totalDef >= 3 && totalMed >= 5 && totalDel >= 2) formacion = "3-5-2";
+                else if (totalDef >= 5 && totalMed >= 3 && totalDel >= 1) formacion = "5-4-1";
+                else if (totalDef >= 4 && totalMed >= 2 && totalDel >= 3) formacion = "4-2-3-1";
+            } else if (Array.isArray(formacion)) {
+                formacion = formacion[0];
+            }
 
             var posiciones = POSICIONES_FORMACION[formacion] || POSICIONES_FORMACION["4-3-3"];
             var disponibles = jugadores.slice();
@@ -1229,19 +1248,19 @@ function abrirPlantillaRival(nombreClub) {
             // Map position tags to compatible positions (priority order)
             var compatibilidad = {
                 "POR": ["POR"],
-                "LD": ["LD", "CAD", "DFC", "LI"],
-                "LI": ["LI", "CAI", "DFC", "LD"],
+                "LD": ["LD", "CAD", "MD"],
+                "LI": ["LI", "CAI", "MI"],
                 "DFC": ["DFC", "LD", "LI", "CAD", "CAI"],
-                "CAD": ["CAD", "LD", "DFC"],
-                "CAI": ["CAI", "LI", "DFC"],
-                "MCD": ["MCD", "MC", "MD", "MI"],
-                "MC": ["MC", "MCD", "MCO", "MI", "MD"],
-                "MCO": ["MCO", "MC", "EI", "ED"],
-                "MI": ["MI", "MD", "MC", "MCD"],
-                "MD": ["MD", "MI", "MC", "MCD"],
-                "ED": ["ED", "EI", "DC", "MCO"],
-                "EI": ["EI", "ED", "DC", "MCO"],
-                "DC": ["DC", "ED", "EI"]
+                "CAD": ["CAD", "LD"],
+                "CAI": ["CAI", "LI"],
+                "MCD": ["MCD", "MC"],
+                "MC": ["MC", "MCD", "MCO"],
+                "MCO": ["MCO", "MC", "MI", "MD"],
+                "MI": ["MI", "MD", "LI", "EI"],
+                "MD": ["MD", "MI", "LD", "ED"],
+                "ED": ["ED", "EI", "MI", "MD"],
+                "EI": ["EI", "ED", "MI", "MD"],
+                "DC": ["DC", "MCO", "ED", "EI"]
             };
 
             function encontrarMejor(slotTag) {
@@ -1252,13 +1271,17 @@ function abrirPlantillaRival(nombreClub) {
                         var pos = (disponibles[di].posicion || "").toUpperCase();
                         if (pos === compats[ci]) {
                             var pod = disponibles[di].poder || disponibles[di].rating || 0;
-                            if (pod > bestPoder) {
-                                bestPoder = pod;
-                                bestIdx = di;
-                            }
+                            if (pod > bestPoder) { bestPoder = pod; bestIdx = di; }
                         }
                     }
                     if (bestIdx >= 0) break;
+                }
+                if (bestIdx < 0 && slotTag !== "POR") {
+                    for (var di = 0; di < disponibles.length; di++) {
+                        if ((disponibles[di].posicion || "").toUpperCase() !== "POR") {
+                            bestIdx = di; break;
+                        }
+                    }
                 }
                 if (bestIdx >= 0) return disponibles.splice(bestIdx, 1)[0];
                 return null;
@@ -1273,7 +1296,7 @@ function abrirPlantillaRival(nombreClub) {
             var ultimoPartido = null;
             for (var mi = calendarioLiga.length - 1; mi >= 0; mi--) {
                 var p = calendarioLiga[mi];
-                if (p.jugado && (p.local === nombreClub || p.visitante === nombreClub)) {
+                if (p.jugado && (p.local.nombre === nombreClub || p.visitante.nombre === nombreClub)) {
                     ultimoPartido = p;
                     break;
                 }
@@ -1383,29 +1406,61 @@ function abrirPlantillaRival(nombreClub) {
                 (mejor ? '<div style="margin-top:10px;font-size:12px;color:#555;text-align:center">Mejor jugador: <strong>' + mejor.nombre + '</strong> (' + (mejor.posicion || "-") + ')</div>' : '') +
             '</div>';
 
-        // Calendario tab: filter matches for this team
-        var partidosHtml = "";
-        var contPartidos = 0;
-        for (var m = 0; m < calendarioLiga.length; m++) {
-            var p = calendarioLiga[m];
-            if (p.local === nombreClub || p.visitante === nombreClub) {
-                contPartidos++;
-                var rival = p.local === nombreClub ? p.visitante : p.local;
-                var esLocal = p.local === nombreClub;
-                var resultadoStr = p.jugado ? (p.resultado || "-") : "vs";
-                var diaStr = p.dia || "?";
-                partidosHtml += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #f0f0f0;font-size:12px">' +
-                    '<span style="min-width:20px;color:#888;font-weight:600">J' + p.jornada + '</span>' +
-                    '<span style="flex:1;text-align:' + (esLocal ? 'right' : 'left') + ';color:#111;font-weight:' + (esLocal ? '700' : '400') + '">' + (esLocal ? nombreClub : rival) + '</span>' +
-                    '<span style="font-weight:700;color:' + (p.jugado ? '#3B811F' : '#888') + ';min-width:40px;text-align:center">' + resultadoStr + '</span>' +
-                    '<span style="flex:1;text-align:' + (esLocal ? 'left' : 'right') + ';color:#111;font-weight:' + (esLocal ? '400' : '700') + '">' + (esLocal ? rival : nombreClub) + '</span>' +
-                    '<span style="color:#888;font-size:10px;min-width:50px;text-align:right">' + diaStr + '</span>' +
-                    '</div>';
+        // Calendario tab: filter matches for this team (same style as user's calendar)
+        (function () {
+            var contCal = document.getElementById("rival-tab-calendario");
+            if (!contCal) return;
+            contCal.innerHTML = "";
+
+            var partidosEq = [];
+            for (var mc = 0; mc < calendarioLiga.length; mc++) {
+                var pc = calendarioLiga[mc];
+                if (pc.local.nombre === nombreClub || pc.visitante.nombre === nombreClub) {
+                    partidosEq.push(pc);
+                }
             }
-        }
-        document.getElementById("rival-tab-calendario").innerHTML = contPartidos > 0
-            ? '<div style="padding:4px 0">' + partidosHtml + '</div>'
-            : '<p style="color:#888;font-size:12px;text-align:center;padding:16px">No hay partidos registrados.</p>';
+            partidosEq.sort(function (a, b) { return a.jornada - b.jornada; });
+
+            if (partidosEq.length === 0) {
+                contCal.innerHTML = '<p style="color:#888;font-size:13px;padding:20px;text-align:center">No hay partidos programados.</p>';
+                return;
+            }
+
+            partidosEq.forEach(function (p) {
+                var esLocal = p.local.nombre === nombreClub;
+                var rivalObj = esLocal ? p.visitante : p.local;
+                var marcadoJugado = p.jornada < jornadaActual;
+
+                var filaCal = document.createElement("div");
+                filaCal.className = "partido-cal-row" + (marcadoJugado ? " jugado" : "");
+
+                var clubEscudo = "";
+                var clubArr = laLigaClasificacion.find(function (e) { return e.nombre === nombreClub; });
+                if (clubArr) clubEscudo = clubArr.escudo;
+
+                var izq = document.createElement("div");
+                izq.className = "partido-cal-izq";
+                izq.innerHTML =
+                    '<img class="partido-cal-logo" src="img/ligas/primera-division-ea.png" alt="Liga" onerror="this.style.display=\'none\'">' +
+                    '<span class="partido-cal-icono">' + (esLocal ? "🏠" : "✈️") + "</span>" +
+                    '<div class="partido-cal-equipos">' +
+                        '<img class="partido-cal-escudo" src="' + clubEscudo + '" alt="" onerror="this.src=\'img/clubes/429.jpg\'">' +
+                        '<span class="partido-cal-vs">vs</span>' +
+                        '<img class="partido-cal-escudo" src="' + (rivalObj.escudo || "img/clubes/429.jpg") + '" alt="" onerror="this.src=\'img/clubes/429.jpg\'">' +
+                        '<span class="partido-cal-nombre">' + rivalObj.nombre + "</span>" +
+                    "</div>";
+
+                var dcha = document.createElement("div");
+                dcha.className = "partido-cal-dcha";
+                dcha.innerHTML =
+                    '<span class="partido-cal-jornada">Jornada ' + p.jornada + ' - ' + p.dia + '</span>' +
+                    (p.jugado && p.resultado ? '<span class="partido-cal-resultado">' + p.resultado + '</span>' : '<span class="partido-cal-por-jugar">Por jugar</span>');
+
+                filaCal.appendChild(izq);
+                filaCal.appendChild(dcha);
+                contCal.appendChild(filaCal);
+            });
+        })();
     };
     window.xhrPlantillaRival = xhr;
     xhr.send();
@@ -2555,6 +2610,7 @@ function guardarPartida() {
         historialEconomia: historialEconomia,
         estadioZonas: estadioZonas,
         mercadoTodasLasPlantillas: mercadoTodasLasPlantillas,
+        entrenador: window.entrenadorUsuario || "Tú",
         fechaGuardado: timestamp,
         fecha: fechaLegible
     };
@@ -2703,6 +2759,8 @@ function renderizarSlotsCargar() {
             if (slot.historialEconomia) historialEconomia = slot.historialEconomia;
             if (slot.estadioZonas) estadioZonas = slot.estadioZonas;
             if (slot.mercadoTodasLasPlantillas) mercadoTodasLasPlantillas = slot.mercadoTodasLasPlantillas;
+            if (slot.entrenador) window.entrenadorUsuario = slot.entrenador;
+            else window.entrenadorUsuario = "Tú";
 
             cargarYMostrarOficina(equipoSeleccionado);
         };
@@ -2773,7 +2831,7 @@ function calcularMediaEnPosicion(jugador, posicionDestino) {
 
 const POSICIONES_FORMACION = {
     "4-3-3": [
-        { x: 50, y: 90, etiqueta: "POR" },
+        { x: 50, y: 88, etiqueta: "POR" },
         { x: 85, y: 68, etiqueta: "LD" }, { x: 35, y: 72, etiqueta: "DFC" },
         { x: 65, y: 72, etiqueta: "DFC" }, { x: 15, y: 68, etiqueta: "LI" },
         { x: 80, y: 45, etiqueta: "MC" }, { x: 50, y: 48, etiqueta: "MC" },
@@ -2782,7 +2840,7 @@ const POSICIONES_FORMACION = {
         { x: 20, y: 18, etiqueta: "EI" }
     ],
     "4-3-3(2)": [
-        { x: 50, y: 90, etiqueta: "POR" },
+        { x: 50, y: 88, etiqueta: "POR" },
         { x: 85, y: 68, etiqueta: "LD" }, { x: 35, y: 72, etiqueta: "DFC" },
         { x: 65, y: 72, etiqueta: "DFC" }, { x: 15, y: 68, etiqueta: "LI" },
         { x: 80, y: 45, etiqueta: "MC" }, { x: 50, y: 56, etiqueta: "MCD" },
@@ -2791,7 +2849,7 @@ const POSICIONES_FORMACION = {
         { x: 20, y: 18, etiqueta: "EI" }
     ],
     "4-4-2": [
-        { x: 50, y: 90, etiqueta: "POR" },
+        { x: 50, y: 88, etiqueta: "POR" },
         { x: 85, y: 70, etiqueta: "LD" }, { x: 35, y: 74, etiqueta: "DFC" },
         { x: 65, y: 74, etiqueta: "DFC" }, { x: 15, y: 70, etiqueta: "LI" },
         { x: 80, y: 46, etiqueta: "MD" }, { x: 40, y: 50, etiqueta: "MC" },
@@ -2799,25 +2857,25 @@ const POSICIONES_FORMACION = {
         { x: 35, y: 16, etiqueta: "DC" }, { x: 65, y: 16, etiqueta: "DC" }
     ],
     "3-4-3": [
-        { x: 50, y: 90, etiqueta: "POR" },
-        { x: 25, y: 68, etiqueta: "DFC" }, { x: 50, y: 68, etiqueta: "DFC" },
-        { x: 75, y: 68, etiqueta: "DFC" },
-        { x: 85, y: 46, etiqueta: "MD" }, { x: 38, y: 47, etiqueta: "MC" },
-        { x: 62, y: 47, etiqueta: "MC" }, { x: 15, y: 46, etiqueta: "MI" },
+        { x: 50, y: 88, etiqueta: "POR" },
+        { x: 25, y: 67, etiqueta: "DFC" }, { x: 50, y: 67, etiqueta: "DFC" },
+        { x: 75, y: 67, etiqueta: "DFC" },
+        { x: 85, y: 43, etiqueta: "MD" }, { x: 38, y: 44, etiqueta: "MC" },
+        { x: 62, y: 44, etiqueta: "MC" }, { x: 15, y: 43, etiqueta: "MI" },
         { x: 80, y: 18, etiqueta: "ED" }, { x: 50, y: 14, etiqueta: "DC" },
         { x: 20, y: 18, etiqueta: "EI" }
     ],
     "3-5-2": [
-        { x: 50, y: 90, etiqueta: "POR" },
-        { x: 25, y: 68, etiqueta: "DFC" }, { x: 50, y: 68, etiqueta: "DFC" },
-        { x: 75, y: 68, etiqueta: "DFC" },
-        { x: 85, y: 42, etiqueta: "MD" }, { x: 33, y: 43, etiqueta: "MC" },
-        { x: 50, y: 46, etiqueta: "MCD" },
-        { x: 67, y: 43, etiqueta: "MC" }, { x: 15, y: 42, etiqueta: "MI" },
+        { x: 50, y: 88, etiqueta: "POR" },
+        { x: 25, y: 67, etiqueta: "DFC" }, { x: 50, y: 67, etiqueta: "DFC" },
+        { x: 75, y: 67, etiqueta: "DFC" },
+        { x: 85, y: 41, etiqueta: "MD" }, { x: 33, y: 42, etiqueta: "MC" },
+        { x: 50, y: 45, etiqueta: "MCD" },
+        { x: 67, y: 42, etiqueta: "MC" }, { x: 15, y: 41, etiqueta: "MI" },
         { x: 35, y: 16, etiqueta: "DC" }, { x: 65, y: 16, etiqueta: "DC" }
     ],
     "4-5-1": [
-        { x: 50, y: 90, etiqueta: "POR" },
+        { x: 50, y: 88, etiqueta: "POR" },
         { x: 85, y: 70, etiqueta: "LD" }, { x: 35, y: 74, etiqueta: "DFC" },
         { x: 65, y: 74, etiqueta: "DFC" }, { x: 15, y: 70, etiqueta: "LI" },
         { x: 85, y: 42, etiqueta: "MD" }, { x: 33, y: 43, etiqueta: "MC" },
@@ -2826,34 +2884,34 @@ const POSICIONES_FORMACION = {
         { x: 50, y: 14, etiqueta: "DC" }
     ],
     "5-3-2": [
-        { x: 50, y: 90, etiqueta: "POR" },
-        { x: 90, y: 64, etiqueta: "CAD" }, { x: 28, y: 68, etiqueta: "DFC" },
-        { x: 50, y: 70, etiqueta: "DFC" },
-        { x: 72, y: 68, etiqueta: "DFC" }, { x: 10, y: 64, etiqueta: "CAI" },
+        { x: 50, y: 88, etiqueta: "POR" },
+        { x: 90, y: 62, etiqueta: "CAD" }, { x: 28, y: 66, etiqueta: "DFC" },
+        { x: 50, y: 66, etiqueta: "DFC" },
+        { x: 72, y: 66, etiqueta: "DFC" }, { x: 10, y: 62, etiqueta: "CAI" },
         { x: 25, y: 40, etiqueta: "MC" }, { x: 50, y: 42, etiqueta: "MCD" },
         { x: 75, y: 40, etiqueta: "MC" },
         { x: 35, y: 12, etiqueta: "DC" }, { x: 65, y: 12, etiqueta: "DC" }
     ],
     "5-4-1": [
-        { x: 50, y: 90, etiqueta: "POR" },
-        { x: 90, y: 64, etiqueta: "CAD" }, { x: 28, y: 67, etiqueta: "DFC" },
-        { x: 50, y: 67, etiqueta: "DFC" },
-        { x: 72, y: 67, etiqueta: "DFC" }, { x: 10, y: 64, etiqueta: "CAI" },
+        { x: 50, y: 88, etiqueta: "POR" },
+        { x: 90, y: 62, etiqueta: "CAD" }, { x: 28, y: 66, etiqueta: "DFC" },
+        { x: 50, y: 66, etiqueta: "DFC" },
+        { x: 72, y: 66, etiqueta: "DFC" }, { x: 10, y: 62, etiqueta: "CAI" },
         { x: 80, y: 40, etiqueta: "MD" }, { x: 40, y: 42, etiqueta: "MC" },
         { x: 60, y: 42, etiqueta: "MC" }, { x: 20, y: 40, etiqueta: "MI" },
         { x: 50, y: 14, etiqueta: "DC" }
     ],
     "5-2-3": [
-        { x: 50, y: 90, etiqueta: "POR" },
-        { x: 90, y: 64, etiqueta: "LD" }, { x: 28, y: 67, etiqueta: "DFC" },
-        { x: 50, y: 67, etiqueta: "DFC" },
-        { x: 72, y: 67, etiqueta: "DFC" }, { x: 10, y: 64, etiqueta: "LI" },
+        { x: 50, y: 88, etiqueta: "POR" },
+        { x: 90, y: 62, etiqueta: "LD" }, { x: 28, y: 66, etiqueta: "DFC" },
+        { x: 50, y: 66, etiqueta: "DFC" },
+        { x: 72, y: 66, etiqueta: "DFC" }, { x: 10, y: 62, etiqueta: "LI" },
         { x: 35, y: 40, etiqueta: "MC" }, { x: 65, y: 40, etiqueta: "MC" },
         { x: 80, y: 18, etiqueta: "ED" }, { x: 50, y: 14, etiqueta: "DC" },
         { x: 20, y: 18, etiqueta: "EI" }
     ],
     "4-2-3-1": [
-        { x: 50, y: 90, etiqueta: "POR" },
+        { x: 50, y: 88, etiqueta: "POR" },
         { x: 85, y: 72, etiqueta: "LD" }, { x: 35, y: 76, etiqueta: "DFC" },
         { x: 65, y: 76, etiqueta: "DFC" }, { x: 15, y: 72, etiqueta: "LI" },
         { x: 35, y: 53, etiqueta: "MCD" }, { x: 65, y: 53, etiqueta: "MCD" },
@@ -2862,7 +2920,7 @@ const POSICIONES_FORMACION = {
         { x: 50, y: 12, etiqueta: "DC" }
     ],
     "4-1-4-1": [
-        { x: 50, y: 90, etiqueta: "POR" },
+        { x: 50, y: 88, etiqueta: "POR" },
         { x: 85, y: 72, etiqueta: "LD" }, { x: 35, y: 76, etiqueta: "DFC" },
         { x: 65, y: 76, etiqueta: "DFC" }, { x: 15, y: 72, etiqueta: "LI" },
         { x: 50, y: 56, etiqueta: "MCD" },
@@ -2897,6 +2955,10 @@ function renderizarJugador(jugador, contenedor, poderPersonalizado, estadoPosici
     else if (estadoPosicion === "opuesta") colorBadge = "#e74c3c";
     else if (estadoPosicion === "secundaria") colorBadge = "#2ecc71";
 
+    let estamina = (jugador.stamina !== undefined ? jugador.stamina : (jugador.poder ? Math.min(100, jugador.poder + 10) : 70));
+    let estaminaColor = estamina >= 60 ? "#00c853" : estamina >= 35 ? "#ff9800" : "#d32f2f";
+    let lesIcon = jugador.lesionado ? '<span style="font-size:10px;margin-left:4px">🚑</span>' : '';
+
     let html =
         '<div class="nodo-jugador">' +
             '<div class="circulo-jugador">' +
@@ -2904,8 +2966,9 @@ function renderizarJugador(jugador, contenedor, poderPersonalizado, estadoPosici
                 '<span class="badge-poder" style="background:' + colorBadge + '">' + poderMostrar + '</span>' +
             '</div>' +
             '<div class="info-jugador">' +
-                '<div class="nombre-linea">' + apellido + '</div>' +
+                '<div class="nombre-linea">' + apellido + lesIcon + '</div>' +
                 '<div class="pos-linea">' + posPie + '</div>' +
+                '<div class="nodo-estamina-bar" style="width:80%;margin:2px auto 0"><div class="nodo-estamina-fill" style="width:' + estamina + '%;background:' + estaminaColor + '"></div></div>' +
             '</div>' +
         '</div>';
 
@@ -3025,8 +3088,9 @@ function renderizarReservas() {
 
         let pieAbrev = (jugador.pierna || "").substring(0, 3);
         let posPie = (jugador.posicion || "") + (pieAbrev ? " - " + pieAbrev : "");
-        let estamina = (jugador.estamina || (jugador.poder ? Math.min(100, jugador.poder + 10) : 70));
+        let estamina = (jugador.stamina !== undefined ? jugador.stamina : (jugador.poder ? Math.min(100, jugador.poder + 10) : 70));
         let estaminaColor = estamina >= 60 ? "#00c853" : estamina >= 35 ? "#ff9800" : "#d32f2f";
+        let lesBadge = jugador.lesionado ? '<span class="res-lesionado">🚑 ' + jugador.lesionado + 'p</span>' : '';
 
         ficha.innerHTML =
             '<div class="res-foto-wrapper">' +
@@ -3036,6 +3100,7 @@ function renderizarReservas() {
             '<div class="res-info">' +
                 '<span class="res-nombre">' + jugador.nombre + '</span>' +
                 '<span class="res-detalle">' + posPie + '</span>' +
+                lesBadge +
             '</div>' +
             '<div class="res-estamina">' +
                 '<div class="res-estamina-fill" style="width:' + estamina + '%;background:' + estaminaColor + '"></div>' +
@@ -3721,19 +3786,19 @@ function detectarFormacionRival(jugadores) {
 
 var compatibilidadPosiciones = {
     "POR": ["POR"],
-    "LD": ["LD", "CAD", "DFC", "LI"],
-    "LI": ["LI", "CAI", "DFC", "LD"],
+    "LD": ["LD", "CAD", "MD"],
+    "LI": ["LI", "CAI", "MI"],
     "DFC": ["DFC", "LD", "LI", "CAD", "CAI"],
-    "CAD": ["CAD", "LD", "DFC"],
-    "CAI": ["CAI", "LI", "DFC"],
-    "MCD": ["MCD", "MC", "MD", "MI"],
-    "MC": ["MC", "MCD", "MCO", "MI", "MD"],
-    "MCO": ["MCO", "MC", "EI", "ED"],
-    "MI": ["MI", "MD", "MC", "MCD"],
-    "MD": ["MD", "MI", "MC", "MCD"],
-    "ED": ["ED", "EI", "DC", "MCO"],
-    "EI": ["EI", "ED", "DC", "MCO"],
-    "DC": ["DC", "ED", "EI"]
+    "CAD": ["CAD", "LD"],
+    "CAI": ["CAI", "LI"],
+    "MCD": ["MCD", "MC"],
+    "MC": ["MC", "MCD", "MCO"],
+    "MCO": ["MCO", "MC", "MI", "MD"],
+    "MI": ["MI", "MD", "LI", "EI"],
+    "MD": ["MD", "MI", "LD", "ED"],
+    "ED": ["ED", "EI", "MI", "MD"],
+    "EI": ["EI", "ED", "MI", "MD"],
+    "DC": ["DC", "MCO", "ED", "EI"]
 };
 
 function poderEfectivo(jugador) {
@@ -3757,9 +3822,62 @@ function encontrarMejorRival(slotTag, disponibles) {
         }
         if (bestIdx >= 0) break;
     }
+    if (bestIdx < 0 && slotTag !== "POR") {
+        for (var di = 0; di < disponibles.length; di++) {
+            if ((disponibles[di].posicion || "").toUpperCase() !== "POR") {
+                bestIdx = di; break;
+            }
+        }
+    }
     if (bestIdx >= 0) return disponibles.splice(bestIdx, 1)[0];
     return null;
 }
+
+var formacionesEquipos = {
+    "FC Barcelona": "4-2-3-1",
+    "Real Madrid": ["4-3-3", "4-4-2"],
+    "Atlético de Madrid": ["5-3-2", "4-4-2"],
+    "Athletic Club": "4-2-3-1",
+    "Real Sociedad": "4-3-3",
+    "Real Betis": "4-2-3-1",
+    "Celta": "3-4-3",
+    "Sevilla": "4-3-3",
+    "Girona": "4-2-3-1",
+    "Valencia": "4-4-2",
+    "Osasuna": "4-3-3",
+    "Rayo Vallecano": "4-2-3-1",
+    "Getafe": ["4-4-2", "5-3-2"],
+    "Deportivo Alavés": "4-2-3-1",
+    "Mallorca": ["4-2-3-1", "5-4-1"],
+    "Espanyol": "4-4-2",
+    "Real Oviedo": "4-2-3-1",
+    "Elche": "4-3-3",
+    "Levante": "4-2-3-1",
+    "Villarreal": "4-4-2"
+};
+
+var entrenadoresLiga = {
+    "FC Barcelona": "Hansi Flick",
+    "Real Madrid": "Carlo Ancelotti",
+    "Atlético de Madrid": "Diego Simeone",
+    "Athletic Club": "Ernesto Valverde",
+    "Real Sociedad": "Imanol Alguacil",
+    "Real Betis": "Manuel Pellegrini",
+    "Celta": "Claudio Giráldez",
+    "Sevilla": "García Pimienta",
+    "Girona": "Míchel",
+    "Valencia": "Rubén Baraja",
+    "Osasuna": "Vicente Moreno",
+    "Rayo Vallecano": "Íñigo Pérez",
+    "Getafe": "José Bordalás",
+    "Deportivo Alavés": "Luis García",
+    "Mallorca": "Jagoba Arrasate",
+    "Espanyol": "Manolo González",
+    "Real Oviedo": "Javi Calleja",
+    "Elche": "Eder Sarabia",
+    "Levante": "Julián Calero",
+    "Villarreal": "Marcelino"
+};
 
 function obtenerAlineacionIA(equipoNombre) {
     var plantilla = mercadoTodasLasPlantillas[equipoNombre];
@@ -3772,10 +3890,15 @@ function obtenerAlineacionIA(equipoNombre) {
         }
         mercadoTodasLasPlantillas[equipoNombre] = plantilla;
     }
-    var formacion = detectarFormacionRival(plantilla);
+    var formacion = formacionesEquipos[equipoNombre];
+    if (!formacion) {
+        formacion = detectarFormacionRival(plantilla);
+    } else if (Array.isArray(formacion)) {
+        formacion = formacion[Math.floor(Math.random() * formacion.length)];
+    }
     var posiciones = POSICIONES_FORMACION[formacion] || POSICIONES_FORMACION["4-3-3"];
     var titulares = [];
-    var disponibles = plantilla.filter(function (j) { return j && !j.sancion; }).slice();
+    var disponibles = plantilla.filter(function (j) { return j && !j.sancion && !j.lesionado; }).slice();
     posiciones.forEach(function (slot) {
         titulares.push(encontrarMejorRival(slot.etiqueta, disponibles));
     });
@@ -3941,6 +4064,23 @@ function simularPartidoCompleto(alineacionLocal, alineacionVisit, nombreLocal, n
         if (!mvp || e.nota > mvp.nota) mvp = e;
     });
     if (mvp) mvp.mvpOtorgado = true;
+
+    // Injury generation
+    function generarLesiones(jugadores) {
+        jugadores.forEach(function (j) {
+            if (!j) return;
+            var prob = 0.02;
+            var stam = (j.stamina !== undefined && j.stamina !== null) ? j.stamina : 100;
+            if (stam < 15) prob = 0.08;
+            else if (stam < 30) prob = 0.05;
+            if (Math.random() < prob) {
+                var partidos = 1 + Math.floor(Math.random() * 4);
+                j.lesionado = (j.lesionado || 0) + partidos;
+            }
+        });
+    }
+    generarLesiones(todosTitularesLocales);
+    generarLesiones(todosTitularesVisit);
 
     return {
         golesLocal: golesLocal,
@@ -4382,6 +4522,101 @@ function aplicarDesgasteFisico(eventosUsr, eventosRival, nombreRival) {
     plantillaRival.forEach(recover);
 }
 
+// ==========================================================================
+// SQUAD FILLER FOR AI TEAMS
+// ==========================================================================
+
+function generarJugadorGenerico(posForzada) {
+    var posicionesPool = ["POR", "DFC", "LD", "LI", "MCD", "MC", "MCO", "DC", "ED", "EI"];
+    var pos = posForzada || posicionesPool[Math.floor(Math.random() * posicionesPool.length)];
+    var nombres = ["Álex", "Carlos", "David", "Javier", "Miguel", "Pablo", "Sergio", "Víctor", "Raúl", "Adrián"];
+    var apellidos = ["López", "Martín", "García", "Rodríguez", "Fernández", "Sánchez", "Díaz", "Torres", "Ruiz", "Moreno"];
+    return {
+        id: 900000 + Math.floor(Math.random() * 99000),
+        nombre: nombres[Math.floor(Math.random() * nombres.length)] + " " + apellidos[Math.floor(Math.random() * apellidos.length)],
+        posicion: pos,
+        nacionalidad: "🇪🇸",
+        edad: 18 + Math.floor(Math.random() * 5),
+        valor: (200 + Math.floor(Math.random() * 500)) + "K",
+        salario: "4K",
+        poder: 45 + Math.floor(Math.random() * 15),
+        pierna: Math.random() < 0.5 ? "DER" : "IZQ",
+        rating: 45 + Math.floor(Math.random() * 15),
+        stamina: 100,
+        foto: "img/jugadores/67849.jpg",
+        estadisticas: { pj: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvp: 0 },
+        historialPartidos: []
+    };
+}
+
+function rellenarPlantillasIA() {
+    for (var eq in mercadoTodasLasPlantillas) {
+        var plantilla = mercadoTodasLasPlantillas[eq] || [];
+        var disponibles = plantilla.filter(function (j) {
+            return j && !j.sancion && !j.lesionado;
+        });
+        if (disponibles.length >= 16) continue;
+        var necesarios = 16 - disponibles.length;
+        for (var n = 0; n < necesarios; n++) {
+            plantilla.push(generarJugadorGenerico());
+        }
+    }
+}
+
+// ==========================================================================
+// END-OF-SEASON DEVELOPMENT
+// ==========================================================================
+
+function aplicarDesarrolloAnual() {
+    function process(jugadores) {
+        jugadores.forEach(function (j) {
+            if (!j) return;
+            j.edad = (j.edad || 0) + 1;
+
+            var pj = j.estadisticas ? (j.estadisticas.pj || 0) : 0;
+            var avgNota = 0;
+            if (pj > 0 && j.historialPartidos && j.historialPartidos.length > 0) {
+                var suma = 0;
+                j.historialPartidos.forEach(function (h) { suma += (h.nota || 5.0); });
+                avgNota = suma / j.historialPartidos.length;
+            }
+
+            var basePoder = j.poder || j.rating || 50;
+
+            if (pj === 0) {
+                if (j.edad < 30) {
+                    j.poder = Math.max(1, Math.min(99, basePoder - 1));
+                } else {
+                    j.poder = Math.max(1, Math.min(99, basePoder - 3));
+                }
+                if (j.rating !== undefined) j.rating = j.poder;
+                return;
+            }
+
+            var factorPartidos = Math.min(pj, 38) / 38;
+            var factorRendimiento = Math.max(0, Math.min(1, (avgNota - 5.0) / 3.0));
+
+            if (j.edad < 30) {
+                var ganancia = 1 + Math.round(factorPartidos * 2 + factorRendimiento * 2 + (Math.random() - 0.5));
+                j.poder = Math.max(1, Math.min(99, basePoder + ganancia));
+            } else {
+                var perdida = -1 + Math.round(factorPartidos * 1 + factorRendimiento * 1 + (Math.random() - 0.5));
+                perdida = Math.max(-5, Math.min(0, perdida));
+                j.poder = Math.max(1, Math.min(99, basePoder + perdida));
+            }
+            if (j.rating !== undefined) j.rating = j.poder;
+        });
+    }
+
+    process(plantillaActual);
+    for (var eq in mercadoTodasLasPlantillas) {
+        process(mercadoTodasLasPlantillas[eq]);
+    }
+    for (var i = 0; i < laLigaClasificacion.length; i++) {
+        if (laLigaClasificacion[i].jugadores) process(laLigaClasificacion[i].jugadores);
+    }
+}
+
 function mostrarResultadoPartido(resultado, partido, esLocal, nombreUsr, rivalNombre, otrosResultados) {
     var golesLocal = resultado.golesLocal;
     var golesVisit = resultado.golesVisit;
@@ -4515,8 +4750,19 @@ function jugarJornada() {
     for (var ti = 0; ti < 11; ti++) {
         var jid = tacticaGuardada.titulares[ti];
         var jug = null;
-        if (jid) jug = plantillaActual.find(function (j) { return (j.id === jid || j.id === Number(jid)) && !j.sancion; });
+        if (jid) jug = plantillaActual.find(function (j) { return (j.id === jid || j.id === Number(jid)) && !j.sancion && !j.lesionado; });
         titularesUsr.push(jug || null);
+    }
+    // Fill empty non-POR slots with best available player
+    var idsUsados = {};
+    titularesUsr.forEach(function (j) { if (j) idsUsados[j.id || j.nombre] = true; });
+    for (var ti2 = 0; ti2 < titularesUsr.length; ti2++) {
+        if (!titularesUsr[ti2] && ti2 > 0) {
+            var reemplazo = plantillaActual.find(function (j) {
+                return !idsUsados[j.id || j.nombre] && !j.sancion && !j.lesionado && (j.posicion || "").toUpperCase() !== "POR";
+            });
+            if (reemplazo) { titularesUsr[ti2] = reemplazo; idsUsados[reemplazo.id || reemplazo.nombre] = true; }
+        }
     }
     var suplentesUsr = plantillaActual.filter(function (j) { return titularesUsr.indexOf(j) < 0; });
     var alineacionUsr = { titulares: titularesUsr, sustitutos: suplentesUsr, formacion: tacticaGuardada.formacion || "4-3-3" };
@@ -4597,6 +4843,9 @@ function jugarJornada() {
         }
     });
 
+    // Apply stamina drain/recovery
+    aplicarDesgasteFisico(eventosUsr, eventosRival, rivalNombre);
+
     // Simulate other league matches
     var otrosResultados = simularOtrosPartidosJornada(jornadaActual, nombreUsr);
 
@@ -4647,12 +4896,21 @@ function jugarJornada() {
     jornadaActual += 1;
 
     // Decrement suspensions for all players
-    plantillaActual.forEach(function (j) { if (j.sancion && j.sancion > 0) j.sancion--; });
+    var jornadaJugada = jornadaActual - 1;
+    if (jornadaJugada === 38) {
+        aplicarDesarrolloAnual();
+    }
+    plantillaActual.forEach(function (j) {
+        if (j.sancion && j.sancion > 0) j.sancion--;
+        if (j.lesionado && j.lesionado > 0) j.lesionado--;
+    });
     for (var eqS in mercadoTodasLasPlantillas) {
         (mercadoTodasLasPlantillas[eqS] || []).forEach(function (j) {
             if (j.sancion && j.sancion > 0) j.sancion--;
+            if (j.lesionado && j.lesionado > 0) j.lesionado--;
         });
     }
+    rellenarPlantillasIA();
 
     // Show match result
     mostrarResultadoPartido(resultado, partido, esLocal, nombreUsr, rivalNombre, otrosResultados);
