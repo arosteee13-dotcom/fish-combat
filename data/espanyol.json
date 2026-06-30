@@ -1,0 +1,491 @@
+[
+  {
+    "id": 239190,
+    "nombre": "M. Dmitrović",
+    "posicion": "POR",
+    "nacionalidad": "🇷🇸",
+    "edad": 34,
+    "valor": "4.96M",
+    "salario": "36K",
+    "poder": 78,
+    "pierna": "IZQ",
+    "rating": 78,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/239190.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 891928,
+    "nombre": "Ángel Fortuño",
+    "posicion": "POR",
+    "nacionalidad": "🇪🇸",
+    "edad": 24,
+    "valor": "1.69M",
+    "salario": "14K",
+    "poder": 53,
+    "pierna": "DER",
+    "rating": 53,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/891928.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 776240,
+    "nombre": "Pol Tristán",
+    "posicion": "POR",
+    "nacionalidad": "🇪🇸",
+    "edad": 24,
+    "valor": "819K",
+    "salario": "8K",
+    "poder": 47,
+    "pierna": "AMB",
+    "rating": 47,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/776240.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 966527,
+    "nombre": "Omar El Hilali",
+    "posicion": "LD",
+    "posicionesSecundarias": [
+      "DFC"
+    ],
+    "nacionalidad": "🇲🇦",
+    "edad": 22,
+    "valor": "18.93M",
+    "salario": "110K",
+    "poder": 77,
+    "pierna": "DER",
+    "rating": 77,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/966527.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 28766,
+    "nombre": "L. Cabrera",
+    "posicion": "DFC",
+    "posicionesSecundarias": [
+      "LI"
+    ],
+    "nacionalidad": "🇺🇾",
+    "edad": 35,
+    "valor": "4.10M",
+    "salario": "32K",
+    "poder": 76,
+    "pierna": "IZQ",
+    "rating": 76,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/28766.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 423294,
+    "nombre": "Miguel Rubio",
+    "posicion": "DFC",
+    "posicionesSecundarias": [
+      "LD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 28,
+    "valor": "4.28M",
+    "salario": "32K",
+    "poder": 73,
+    "pierna": "DER",
+    "rating": 73,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/423294.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 878369,
+    "nombre": "J. Salinas",
+    "posicion": "LI",
+    "posicionesSecundarias": [
+      "MI"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "6.37M",
+    "salario": "44K",
+    "poder": 73,
+    "pierna": "IZQ",
+    "rating": 73,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/878369.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 897444,
+    "nombre": "C. Riedel",
+    "posicion": "DFC",
+    "posicionesSecundarias": [
+      "LD"
+    ],
+    "nacionalidad": "🇩🇪",
+    "edad": 22,
+    "valor": "10.43M",
+    "salario": "72K",
+    "poder": 67,
+    "pierna": "DER",
+    "rating": 67,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/897444.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 922062,
+    "nombre": "Rubén Sánchez",
+    "posicion": "LD",
+    "posicionesSecundarias": [
+      "ED"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "3.73M",
+    "salario": "28K",
+    "poder": 67,
+    "pierna": "DER",
+    "rating": 67,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/922062.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 772627,
+    "nombre": "Pablo Ramón",
+    "posicion": "DFC",
+    "nacionalidad": "🇪🇸",
+    "edad": 24,
+    "valor": "2.12M",
+    "salario": "18K",
+    "poder": 66,
+    "pierna": "DER",
+    "rating": 66,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/772627.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 3188379,
+    "nombre": "Roger Hinojo",
+    "posicion": "LI",
+    "posicionesSecundarias": [
+      "DFC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 21,
+    "valor": "1.49M",
+    "salario": "12K",
+    "poder": 65,
+    "pierna": "IZQ",
+    "rating": 65,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3188379.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 951777,
+    "nombre": "Hugo Pérez",
+    "posicion": "DFC",
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "1.08M",
+    "salario": "10K",
+    "poder": 55,
+    "pierna": "DER",
+    "rating": 55,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/951777.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 282577,
+    "nombre": "Edu Expósito",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCO"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 29,
+    "valor": "4.61M",
+    "salario": "34K",
+    "poder": 73,
+    "pierna": "DER",
+    "rating": 73,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/282577.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 319028,
+    "nombre": "Pol Lozano",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 26,
+    "valor": "6.22M",
+    "salario": "44K",
+    "poder": 73,
+    "pierna": "DER",
+    "rating": 73,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/319028.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 878182,
+    "nombre": "Urko González",
+    "posicion": "MCD",
+    "posicionesSecundarias": [
+      "DFC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "5.66M",
+    "salario": "40K",
+    "poder": 73,
+    "pierna": "DER",
+    "rating": 73,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/878182.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 3188380,
+    "nombre": "Rafel Bauzà",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 21,
+    "valor": "2.86M",
+    "salario": "22K",
+    "poder": 68,
+    "pierna": "DER",
+    "rating": 68,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3188380.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 393747,
+    "nombre": "José Gragera",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 26,
+    "valor": "2.09M",
+    "salario": "16K",
+    "poder": 65,
+    "pierna": "DER",
+    "rating": 65,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/393747.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 1002236,
+    "nombre": "Javi Hernández",
+    "posicion": "MCO",
+    "posicionesSecundarias": [
+      "MC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 22,
+    "valor": "3.24M",
+    "salario": "24K",
+    "poder": 61,
+    "pierna": "IZQ",
+    "rating": 61,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/1002236.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 3166163,
+    "nombre": "Justin Smith",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "DFC"
+    ],
+    "nacionalidad": "🇨🇦",
+    "edad": 23,
+    "valor": "928K",
+    "salario": "8K",
+    "poder": 58,
+    "pierna": "DER",
+    "rating": 58,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3166163.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 950043,
+    "nombre": "Roberto",
+    "posicion": "DC",
+    "posicionesSecundarias": [
+      "EI"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "15.27M",
+    "salario": "96K",
+    "poder": 79,
+    "pierna": "DER",
+    "rating": 79,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/950043.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 337628,
+    "nombre": "Javi Puado",
+    "posicion": "EI",
+    "posicionesSecundarias": [
+      "DC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 28,
+    "valor": "12.05M",
+    "salario": "80K",
+    "poder": 79,
+    "pierna": "DER",
+    "rating": 79,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/337628.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 27930,
+    "nombre": "Kike García",
+    "posicion": "DC",
+    "posicionesSecundarias": [
+      "ED"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 36,
+    "valor": "1.78M",
+    "salario": "14K",
+    "poder": 76,
+    "pierna": "DER",
+    "rating": 76,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/27930.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 839077,
+    "nombre": "Tyrhys Dolan",
+    "posicion": "ED",
+    "posicionesSecundarias": [
+      "DC"
+    ],
+    "nacionalidad": "🇬🇧",
+    "edad": 24,
+    "valor": "13.43M",
+    "salario": "86K",
+    "poder": 76,
+    "pierna": "DER",
+    "rating": 76,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/839077.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 122718,
+    "nombre": "Pere Milla",
+    "posicion": "EI",
+    "posicionesSecundarias": [
+      "MCO"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 33,
+    "valor": "2.71M",
+    "salario": "20K",
+    "poder": 73,
+    "pierna": "IZQ",
+    "rating": 73,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/122718.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 1017791,
+    "nombre": "Marcos Fernández",
+    "posicion": "DC",
+    "posicionesSecundarias": [
+      "MD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "2.22M",
+    "salario": "18K",
+    "poder": 68,
+    "pierna": "DER",
+    "rating": 68,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/1017791.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 844933,
+    "nombre": "Jofre",
+    "posicion": "ED",
+    "posicionesSecundarias": [
+      "MC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "5.62M",
+    "salario": "40K",
+    "poder": 63,
+    "pierna": "DER",
+    "rating": 63,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/844933.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 922231,
+    "nombre": "O. Sadik",
+    "posicion": "DC",
+    "posicionesSecundarias": [
+      "MI"
+    ],
+    "nacionalidad": "🇲🇦",
+    "edad": 22,
+    "valor": "1.52M",
+    "salario": "12K",
+    "poder": 62,
+    "pierna": "IZQ",
+    "rating": 62,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/922231.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  },
+  {
+    "id": 993032,
+    "nombre": "Antoniu",
+    "posicion": "ED",
+    "posicionesSecundarias": [
+      "MD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "2.44M",
+    "salario": "20K",
+    "poder": 53,
+    "pierna": "DER",
+    "rating": 53,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/993032.jpg?size=120x&lossy=1",
+    "estadisticas": { "pj": 0, "goles": 0, "asistencias": 0, "amarillas": 0, "rojas": 0, "mvp": 0 },
+    "historialPartidos": []
+  }
+]

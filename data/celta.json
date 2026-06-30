@@ -1,0 +1,684 @@
+[
+  {
+    "id": 2001,
+    "nombre": "Andrei Radu",
+    "posicion": "POR",
+    "nacionalidad": "🇷🇴",
+    "edad": 29,
+    "valor": "8.84M",
+    "salario": "62K",
+    "poder": 80,
+    "pierna": "DER",
+    "rating": 80,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/284805.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2002,
+    "nombre": "Marc Vidal",
+    "posicion": "POR",
+    "nacionalidad": "🇪🇸",
+    "edad": 26,
+    "valor": "847K",
+    "salario": "8K",
+    "poder": 53,
+    "pierna": "DER",
+    "rating": 53,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/423661.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2003,
+    "nombre": "Iván Villar",
+    "posicion": "POR",
+    "nacionalidad": "🇪🇸",
+    "edad": 28,
+    "valor": "1.66M",
+    "salario": "14K",
+    "poder": 47,
+    "pierna": "DER",
+    "rating": 47,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/197274.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2004,
+    "nombre": "Carl Starfelt",
+    "posicion": "DFC",
+    "nacionalidad": "🇸🇪",
+    "edad": 31,
+    "valor": "10.87M",
+    "salario": "76K",
+    "poder": 80,
+    "pierna": "DER",
+    "rating": 80,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/212343.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2005,
+    "nombre": "Javi Rodríguez",
+    "posicion": "DFC",
+    "posicionesSecundarias": [
+      "MD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "13.99M",
+    "salario": "90K",
+    "poder": 78,
+    "pierna": "DER",
+    "rating": 78,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/1021586.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2006,
+    "nombre": "Sergio Carreira",
+    "posicion": "LD",
+    "posicionesSecundarias": [
+      "MD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "8.66M",
+    "salario": "60K",
+    "poder": 76,
+    "pierna": "DER",
+    "rating": 76,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/460639.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2007,
+    "nombre": "Álvaro Núñez",
+    "posicion": "LD",
+    "posicionesSecundarias": [
+      "MD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "8.17M",
+    "salario": "58K",
+    "poder": 75,
+    "pierna": "DER",
+    "rating": 75,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/738484.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2008,
+    "nombre": "Manu Sánchez",
+    "posicion": "LI",
+    "posicionesSecundarias": [
+      "CAI"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "10.69M",
+    "salario": "74K",
+    "poder": 78,
+    "pierna": "IZQ",
+    "rating": 78,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/776229.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2009,
+    "nombre": "Javi Rueda",
+    "posicion": "LD",
+    "posicionesSecundarias": [
+      "MD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 24,
+    "valor": "8.22M",
+    "salario": "58K",
+    "poder": 75,
+    "pierna": "DER",
+    "rating": 75,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/879218.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2010,
+    "nombre": "Unai Núñez",
+    "posicion": "DFC",
+    "nacionalidad": "🇪🇸",
+    "edad": 29,
+    "valor": "5.76M",
+    "salario": "42K",
+    "poder": 73,
+    "pierna": "DER",
+    "rating": 73,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/186124.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2011,
+    "nombre": "C. Domínguez",
+    "posicion": "DFC",
+    "posicionesSecundarias": [
+      "LI"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "6.89M",
+    "salario": "48K",
+    "poder": 74,
+    "pierna": "IZQ",
+    "rating": 74,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/950939.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2012,
+    "nombre": "Yoel Lago",
+    "posicion": "DFC",
+      "posicionesSecundarias": [
+      "MC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 22,
+    "valor": "7.63M",
+    "salario": "54K",
+    "poder": 72,
+    "pierna": "DER",
+    "rating": 72,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/996554.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2013,
+    "nombre": "Manu Fernández",
+    "posicion": "DFC",
+      "posicionesSecundarias": [
+      "MC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "1.51M",
+    "salario": "12K",
+    "poder": 62,
+    "pierna": "DER",
+    "rating": 62,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3252995.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2014,
+    "nombre": "Ilaix Moriba",
+    "posicion": "MC",
+      "posicionesSecundarias": [
+      "MCD"
+    ],
+    "nacionalidad": "🇬🇳",
+    "edad": 23,
+    "valor": "13.45M",
+    "salario": "86K",
+    "poder": 79,
+    "pierna": "DER",
+    "rating": 79,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/776252.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2015,
+    "nombre": "Miguel Román",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "5.56M",
+    "salario": "42K",
+    "poder": 72,
+    "pierna": "DER",
+    "rating": 72,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/993015.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2016,
+    "nombre": "Aleix Febas",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCO"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 30,
+    "valor": "5.94M",
+    "salario": "44K",
+    "poder": 74,
+    "pierna": "DER",
+    "rating": 74,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/136595.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2017,
+    "nombre": "M. Vecino",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCD"
+    ],
+    "nacionalidad": "🇺🇾",
+    "edad": 34,
+    "valor": "4.76M",
+    "salario": "36K",
+    "poder": 75,
+    "pierna": "DER",
+    "rating": 75,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/130739.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2018,
+    "nombre": "Carlos Dotor",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCO"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "1.31M",
+    "salario": "12K",
+    "poder": 65,
+    "pierna": "DER",
+    "rating": 65,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/776278.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2019,
+    "nombre": "Hugo Sotelo",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCO"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 22,
+    "valor": "6.57M",
+    "salario": "48K",
+    "poder": 73,
+    "pierna": "DER",
+    "rating": 73,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/950972.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2020,
+    "nombre": "Damián",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "4.63M",
+    "salario": "36K",
+    "poder": 70,
+    "pierna": "IZQ",
+    "rating": 70,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/950945.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2021,
+    "nombre": "Borja Iglesias",
+    "posicion": "DC",
+    "nacionalidad": "🇪🇸",
+    "edad": 33,
+    "valor": "6.70M",
+    "salario": "48K",
+    "poder": 77,
+    "pierna": "DER",
+    "rating": 77,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/162561.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2022,
+    "nombre": "Ferran Jutglà",
+    "posicion": "DC",
+    "posicionesSecundarias": [
+      "ED"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 27,
+    "valor": "12.00M",
+    "salario": "80K",
+    "poder": 80,
+    "pierna": "DER",
+    "rating": 80,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/424442.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2023,
+    "nombre": "Pablo Durán",
+    "posicion": "DC",
+    "posicionesSecundarias": [
+      "EI"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "8.72M",
+    "salario": "60K",
+    "poder": 76,
+    "pierna": "DER",
+    "rating": 76,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3145326.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2024,
+    "nombre": "Iago Aspas",
+    "posicion": "DC",
+    "posicionesSecundarias": [
+      "ED"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 38,
+    "valor": "93K",
+    "salario": "10K",
+    "poder": 82,
+    "pierna": "IZQ",
+    "rating": 82,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/7408.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2025,
+    "nombre": "W. Swedberg",
+    "posicion": "EI",
+    "posicionesSecundarias": [
+      "MCO"
+    ],
+    "nacionalidad": "🇸🇪",
+    "edad": 22,
+    "valor": "12.58M",
+    "salario": "82K",
+    "poder": 79,
+    "pierna": "DER",
+    "rating": 79,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/887481.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2026,
+    "nombre": "Hugo Álvarez",
+    "posicion": "EI",
+    "posicionesSecundarias": [
+      "LI"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 22,
+    "valor": "10.57M",
+    "salario": "72K",
+    "poder": 77,
+    "pierna": "DER",
+    "rating": 77,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/992911.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2027,
+    "nombre": "Carles Pérez",
+    "posicion": "ED",
+    "posicionesSecundarias": [
+      "EI"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 28,
+    "valor": "4.52M",
+    "salario": "34K",
+    "poder": 74,
+    "pierna": "IZQ",
+    "rating": 74,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/284540.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 2028,
+    "nombre": "J. El-Abdellaoui",
+    "posicion": "ED",
+    "posicionesSecundarias": [
+      "DC"
+    ],
+    "nacionalidad": "🇲🇦",
+    "edad": 20,
+    "valor": "7.37M",
+    "salario": "52K",
+    "poder": 72,
+    "pierna": "DER",
+    "rating": 72,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3218421.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  }
+]

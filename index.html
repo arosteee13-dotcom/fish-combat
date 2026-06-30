@@ -1,357 +1,553 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fish Battle Arena</title>
-  <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Manager Minimalista</title>
 </head>
 <body>
-  <div id="app">
-    <div id="ambient-fish-layer" class="ambient-fish-layer"></div>
+    <div class="pantalla-movil">
 
-    <div id="screen-main" class="screen active">
-      <header class="main-header">
-        <div class="header-left">
-          <div class="header-currencies">
-            <span id="coin-display" class="header-coin">🪙 100</span>
-            <span id="diamond-display" class="header-diamond">💎 0</span>
-          </div>
-          <button type="button" id="header-user-box" class="header-user-box">
-            <span class="header-user-avatar">👤</span>
-            <span class="header-user-name">Jugador123</span>
-          </button>
-        </div>
-        <div class="header-right">
-          <div class="header-actions-row">
-            <button id="btn-amigos" class="header-action-btn" aria-label="Amigos">👥</button>
-            <button id="btn-news" class="header-action-btn" aria-label="Noticias">📰</button>
-            <button id="btn-settings" class="header-action-btn" aria-label="Configuración">⚙️</button>
-          </div>
-          <div class="header-bottom-group">
-            <button id="header-bp-btn" class="header-bp-btn">
-              <div class="bp-header-title">Pase de Batalla</div>
-              <div class="bp-header-row">
-                <span id="header-bp-level" class="bp-header-level">Nivel 0</span>
-                <div class="bp-header-xp-bar">
-                  <div id="header-bp-xp-fill" class="bp-header-xp-fill" style="width:0%"></div>
-                  <span id="header-bp-xp-text" class="bp-header-xp-text">0/10</span>
-                </div>
-              </div>
-            </button>
-            <div class="header-trophies-row">
-              <div id="header-trophies" class="header-trophies">🏆 0</div>
-              <div class="header-missions-block">
-                <button id="header-missions-btn" class="header-missions-btn">
-                  <span class="header-missions-btn-inner">
-                    <span class="notification-dot" id="dot-missions"></span>
-                    <span class="header-missions-icon">📜</span>
-                    <span class="header-missions-text">Misiones</span>
-                  </span>
-                </button>
-                <span id="header-missions-countdown" class="header-missions-countdown">--:--:--</span>
-              </div>
+        <div id="pantalla-menu" class="seccion activa">
+            <h1>FOOTBALL MANAGER</h1>
+            <div class="contenedor-menu-principal">
+                <button class="btn-menu btn-nueva-partida" onclick="irAContinentes()">Nueva Partida</button>
+                <button class="btn-menu btn-cargar-partida" onclick="abrirPantallaCargarPartidas()">Cargar Partida</button>
             </div>
-          </div>
-        </div>
-      </header>
-
-      <div class="sections-container">
-
-        <div id="section-fight" class="section active">
-          <div id="fight-content" class="fight-content"></div>
         </div>
 
-        <div id="section-inventory" class="section">
-          <h2 class="section-title">🎒 Inventario</h2>
-          <p class="section-desc">Tus objetos y cosméticos. Toca un objeto libre para equiparlo</p>
-          <div id="inventory-content" class="inventory-content"></div>
-          <div id="equip-modal" class="equip-modal">
-            <div class="equip-modal-backdrop"></div>
-            <div class="equip-modal-content">
-              <div id="equip-modal-body"></div>
+        <div id="pantalla-cargar-partidas" class="seccion">
+            <div id="lista-slots-guardados"></div>
+            <button class="btn-volver-rojo" onclick="mostrarPantalla('pantalla-menu')">Volver al Menú Principal</button>
+        </div>
+
+        <div id="pantalla-crear-manager" class="seccion">
+            <h1>Perfil del Manager</h1>
+            <div class="formulario-perfil">
+                <div class="campo-form">
+                    <label for="input-nombre">Nombre y Apellidos</label>
+                    <input id="input-nombre" type="text" placeholder="Escribe tu nombre completo">
+                </div>
+                <div class="campo-form">
+                    <label for="select-nacionalidad">Nacionalidad</label>
+                    <select id="select-nacionalidad">
+                        <option value="">Selecciona tu país...</option>
+                    </select>
+                </div>
+                <div class="perfil-botones">
+                    <button class="btn-continuar" onclick="guardarManager()">Continuar</button>
+                    <button class="btn-volver-rojo" onclick="mostrarPantalla('pantalla-menu')">Volver al Menú</button>
+                </div>
             </div>
-          </div>
         </div>
 
-        <div id="section-bank" class="section">
-          <h2 class="section-title">🐟 Tu Colección</h2>
-          <p class="section-desc">Toca un pez para ver sus detalles</p>
-          <div id="bank-cards" class="bank-cards"></div>
-        </div>
-
-        <div id="section-shop" class="section">
-          <h2 class="section-title">🛒 Tienda</h2>
-          <div id="shop-content" class="shop-content"></div>
-          <div id="chest-modal" class="chest-modal">
-            <div class="chest-modal-backdrop"></div>
-            <div class="chest-modal-content">
-              <div id="chest-modal-body"></div>
+        <div id="pantalla-continentes" class="seccion">
+            <h1>Selecciona Continente</h1>
+            
+            <div class="cuadricula-continentes">
+                <div class="tarjeta-continente" onclick="seleccionarContinente('Europa')">
+                    <img src="img/continentes/europa.png" alt="Europa" class="img-continente">
+                    <span class="nombre-continente">Europa</span>
+                </div>
+                <div class="tarjeta-continente" onclick="seleccionarContinente('Norteamérica')">
+                    <img src="img/continentes/norteamerica.png" alt="Norteamérica" class="img-continente">
+                    <span class="nombre-continente">Norteamérica</span>
+                </div>
+                <div class="tarjeta-continente" onclick="seleccionarContinente('Sudamérica')">
+                    <img src="img/continentes/sudamerica.png" alt="Sudamérica" class="img-continente">
+                    <span class="nombre-continente">Sudamérica</span>
+                </div>
+                <div class="tarjeta-continente" onclick="seleccionarContinente('África')">
+                    <img src="img/continentes/africa.png" alt="África" class="img-continente">
+                    <span class="nombre-continente">África</span>
+                </div>
+                <div class="tarjeta-continente" onclick="seleccionarContinente('Asia')">
+                    <img src="img/continentes/asia.png" alt="Asia" class="img-continente">
+                    <span class="nombre-continente">Asia</span>
+                </div>
+                <div class="tarjeta-continente" onclick="seleccionarContinente('Oceanía')">
+                    <img src="img/continentes/oceania.png" alt="Oceanía" class="img-continente">
+                    <span class="nombre-continente">Oceanía</span>
+                </div>
             </div>
-          </div>
-          <div id="item-modal" class="item-modal">
-            <div class="item-modal-backdrop"></div>
-            <div class="item-modal-content">
-              <div id="item-modal-body"></div>
+        </div>
+
+        <div id="pantalla-paises" class="seccion">
+            <h1 id="titulo-paises">Países</h1>
+            <div class="contenedor-paises" id="lista-paises"></div>
+            <button onclick="mostrarPantalla('pantalla-continentes')" class="btn-volver-rojo" style="margin-top:16px">Volver</button>
+        </div>
+
+        <div id="pantalla-ligas" class="seccion">
+            <h1 id="titulo-ligas">Ligas disponibles</h1>
+            <div class="contenedor-ligas" id="lista-ligas"></div>
+            <button onclick="volverAPaises()" class="btn-volver-rojo" style="margin-top:16px">Volver</button>
+        </div>
+
+        <div id="pantalla-equipos" class="seccion">
+            <h1>Selecciona Equipo</h1>
+
+            <div id="lista-equipos-vertical"></div>
+
+            <div class="acciones-equipos">
+                <button id="btn-confirmar-equipo" disabled>Seleccionar y Empezar Partida</button>
+                <button onclick="mostrarPantalla('pantalla-ligas')" class="btn-volver-rojo">Volver a Ligas</button>
             </div>
-          </div>
         </div>
 
-        <div id="section-muelle" class="section">
-          <h2 class="section-title">🎣 El Muelle de la Suerte</h2>
-          <div id="muelle-content" class="muelle-content"></div>
-          <div id="muelle-bet-modal" class="muelle-bet-modal">
-            <div class="muelle-bet-modal-backdrop"></div>
-            <div class="muelle-bet-modal-content">
-              <div id="muelle-bet-modal-body"></div>
+        <div id="pantalla-oficina" class="seccion">
+            <div class="barra-menu-superior-fija">
+                <button id="btn-menu-oficina" onclick="toggleMenuLateral()">Menú ☰</button>
+                <div class="nav-tabs">
+                    <button class="nav-tab activo" onclick="cambiarPantalla('inicio')">🛡️ Club</button>
+                    <button class="nav-tab" onclick="cambiarPantalla('clasificacion')">📊 Liga</button>
+                    <button class="nav-tab" onclick="cambiarPantalla('mercado')">🤝 Mercado</button>
+                    <button class="nav-tab" onclick="cambiarPantalla('economia')">💸 Economía</button>
+                </div>
             </div>
-          </div>
-        </div>
 
+            <div id="menu-lateral">
+                <div class="menu-item" onclick="abrirBandejaEntrada()"><span class="menu-icon">📬</span> Bandeja de Entrada</div>
+                <div class="menu-item" onclick="abrirHistorialTorneos()"><span class="menu-icon">🏆</span> Historial de Torneos</div>
+                <div class="menu-item" onclick="cambiarPantalla('calendario')"><span class="menu-icon">📅</span> Calendario</div>
+                <div class="menu-item" onclick="cambiarPantalla('estadio')"><span class="menu-icon">🏟️</span> Estadio</div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" onclick="abrirPantallaTactica()"><span class="menu-icon">📋</span> Táctica</div>
+                <div class="menu-item" id="btn-guardar-partida" onclick="guardarPartida()"><span class="menu-icon">💾</span> Guardar Partida</div>
+                <div class="menu-divider"></div>
+                <div class="menu-item menu-item-cerrar" onclick="cerrarMenuLateral()"><span class="menu-icon">✕</span> Cerrar</div>
+            </div>
 
-      </div>
+            <div class="cuerpo-oficina">
 
-      <div class="action-footer">
-        <button id="action-fish-btn" class="action-fish-box"></button>
-        <div class="action-center">
-          <button id="btn-battle" class="btn-battle" disabled>Batalla</button>
-        </div>
-        <div class="mode-selector-wrapper">
-          <button id="btn-mode-selector" class="btn-switch-fish" aria-label="Seleccionar modo">
-            ⚔️
-          </button>
-          <div id="mode-dropdown" class="mode-dropdown" style="display:none">
-            <button class="mode-option mode-option-normal" data-mode="normal">⚔️ Normal</button>
-            <button class="mode-option mode-option-survival" data-mode="survival">🔥 Supervivencia</button>
-            <button class="mode-option mode-option-gold-fever" data-mode="goldFever">🪙 Fiebre del Oro</button>
-            <button class="mode-option mode-option-diamond-fever" data-mode="diamondFever">💎 Mina de Gemas</button>
-          </div>
-        </div>
-      </div>
+                <div id="pantalla-inicio" class="seccion-juego">
 
-      <div id="fish-modal" class="fish-modal">
-        <div class="fish-modal-backdrop"></div>
-        <div class="fish-modal-content">
-          <div id="fish-modal-body"></div>
-        </div>
-      </div>
+                    <div class="dashboard-card card-proximo-partido" onclick="cambiarPantalla('calendario')" style="cursor:pointer">
+                        <div class="card-proximo-header">
+                            <span class="card-titulo">Próximo Encuentro</span>
+                            <span class="card-jornada" id="oficina-jornada">Jornada 1</span>
+                        </div>
+                        <div class="card-partido-body">
+                            <div class="card-partido-equipos">
+                                <img id="oficina-logo-local" class="card-escudo-peq" src="" alt="Club">
+                                <span class="card-vs">vs</span>
+                                <img id="oficina-logo-visitante" class="card-escudo-peq" src="" alt="Visitante">
+                            </div>
+                            <p id="oficina-dia-partido" class="card-partido-fecha">Domingo</p>
+                        </div>
+                        <p class="card-club-linea">
+                            <img id="oficina-logo-club" class="card-escudo-peq" src="" alt="" style="display:none">
+                            <strong id="oficina-nombre-club">Club</strong> <span id="oficina-posicion">(3º)</span>
+                        </p>
+                    </div>
 
-      <div id="missions-modal" class="missions-modal">
-        <div class="missions-modal-backdrop"></div>
-        <div class="missions-modal-content">
-          <div id="missions-modal-body"></div>
-        </div>
-      </div>
+                    <div class="dashboard-card card-estado">
+                        <div class="card-confianza">
+                            <p id="texto-confianza" class="card-confianza-texto">Confianza de la directiva: 85%</p>
+                            <div class="barra-confianza"><div id="barra-confianza-fill"></div></div>
+                        </div>
+                        <div class="card-acciones">
+                            <button class="btn-accion" onclick="abrirPantallaTactica()">Ir a Táctica</button>
+                        </div>
+                    </div>
 
-      <div id="battle-pass-modal" class="battle-pass-modal">
-        <div class="battle-pass-modal-backdrop"></div>
-        <div class="battle-pass-modal-content">
-          <div id="battle-pass-modal-body"></div>
-        </div>
-      </div>
+                    <div class="dashboard-card card-plantilla">
+                        <h3 class="card-titulo">Plantilla Actual</h3>
+                        <div class="encabezado-jugadores-oficina">
+                            <span>POS</span><span>NAT</span><span>JUGADOR</span><span>EDAD</span><span>VALOR</span><span>POD</span>
+                        </div>
+                        <ul id="lista-jugadores-oficina"></ul>
+                    </div>
 
-      <div id="arena-modal" class="arena-modal">
-        <div class="arena-modal-backdrop"></div>
-        <div class="arena-modal-content">
-          <div id="arena-modal-body"></div>
-        </div>
-      </div>
-
-      <div id="profile-modal" class="profile-modal">
-        <div class="profile-modal-backdrop"></div>
-        <div class="profile-modal-content">
-          <div id="profile-modal-body"></div>
-        </div>
-      </div>
-
-      <div id="settings-modal" class="settings-modal">
-        <div class="settings-modal-backdrop"></div>
-        <div class="settings-modal-content">
-          <div id="settings-modal-body"></div>
-        </div>
-      </div>
-
-      <div id="reset-modal" class="reset-modal">
-        <div class="reset-modal-backdrop"></div>
-        <div class="reset-modal-content">
-          <div class="reset-modal-header">
-            <span class="reset-modal-title">🗑️ Nueva Partida</span>
-            <button class="reset-modal-close" id="reset-modal-close-btn">✕</button>
-          </div>
-          <div class="reset-modal-body">
-            <div class="reset-warning-icon">⚠️</div>
-            <p class="reset-warning-text">
-              ¡Atención! Si inicias una nueva partida perderás todos tus peces, trofeos, oro y gemas de forma permanente. Esta acción es irreversible.
-            </p>
-            <label class="reset-input-label">Escribe <strong>REINICIAR</strong> para confirmar:</label>
-            <input type="text" id="reset-confirm-input" class="reset-confirm-input" placeholder="REINICIAR" autocomplete="off">
-            <button class="btn-reset-confirm" id="btn-reset-confirm" disabled>Confirmar Borrado</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="update-modal" class="update-modal">
-        <div class="update-modal-backdrop"></div>
-        <div class="update-modal-content">
-          <div class="update-modal-header">
-            <span class="update-modal-title">🚀 ¡NUEVA ACTUALIZACIÓN v1.3! 🚀</span>
-          </div>
-          <div class="update-modal-body">
-            <section class="update-news-list" aria-label="Novedades del juego">
-              <article class="update-news-item">
-                <div class="update-news-head">
-                  <h3 class="update-news-title">🌋 ¡ARENA 6: FOSAS HIDROTERMALES! 🌋</h3>
-                  <span class="update-news-time">28/06/2026</span>
+                    <button id="btn-jugar-jornada" onclick="jugarJornada()">Jugar Partido ➔</button>
                 </div>
-                <p class="update-news-desc">El abismo tiene sus propios volcanes. Bienvenido a las Fosas Hidrotermales, la arena más profunda y peligrosa jamás descubierta. Aquí habitan criaturas adaptadas a la presión extrema y al agua hirviendo: cangrejos yeti, gusanos tubo gigantes y el temible pez linterna negro. Solo los maestros con más de 1800 copas podrán acceder a este infierno submarino. ¡Prepárate para el desafío definitivo!</p>
-              </article>
-              <article class="update-news-item">
-                <div class="update-news-head">
-                  <h3 class="update-news-title">❄️ ¡DESCUBRE LA ARENA 5: AGUAS HELADAS! ❄️</h3>
-                  <span class="update-news-time">27/06/2026</span>
+
+                <div id="pantalla-clasificacion" class="seccion-juego" style="display:none">
+                    <div class="dashboard-card">
+                        <h3 class="card-titulo">📊 Clasificación de la Liga</h3>
+                        <div class="tabla-clasificacion-wrapper">
+                            <table class="tabla-clasificacion">
+                                <thead>
+                                    <tr>
+                                        <th class="col-pos">#</th>
+                                        <th class="col-equipo">Equipo</th>
+                                        <th>PTS</th>
+                                        <th>PJ</th>
+                                        <th>PG</th>
+                                        <th>PE</th>
+                                        <th>PP</th>
+                                        <th>GF</th>
+                                        <th>GC</th>
+                                        <th>DG</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpo-clasificacion"></tbody>
+                            </table>
+                        </div>
+                        <button class="btn-estadisticas-liga" onclick="abrirEstadisticasLiga()">📊 Estadísticas de la Liga</button>
+                    </div>
                 </div>
-                <p class="update-news-desc">¡El mapa se expande! Si lograste sobrevivir a la oscuridad de Las Profundidades, prepárate para el viaje más extremo de tu vida. Ya está disponible la Arena 5: Aguas Heladas. Olvídate del fondo del mar tropical; nos movemos a un bioma polar extremo rodeado de glaciares y bloques de hielo. En esta arena los combates suben de nivel (¡encontrarás enemigos entre el nivel 12 y 15!) y el frío congelará a los débiles.</p>
-              </article>
-              <article class="update-news-item">
-                <div class="update-news-head">
-                  <h3 class="update-news-title">🦈 ¡Llega el nuevo MODO SUPERVIVENCIA! 🦈</h3>
-                  <span class="update-news-time">27/06/2026</span>
+
+                <div id="pantalla-mercado" class="seccion-juego" style="display:none">
+                    <div class="dashboard-card">
+                        <h3 class="card-titulo">🤝 Mercado de Fichajes</h3>
+                        <input type="text" id="buscador-jugadores" class="mercado-buscador" placeholder="🔍 Escribe el nombre del jugador..." oninput="filtrarMercado()">
+                        <div class="cabecera-mercado">
+                            <span>POS</span>
+                            <span>NAT</span>
+                            <span style="text-align:left;padding-left:4px">JUGADOR</span>
+                            <span>CLUB</span>
+                            <span>EDAD</span>
+                            <span>VALOR</span>
+                            <span>POD</span>
+                            <span></span>
+                        </div>
+                        <div id="resultados-mercado" class="mercado-lista"></div>
+                    </div>
                 </div>
-                <p class="update-news-desc">¡Prepara a tus mejores peces porque se viene el mayor reto hasta la fecha! Ya puedes activar el nuevo Modo Supervivencia pulsando el botón de las espadas al lado de "Batalla". Enfréntate a 20 oleadas de enemigos seguidas que subirán de nivel combate a combate. Si logras llegar a la última oleada, te estará esperando un Jefe Final con el doble de vida. ¿Lo mejor? ¡Las recompensas de Oro y Gemas son una auténtica locura! Solo tienes 1 intento al día, así que piénsalo bien antes de saltar al agua.</p>
-              </article>
-              <article class="update-news-item">
-                <div class="update-news-head">
-                  <h3 class="update-news-title">¡Estadísticas disponibles!</h3>
-                  <span class="update-news-time">27/06/2026</span>
+
+                <div id="pantalla-economia" class="seccion-juego" style="display:none">
+                    <div class="dashboard-card">
+                        <h3 class="card-titulo" style="text-align:center;font-size:14px">💸 PRESUPUESTO PARA FICHAJES</h3>
+                        <div class="eco-presupuesto" id="eco-presupuesto">50.000.000€</div>
+                    </div>
+                    <div class="dashboard-card" style="flex:1;min-height:0;display:flex;flex-direction:column;margin-top:10px">
+                        <h3 class="card-titulo">Historial de Ingresos</h3>
+                        <div id="eco-historial" class="eco-historial-lista"></div>
+                    </div>
                 </div>
-                <p class="update-news-desc">Ya puedes consultar todas tus estadísticas detalladas dentro del apartado de tu perfil de usuario. ¡Sigue de cerca tu progreso en las arenas!</p>
-              </article>
 
-              <article class="update-news-item">
-                <div class="update-news-head">
-                  <h3 class="update-news-title">¡Llega la Tienda Rotativa de Objetos!</h3>
-                  <span class="update-news-time">26/06/2026</span>
+                <div id="pantalla-estadio" class="seccion-juego" style="display:none">
+                    <div class="dashboard-card">
+                        <div class="estadio-ingreso-max" id="estadio-ingreso-max">0€</div>
+                        <p style="text-align:center;color:#888;font-size:11px;margin:0">Ingreso máximo por partido</p>
+                    </div>
+                    <div id="estadio-zonas" class="estadio-grid"></div>
                 </div>
-                <p class="update-news-desc">Cada día aparecerán nuevas opciones para que la tienda se sienta viva y cambiante.</p>
-              </article>
 
-              <article class="update-news-item">
-                <div class="update-news-head">
-                  <h3 class="update-news-title">¡Menús unificados para moverte más rápido!</h3>
-                  <span class="update-news-time">26/06/2026</span>
+                <div id="pantalla-calendario" class="seccion-juego" style="display:none">
+                    <div class="dashboard-card">
+                        <h3 class="card-titulo">📅 Calendario de la Temporada</h3>
+                        <div id="lista-partidos-calendario" class="calendario-lista"></div>
+                    </div>
                 </div>
-                <p class="update-news-desc">Tus controles y tu economía quedan mejor organizados para encontrarlo todo de un vistazo.</p>
-              </article>
 
-              <article class="update-news-item">
-                <div class="update-news-head">
-                  <h3 class="update-news-title">¡Espectacular rediseño de la interfaz de combate!</h3>
-                  <span class="update-news-time">26/06/2026</span>
-                </div>
-                <p class="update-news-desc">La pantalla de lucha ahora se ve más limpia, amplia y centrada en la acción.</p>
-              </article>
-            </section>
-          </div>
-          <div class="update-modal-footer">
-            <button id="update-modal-close-btn" class="btn-primary update-modal-button">CERRAR</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="friends-modal" class="friends-modal">
-        <div class="friends-modal-backdrop"></div>
-        <div class="friends-modal-content">
-          <div id="friends-modal-body"></div>
-        </div>
-      </div>
-
-      <nav id="bottom-nav">
-        <button class="nav-tab" data-tab="shop">
-          <span class="nav-icon">🛒<span class="notification-dot" id="dot-daily-gift"></span></span>
-          <span class="nav-label">Tienda</span>
-        </button>
-        <button class="nav-tab" data-tab="inventory">
-          <span class="nav-icon">🎒</span>
-          <span class="nav-label">Objetos</span>
-        </button>
-        <button class="nav-tab active" data-tab="fight">
-          <span class="nav-icon">⚔️</span>
-          <span class="nav-label">Luchar</span>
-        </button>
-        <button class="nav-tab" data-tab="bank">
-          <span class="nav-icon">🐟</span>
-          <span class="nav-label">Banco</span>
-        </button>
-        <button class="nav-tab" data-tab="muelle">
-          <span class="nav-icon">🎣</span>
-          <span class="nav-label">Muelle</span>
-        </button>
-      </nav>
-    </div>
-
-    <div id="screen-combat" class="screen">
-      <div class="combat-arena">
-
-        <div id="enemy-area" class="fighter-area enemy-area">
-          <div class="fighter-info">
-            <span id="enemy-name" class="fighter-name"></span>
-            <span id="enemy-status" class="status-tag"></span>
-            <span id="enemy-hp-text" class="fighter-hp-text"></span>
-          </div>
-          <div class="hp-bar"><div id="enemy-hp-fill" class="hp-fill"></div></div>
-          <div id="enemy-emoji" class="fighter-img-wrap"></div>
-          <div class="fighter-subinfo"><span id="enemy-spd" class="fighter-stat">SPD: --</span></div>
+            </div>
         </div>
 
-        <div id="wave-indicator" class="wave-indicator" style="display:none"></div>
-        <div class="battle-log"><p id="log-message">Prepara tu ataque...</p></div>
+        <div id="pantalla-tactica" class="seccion">
+            <div class="tactica-top-bar">
+                <button class="btn-volver-tactica" onclick="volverAOficina()">← Volver</button>
+                <button class="btn-instrucciones" onclick="abrirInstrucciones()">📋 Instrucciones</button>
+                <select id="select-formacion" class="tactica-select tactica-select-activo" onchange="cambiarFormacion()">
+                    <option value="4-3-3">4-3-3</option>
+                    <option value="4-3-3(2)">4-3-3 (2)</option>
+                    <option value="4-4-2">4-4-2</option>
+                    <option value="3-4-3">3-4-3</option>
+                    <option value="3-5-2">3-5-2</option>
+                    <option value="4-5-1">4-5-1</option>
+                    <option value="5-3-2">5-3-2</option>
+                    <option value="5-4-1">5-4-1</option>
+                    <option value="5-2-3">5-2-3</option>
+                    <option value="4-2-3-1">4-2-3-1</option>
+                    <option value="4-1-4-1">4-1-4-1</option>
+                </select>
+            </div>
 
-        <div id="player-area" class="fighter-area player-area">
-          <div id="player-emoji" class="fighter-img-wrap"></div>
-          <div class="hp-bar"><div id="player-hp-fill" class="hp-fill"></div></div>
-          <div class="fighter-info">
-            <span id="player-name" class="fighter-name"></span>
-            <span id="player-status" class="status-tag"></span>
-            <span id="player-hp-text" class="fighter-hp-text"></span>
-          </div>
-          <div class="fighter-subinfo"><span id="player-spd" class="fighter-stat">SPD: --</span></div>
+            <div id="campo-nodos" class="campo-futbol-horizontal">
+                <div class="lineas-campo">
+                    <div class="linea-medio-campo"></div>
+                    <div class="circulo-central"></div>
+                    <div class="area-grande area-arriba"></div>
+                    <div class="area-grande area-abajo"></div>
+                    <div class="area-pequena area-arriba"></div>
+                    <div class="area-pequena area-abajo"></div>
+                </div>
+                <div id="nodos-campo"></div>
+            </div>
+
+            <div class="bloque-convocatoria bloque-sustitutos-tactica">
+                <div class="barra-sustitutos-tactica">
+                    <span>Suplentes</span>
+                    <strong id="texto-sustitutos-tactica">0 / 12</strong>
+                </div>
+                <div id="cuadricula-sustitutos" class="cuadricula-sustitutos"></div>
+            </div>
+
+            <div class="bloque-convocatoria bloque-reservas-tactica">
+                <div class="cabecera-reservas-tactica">
+                    <span>Reservas</span>
+                </div>
+                <div id="cuadricula-reservas" class="cuadricula-reservas"></div>
+            </div>
         </div>
 
-      </div>
-      <div id="attack-menu" class="attack-menu"></div>
-    </div>
+        <div id="modal-instrucciones" class="modal-overlay" onclick="cerrarInstrucciones()">
+            <div class="modal-instrucciones-card" onclick="event.stopPropagation()">
+                <div class="modal-instrucciones-header">
+                    <h2>Instrucciones</h2>
+                    <button class="btn-cerrar-modal" onclick="cerrarInstrucciones()">✕</button>
+                </div>
 
-    <div id="screen-result" class="screen">
-      <div class="result-content">
-        <h2 id="result-title" class="result-title"></h2>
-        <div id="result-emoji" class="result-emoji"></div>
-        <p id="result-cups" class="result-cups"></p>
-        <p id="result-sub" class="result-sub"></p>
-        <button id="btn-restart" class="btn-primary">Volver al Mazo</button>
-      </div>
-    </div>
+                <div class="instrucciones-tabs">
+                    <button class="tab-btn activo" data-tab="tacticas" onclick="cambiarTabInstrucciones('tacticas')">Tácticas</button>
+                    <button class="tab-btn" data-tab="roles" onclick="cambiarTabInstrucciones('roles')">Roles</button>
+                </div>
 
-    <div id="auth-modal" class="auth-modal">
-      <div class="auth-modal-backdrop"></div>
-      <div class="auth-modal-content">
-        <div id="auth-modal-body"></div>
-      </div>
-    </div>
+                <div class="instrucciones-panels">
+                    <div class="tab-panel activo" id="panel-tacticas">
+                        <div class="tacticas-grid">
+                            <button class="tactica-btn" data-tactica="canales" data-tendencia="ofensivo" onclick="seleccionarTactica(this)">
+                                <span class="tactica-indicador ofensivo"></span>
+                                <span class="tactica-nombre">Jugar en los canales</span>
+                                <span class="tactica-desc">Ataque por bandas aprovechando espacios</span>
+                            </button>
+                            <button class="tactica-btn" data-tactica="desde_atras" data-tendencia="neutral" onclick="seleccionarTactica(this)">
+                                <span class="tactica-indicador neutral"></span>
+                                <span class="tactica-nombre">Desde atrás</span>
+                                <span class="tactica-desc">Construcción lenta desde defensa</span>
+                            </button>
+                            <button class="tactica-btn" data-tactica="presion_alta" data-tendencia="ofensivo" onclick="seleccionarTactica(this)">
+                                <span class="tactica-indicador ofensivo"></span>
+                                <span class="tactica-nombre">Presión alta</span>
+                                <span class="tactica-desc">Recuperación rápida en campo contrario</span>
+                            </button>
+                            <button class="tactica-btn" data-tactica="mantener_balon" data-tendencia="neutral" onclick="seleccionarTactica(this)">
+                                <span class="tactica-indicador neutral"></span>
+                                <span class="tactica-nombre">Mantener el balón</span>
+                                <span class="tactica-desc">Posesión para controlar el partido</span>
+                            </button>
+                            <button class="tactica-btn" data-tactica="contraataque" data-tendencia="neutral" onclick="seleccionarTactica(this)">
+                                <span class="tactica-indicador neutral"></span>
+                                <span class="tactica-nombre">Contraataque</span>
+                                <span class="tactica-desc">Salida rápida al espacio libre</span>
+                            </button>
+                            <button class="tactica-btn" data-tactica="autobus" data-tendencia="defensivo" onclick="seleccionarTactica(this)">
+                                <span class="tactica-indicador defensivo"></span>
+                                <span class="tactica-nombre">Meter un autobús</span>
+                                <span class="tactica-desc">Bloque defensivo muy cerrado</span>
+                            </button>
+                            <button class="tactica-btn" data-tactica="ataque_total" data-tendencia="ofensivo" onclick="seleccionarTactica(this)">
+                                <span class="tactica-indicador ofensivo"></span>
+                                <span class="tactica-nombre">Ataque total</span>
+                                <span class="tactica-desc">Todos al ataque sin reservas</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tab-panel" id="panel-roles">
+                        <div class="roles-tabla-wrapper">
+                            <table class="roles-tabla">
+                                <thead>
+                                    <tr>
+                                        <th class="col-jugador">Jugador</th>
+                                        <th class="col-rol">Capitán</th>
+                                        <th class="col-rol">Faltas</th>
+                                        <th class="col-rol">Penaltis</th>
+                                        <th class="col-rol">Esquinas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="roles-tabla-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-    <div id="username-modal" class="username-modal">
-      <div class="username-modal-backdrop"></div>
-      <div class="username-modal-content">
-        <div id="username-modal-body"></div>
-      </div>
-    </div>
+                <button class="btn-guardar-instrucciones" onclick="cerrarInstrucciones()">Guardar</button>
+            </div>
+        </div>
 
-  </div>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script>
-    window.__FIREBASE_CONFIG__ = window.__FIREBASE_CONFIG__ || null;
-  </script>
-  <script src="game.js"></script>
+        <div id="modal-detalle-jugador" class="modal-jugador" onclick="cerrarDetalleJugador()">
+            <div class="tarjeta-detalle-jugador" onclick="event.stopPropagation()">
+                <button class="btn-cerrar-tarjeta" onclick="cerrarDetalleJugador()">✕</button>
+
+                <div class="tarjeta-cabecera">
+                    <img id="det-foto" class="tarjeta-foto" src="img/jugadores/67849.jpg" alt="Foto del jugador">
+                    <div class="tarjeta-info-principal">
+                        <div class="det-nombre" id="detalle-jugador-nombre">Jugador</div>
+                        <div class="det-pos-principal" id="detalle-jugador-posicion">-</div>
+                        <div class="det-pos-secundarias" id="detalle-jugador-pos-sec"></div>
+                        <div class="det-nacionalidad" id="detalle-jugador-nacionalidad">-</div>
+                    </div>
+                </div>
+
+                <div class="tarjeta-datos-tecnicos">
+                    <div><span>Edad</span><strong id="detalle-jugador-edad">-</strong></div>
+                    <div><span>Pierna</span><strong id="detalle-jugador-pierna">-</strong></div>
+                    <div><span>Valor</span><strong id="detalle-jugador-valor">-</strong></div>
+                    <div><span>Poder</span><strong id="detalle-jugador-poder">-</strong></div>
+                </div>
+
+                <div class="tarjeta-estadisticas" id="detalle-estadisticas"></div>
+
+                <div class="historial-partidos">
+                    <button class="btn-historial" id="btn-historial" onclick="toggleHistorial()">📋 Ver historial detallado</button>
+                    <div class="historial-contenido" id="historial-contenido">
+                        <table class="tabla-historial">
+                            <thead><tr><th>Jor.</th><th>Rival</th><th>Min</th><th>Nota</th><th>Acciones</th></tr></thead>
+                            <tbody id="historial-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="acciones-fichajes-modal">
+                    <button id="btn-lista-transferibles">Lista Transferibles</button>
+                    <button id="btn-lista-cedibles">Lista Cedibles</button>
+                </div>
+                <div id="mercado-acciones-modal" class="mercado-acciones-modal" style="display:none"></div>
+
+                <div id="negociacion-inline" style="display:none">
+                    <button class="btn-volver-detalle" onclick="volverAlDetalleJugador()">← Volver</button>
+
+                    <div id="form-fichar" style="display:none">
+                        <div class="neg-titulo-form">💰 Oferta de Traspaso</div>
+                        <div class="neg-info" id="info-valor-fichaje"></div>
+                        <div class="neg-input-group">
+                            <label for="input-oferta-compra">TU OFERTA ECONÓMICA (€)</label>
+                            <input type="number" id="input-oferta-compra" class="neg-input" min="0" step="100000" placeholder="Ej: 12000000">
+                        </div>
+                        <button class="neg-btn-aceptar" onclick="enviarOfertaCompra()">Enviar Oferta de Compra</button>
+                        <div id="resultado-fichaje" class="neg-resultado" style="display:none"></div>
+                        <div id="accion-fichaje" style="display:none"></div>
+                    </div>
+
+                    <div id="form-cesion" style="display:none">
+                        <div class="neg-titulo-form">📄 Propuesta de Cesión</div>
+                        <div class="neg-input-group">
+                            <label for="select-duracion-cesion">DURACIÓN</label>
+                            <select id="select-duracion-cesion" class="neg-input">
+                                <option value="6">6 Meses</option>
+                                <option value="12">1 Año</option>
+                                <option value="24">2 Años</option>
+                            </select>
+                        </div>
+                        <button class="neg-btn-aceptar" onclick="enviarPropuestaCesion()">Enviar Propuesta de Cesión</button>
+                        <div id="resultado-cesion" class="neg-resultado" style="display:none"></div>
+                    </div>
+
+                    <div id="form-cesion-opcion" style="display:none">
+                        <div class="neg-titulo-form">🔄 Cesión con Opción de Compra</div>
+                        <div class="neg-input-group">
+                            <label for="select-duracion-opcion">DURACIÓN</label>
+                            <select id="select-duracion-opcion" class="neg-input">
+                                <option value="6">6 Meses</option>
+                                <option value="12">1 Año</option>
+                                <option value="24">2 Años</option>
+                            </select>
+                        </div>
+                        <div class="neg-input-group">
+                            <label for="input-precio-opcion">PRECIO DE OPCIÓN DE COMPRA (€)</label>
+                            <input type="number" id="input-precio-opcion" class="neg-input" min="0" step="100000" placeholder="Ej: 15000000">
+                        </div>
+                        <button class="neg-btn-aceptar" onclick="enviarPropuestaCesionOpcion()">Enviar Propuesta con Opción de Compra</button>
+                        <div id="resultado-opcion" class="neg-resultado" style="display:none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-plantilla" class="modal-oculto">
+            <div class="modal-contenido">
+                <div class="modal-cabecera">
+                    <h2 id="modal-titulo-equipo">Plantilla del Equipo</h2>
+                    <button class="btn-cerrar-modal" onclick="cerrarModalPlantilla()">&times;</button>
+                </div>
+                <div class="cabecera-tabla-jugadores">
+                    <span>POS</span>
+                    <span>NAT</span>
+                    <span>JUGADOR</span>
+                    <span>EDAD</span>
+                    <span>VALOR</span>
+                    <span>POD</span>
+                </div>
+                <div id="lista-plantilla-body" class="lista-plantilla-modal"></div>
+            </div>
+        </div>
+
+        <!-- Modal de negociación (fichaje / cesión) -->
+        <div id="modal-negociacion" class="modal-overlay" onclick="cerrarModalNegociacion()">
+            <div class="modal-instrucciones-card" onclick="event.stopPropagation()" style="max-width:400px;padding:24px 20px 20px">
+                <div class="modal-instrucciones-header" style="margin-bottom:12px">
+                    <h2 id="neg-titulo">Negociación</h2>
+                    <button class="btn-cerrar-modal" onclick="cerrarModalNegociacion()">✕</button>
+                </div>
+                <div id="neg-contenido" class="modal-instrucciones-body" style="margin-bottom:14px;gap:10px"></div>
+                <button id="neg-boton-accion" class="btn-guardar-instrucciones" style="display:none" onclick="">Confirmar</button>
+            </div>
+        </div>
+
+        <!-- Modal plantilla rival -->
+        <div id="modal-plantilla-rival" class="modal-overlay" onclick="cerrarPlantillaRival()">
+            <div class="modal-rival-card" onclick="event.stopPropagation()">
+                <div class="modal-instrucciones-header" style="padding-bottom:6px;margin-bottom:0">
+                    <h2 id="rival-titulo-club" style="font-size:15px">Club</h2>
+                    <button class="btn-cerrar-modal" onclick="cerrarPlantillaRival()">✕</button>
+                </div>
+
+                <div class="rival-tabs">
+                    <button class="rival-tab activo" data-tab="general">General</button>
+                    <button class="rival-tab" data-tab="plantilla">Plantilla</button>
+                    <button class="rival-tab" data-tab="calendario">Calendario</button>
+                    <button class="rival-tab" data-tab="traspasos">Traspasos</button>
+                    <button class="rival-tab" data-tab="alineacion">Alineación</button>
+                    <button class="rival-tab" data-tab="estadisticas">Estadísticas</button>
+                </div>
+
+                <div id="rival-tab-general" class="rival-tab-content activo"></div>
+                <div id="rival-tab-plantilla" class="rival-tab-content">
+                    <div id="rival-lista-jugadores" class="rival-lista"></div>
+                </div>
+                <div id="rival-tab-calendario" class="rival-tab-content"></div>
+                <div id="rival-tab-traspasos" class="rival-tab-content"></div>
+                <div id="rival-tab-alineacion" class="rival-tab-content"></div>
+                <div id="rival-tab-estadisticas" class="rival-tab-content"></div>
+            </div>
+        </div>
+
+        <!-- Modal resultado partido -->
+        <div id="modal-resultado-partido" class="modal-overlay" onclick="cerrarResultadoPartido()">
+            <div class="modal-instrucciones-card" onclick="event.stopPropagation()" style="max-width:400px;padding:20px">
+                <div class="modal-instrucciones-header" style="margin-bottom:8px">
+                    <h2 style="font-size:17px;font-weight:700;color:#111">⚔️ Resultado</h2>
+                    <button class="btn-cerrar-modal" onclick="cerrarResultadoPartido()">✕</button>
+                </div>
+                <div id="resultado-contenido" style="flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch"></div>
+            </div>
+        </div>
+
+        <!-- Modal simulación partido en vivo -->
+        <div id="modal-simulacion-partido" class="modal-overlay" onclick="event.stopPropagation()">
+            <div class="modal-simulacion-card">
+                <div class="sim-scoreboard">
+                    <span class="sim-equipo" id="sim-equipo-local">Local</span>
+                    <span class="sim-marcador" id="sim-marcador">0 - 0</span>
+                    <span class="sim-equipo" id="sim-equipo-visit">Visitante</span>
+                </div>
+                <div class="sim-crono" id="sim-crono">00:00</div>
+                <div class="sim-eventos" id="sim-eventos"></div>
+                <div class="sim-acciones" id="sim-acciones">
+                    <button class="neg-btn-secundario" onclick="saltarSimulacion()">⏩ Saltar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal estadísticas de la liga -->
+        <div id="modal-estadisticas-liga" class="modal-overlay" onclick="cerrarEstadisticasLiga()">
+            <div class="modal-instrucciones-card" onclick="event.stopPropagation()" style="max-width:400px;padding:20px">
+                <div class="modal-instrucciones-header">
+                    <h2 style="font-size:17px;font-weight:700;color:#111">📊 Estadísticas de la Liga</h2>
+                    <button class="btn-cerrar-modal" onclick="cerrarEstadisticasLiga()">✕</button>
+                </div>
+                <div class="est-tabs">
+                    <button class="est-tab activo" data-est="pichichi">⚽ Pichichi</button>
+                    <button class="est-tab" data-est="asistencias">🅰 Asistencias</button>
+                    <button class="est-tab" data-est="zamora">🧤 Zamora</button>
+                    <button class="est-tab" data-est="mvp">⭐ MVP</button>
+                </div>
+                <div id="est-contenido" style="flex:1;overflow-y:auto;min-height:0"></div>
+            </div>
+        </div>
+
+    </div> <script src="game.js?v=3"></script>
 </body>
 </html>

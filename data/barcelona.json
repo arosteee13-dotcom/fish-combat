@@ -1,0 +1,603 @@
+[
+  {
+    "id": 67849,
+    "nombre": "M. Ter Stegen",
+    "posicion": "POR",
+    "nacionalidad": "🇩🇪",
+    "edad": 34,
+    "valor": "13.38M",
+    "salario": "180K",
+    "poder": 78,
+    "pierna": "DER",
+    "rating": 78,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/67849.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 0,
+      "goles": 0,
+      "asistencias": 0,
+      "amarillas": 0,
+      "rojas": 0,
+      "mvp": 0
+    },
+    "historialPartidos": []
+  },
+  {
+    "id": 471088,
+    "nombre": "Joan García",
+    "posicion": "POR",
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "9.19M",
+    "salario": "90K",
+    "poder": 71,
+    "pierna": "DER",
+    "rating": 71,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/471088.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 35491,
+    "nombre": "W. Szczęsny",
+    "posicion": "POR",
+    "nacionalidad": "🇵🇱",
+    "edad": 36,
+    "valor": "3.14M",
+    "salario": "100K",
+    "poder": 70,
+    "pierna": "DER",
+    "rating": 70,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/35491.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 284543,
+    "nombre": "Iñaki Peña",
+    "posicion": "POR",
+    "nacionalidad": "🇪🇸",
+    "edad": 27,
+    "valor": "4.22M",
+    "salario": "60K",
+    "poder": 63,
+    "pierna": "DER",
+    "rating": 63,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/284543.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 940493,
+    "nombre": "A. Yaakobishvili",
+    "posicion": "POR",
+    "nacionalidad": "🇭🇺",
+    "edad": 20,
+    "valor": "134K",
+    "salario": "20K",
+    "poder": 62,
+    "pierna": "AMB",
+    "rating": 62,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/940493.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 3242406,
+    "nombre": "D. Kochen",
+    "posicion": "POR",
+    "nacionalidad": "🇺🇸",
+    "edad": 20,
+    "valor": "520K",
+    "salario": "18K",
+    "poder": 49,
+    "pierna": "DER",
+    "rating": 49,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3242406.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 309864,
+    "nombre": "Jules Koundé",
+    "posicion": "LD",
+    "posicionesSecundarias": [
+      "DFC"
+    ],
+    "nacionalidad": "🇫🇷",
+    "edad": 27,
+    "valor": "85.37M",
+    "salario": "160K",
+    "poder": 87,
+    "pierna": "DER",
+    "rating": 87,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/309864.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 879137,
+    "nombre": "Álex Balde",
+    "posicion": "LI",
+    "posicionesSecundarias": [
+      "LD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 22,
+    "valor": "40.39M",
+    "salario": "95K",
+    "poder": 78,
+    "pierna": "IZQ",
+    "rating": 78,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/879137.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 3234352,
+    "nombre": "Pau Cubarsí",
+    "posicion": "DFC",
+    "nacionalidad": "🇪🇸",
+    "edad": 19,
+    "valor": "47.95M",
+    "salario": "85K",
+    "poder": 76,
+    "pierna": "DER",
+    "rating": 76,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3234352.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 367220,
+    "nombre": "Eric García",
+    "posicion": "DFC",
+    "posicionesSecundarias": [
+      "LD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 25,
+    "valor": "19.55M",
+    "salario": "80K",
+    "poder": 75,
+    "pierna": "DER",
+    "rating": 75,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/367220.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 355710,
+    "nombre": "Ronald Araujo",
+    "posicion": "DFC",
+    "posicionesSecundarias": [
+      "LD"
+    ],
+    "nacionalidad": "🇺🇾",
+    "edad": 27,
+    "valor": "20.55M",
+    "salario": "120K",
+    "poder": 70,
+    "pierna": "DER",
+    "rating": 70,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/355710.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 950926,
+    "nombre": "Gerard Martín",
+    "posicion": "DFC",
+    "posicionesSecundarias": [
+      "LI"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 24,
+    "valor": "7.99M",
+    "salario": "50K",
+    "poder": 67,
+    "pierna": "IZQ",
+    "rating": 67,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/950926.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 940495,
+    "nombre": "Héctor Fort",
+    "posicion": "LD",
+    "posicionesSecundarias": [
+      "CAD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 19,
+    "valor": "5.1M",
+    "salario": "35K",
+    "poder": 59,
+    "pierna": "DER",
+    "rating": 59,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/940495.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 1005057,
+    "nombre": "Á. Cortés",
+    "posicion": "DFC",
+    "nacionalidad": "🇪🇸",
+    "edad": 21,
+    "valor": "678K",
+    "salario": "22K",
+    "poder": 58,
+    "pierna": "IZQ",
+    "rating": 58,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/1005057.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 3209128,
+    "nombre": "Xavi Espart",
+    "posicion": "LD",
+    "posicionesSecundarias": [
+      "MCD"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 19,
+    "valor": "247K",
+    "salario": "18K",
+    "poder": 53,
+    "pierna": "DER",
+    "rating": 53,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3209128.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 869514,
+    "nombre": "Pedri",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MI"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "66.45M",
+    "salario": "140K",
+    "poder": 80,
+    "pierna": "DER",
+    "rating": 80,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/869514.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 26,
+      "goles": 5,
+      "asistencias": 7,
+      "amarillas": 3,
+      "rojas": 0,
+      "mvp": 2
+    },
+    "historialPartidos": [
+      {
+        "jornada": 1,
+        "rival": "Valencia",
+        "minutos": 78,
+        "nota": 7.8,
+        "acciones": [
+          "asistencia"
+        ]
+      },
+      {
+        "jornada": 2,
+        "rival": "Athletic",
+        "minutos": 90,
+        "nota": 8.2,
+        "acciones": [
+          "gol"
+        ]
+      },
+      {
+        "jornada": 3,
+        "rival": "Rayo",
+        "minutos": 65,
+        "nota": 7,
+        "acciones": []
+      },
+      {
+        "jornada": 4,
+        "rival": "Villarreal",
+        "minutos": 82,
+        "nota": 8.5,
+        "acciones": [
+          "gol",
+          "asistencia"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 279661,
+    "nombre": "F. De Jong",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCD"
+    ],
+    "nacionalidad": "🇳🇱",
+    "edad": 29,
+    "valor": "31.84M",
+    "salario": "175K",
+    "poder": 75,
+    "pierna": "DER",
+    "rating": 75,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/279661.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 275868,
+    "nombre": "Dani Olmo",
+    "posicion": "MCO",
+    "posicionesSecundarias": [
+      "MC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 28,
+    "valor": "27.96M",
+    "salario": "120K",
+    "poder": 75,
+    "pierna": "DER",
+    "rating": 75,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/275868.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 999075,
+    "nombre": "Fermín López",
+    "posicion": "MCO",
+    "posicionesSecundarias": [
+      "MC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "20.04M",
+    "salario": "95K",
+    "poder": 74,
+    "pierna": "DER",
+    "rating": 74,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/999075.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 902134,
+    "nombre": "Gavi",
+    "posicion": "MC",
+    "posicionesSecundarias": [
+      "MCO"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 21,
+    "valor": "38.05M",
+    "salario": "105K",
+    "poder": 72,
+    "pierna": "DER",
+    "rating": 72,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/902134.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 879165,
+    "nombre": "Marc Casadó",
+    "posicion": "MCD",
+    "posicionesSecundarias": [
+      "MC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 22,
+    "valor": "12.7M",
+    "salario": "60K",
+    "poder": 65,
+    "pierna": "DER",
+    "rating": 65,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/879165.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 3358471,
+    "nombre": "Marc Bernal",
+    "posicion": "MCD",
+    "posicionesSecundarias": [
+      "MC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 19,
+    "valor": "4.59M",
+    "salario": "35K",
+    "poder": 61,
+    "pierna": "DER",
+    "rating": 61,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3358471.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 3341870,
+    "nombre": "Toni Fernández",
+    "posicion": "MCO",
+    "posicionesSecundarias": [
+      "ED"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 17,
+    "valor": "900K",
+    "salario": "25K",
+    "poder": 60,
+    "pierna": "IZQ",
+    "rating": 60,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3341870.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 940484,
+    "nombre": "Tommy Marqués",
+    "posicion": "MCD",
+    "posicionesSecundarias": [
+      "MC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 19,
+    "valor": "61K",
+    "salario": "15K",
+    "poder": 45,
+    "pierna": "DER",
+    "rating": 45,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/940484.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 3189487,
+    "nombre": "Lamine Yamal",
+    "posicion": "ED",
+    "posicionesSecundarias": [
+      "DC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 18,
+    "valor": "106.19M",
+    "salario": "150K",
+    "poder": 90,
+    "pierna": "IZQ",
+    "rating": 90,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/3189487.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 30,
+      "goles": 8,
+      "asistencias": 12,
+      "amarillas": 1,
+      "rojas": 0,
+      "mvp": 6
+    },
+    "historialPartidos": [
+      {
+        "jornada": 1,
+        "rival": "Valencia",
+        "minutos": 82,
+        "nota": 8.1,
+        "acciones": [
+          "gol",
+          "asistencia"
+        ]
+      },
+      {
+        "jornada": 2,
+        "rival": "Athletic",
+        "minutos": 90,
+        "nota": 7.5,
+        "acciones": [
+          "asistencia"
+        ]
+      },
+      {
+        "jornada": 3,
+        "rival": "Rayo",
+        "minutos": 75,
+        "nota": 9,
+        "acciones": [
+          "gol",
+          "gol",
+          "mvp"
+        ]
+      },
+      {
+        "jornada": 4,
+        "rival": "Villarreal",
+        "minutos": 88,
+        "nota": 7.8,
+        "acciones": [
+          "asistencia"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 307127,
+    "nombre": "Raphinha",
+    "posicion": "EI",
+    "posicionesSecundarias": [
+      "ED"
+    ],
+    "nacionalidad": "🇧🇷",
+    "edad": 29,
+    "valor": "42.15M",
+    "salario": "200K",
+    "poder": 89,
+    "pierna": "IZQ",
+    "rating": 89,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/307127.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 427689,
+    "nombre": "Anthony Gordon",
+    "posicion": "EI",
+    "posicionesSecundarias": [
+      "DC"
+    ],
+    "nacionalidad": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    "edad": 25,
+    "valor": "41.72M",
+    "salario": "140K",
+    "poder": 81,
+    "pierna": "DER",
+    "rating": 81,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/427689.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 342274,
+    "nombre": "Ferran Torres",
+    "posicion": "DC",
+    "posicionesSecundarias": [
+      "DC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 26,
+    "valor": "28.23M",
+    "salario": "130K",
+    "poder": 77,
+    "pierna": "DER",
+    "rating": 77,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/342274.jpg?size=120x&lossy=1",
+    "estadisticas": {
+      "pj": 22,
+      "goles": 6,
+      "asistencias": 3,
+      "amarillas": 4,
+      "rojas": 0,
+      "mvp": 1
+    },
+    "historialPartidos": [
+      {
+        "jornada": 1,
+        "rival": "Valencia",
+        "minutos": 25,
+        "nota": 6.5,
+        "acciones": []
+      },
+      {
+        "jornada": 2,
+        "rival": "Athletic",
+        "minutos": 60,
+        "nota": 7,
+        "acciones": [
+          "gol"
+        ]
+      },
+      {
+        "jornada": 3,
+        "rival": "Rayo",
+        "minutos": 30,
+        "nota": 6.8,
+        "acciones": []
+      },
+      {
+        "jornada": 4,
+        "rival": "Villarreal",
+        "minutos": 70,
+        "nota": 7.2,
+        "acciones": [
+          "gol"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 776260,
+    "nombre": "Ansu Fati",
+    "posicion": "EI",
+    "posicionesSecundarias": [
+      "DC"
+    ],
+    "nacionalidad": "🇪🇸",
+    "edad": 23,
+    "valor": "5.74M",
+    "salario": "90K",
+    "poder": 65,
+    "pierna": "DER",
+    "rating": 65,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/776260.jpg?size=120x&lossy=1"
+  },
+  {
+    "id": 964590,
+    "nombre": "R. Bardghji",
+    "posicion": "ED",
+    "posicionesSecundarias": [
+      "MD"
+    ],
+    "nacionalidad": "🇸🇪",
+    "edad": 20,
+    "valor": "9.31M",
+    "salario": "45K",
+    "poder": 59,
+    "pierna": "IZQ",
+    "rating": 59,
+    "foto": "https://cdn.resfu.com/img_data/players/medium/964590.jpg?size=120x&lossy=1"
+  }
+]
