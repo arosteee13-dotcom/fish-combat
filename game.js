@@ -1073,14 +1073,15 @@ function abrirPlantillaRival(nombreClub) {
 
     // Setup tab switching
     document.querySelectorAll(".rival-tab").forEach(function (btn) {
-        btn.onclick = function () {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
             var tab = this.dataset.tab;
             document.querySelectorAll(".rival-tab").forEach(function (b) { b.classList.remove("activo"); });
             this.classList.add("activo");
             document.querySelectorAll(".rival-tab-content").forEach(function (c) { c.classList.remove("activo"); });
             var target = document.getElementById("rival-tab-" + tab);
             if (target) target.classList.add("activo");
-        };
+        });
     });
 
     // Map team name to JSON filename
