@@ -3,98 +3,355 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Sengoku - Caminos de Acero</title>
+  <title>Fish Battle Arena</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="game-container">
+  <div id="app">
+    <div id="ambient-fish-layer" class="ambient-fish-layer"></div>
 
-    <!-- PANTALLA 1: MENÚ PRINCIPAL -->
-    <div id="screen-menu" class="screen">
-      <div class="menu-inner">
-        <p class="menu-title-small">戦国時代</p>
-        <h1 class="menu-title-large">Sengoku</h1>
-        <p class="menu-title-gold">Caminos de Acero</p>
-        <p class="menu-intro">Japón, año 1560. Eres un joven ronin que busca su destino en las tierras de Owari. El camino del guerrero está lleno de desafíos, pero también de honor.</p>
-        <div class="menu-buttons">
-          <button id="btn-continue" class="btn-continue hidden">Continuar partida</button>
-          <button id="btn-new-game" class="btn-new-game">Nueva partida</button>
+    <div id="screen-main" class="screen active">
+      <header class="main-header">
+        <div class="header-left">
+          <div class="header-currencies">
+            <span id="coin-display" class="header-coin">🪙 100</span>
+            <span id="diamond-display" class="header-diamond">💎 0</span>
+          </div>
+          <button type="button" id="header-user-box" class="header-user-box">
+            <span class="header-user-avatar">👤</span>
+            <span class="header-user-name">Jugador123</span>
+          </button>
         </div>
-      </div>
-    </div>
-
-    <!-- PANTALLA 3: EL JUEGO -->
-    <div id="screen-game" class="screen hidden">
-      <header id="game-header">
-        <h1 id="player-name-display">—</h1>
+        <div class="header-right">
+          <div class="header-actions-row">
+            <button id="btn-amigos" class="header-action-btn" aria-label="Amigos">👥</button>
+            <button id="btn-news" class="header-action-btn" aria-label="Noticias">📰</button>
+            <button id="btn-settings" class="header-action-btn" aria-label="Configuración">⚙️</button>
+          </div>
+          <div class="header-bottom-group">
+            <button id="header-bp-btn" class="header-bp-btn">
+              <div class="bp-header-title">Pase de Batalla</div>
+              <div class="bp-header-row">
+                <span id="header-bp-level" class="bp-header-level">Nivel 0</span>
+                <div class="bp-header-xp-bar">
+                  <div id="header-bp-xp-fill" class="bp-header-xp-fill" style="width:0%"></div>
+                  <span id="header-bp-xp-text" class="bp-header-xp-text">0/10</span>
+                </div>
+              </div>
+            </button>
+            <div class="header-trophies-row">
+              <div id="header-trophies" class="header-trophies">🏆 0</div>
+              <div class="header-missions-block">
+                <button id="header-missions-btn" class="header-missions-btn">
+                  <span class="header-missions-btn-inner">
+                    <span class="notification-dot" id="dot-missions"></span>
+                    <span class="header-missions-icon">📜</span>
+                    <span class="header-missions-text">Misiones</span>
+                  </span>
+                </button>
+                <span id="header-missions-countdown" class="header-missions-countdown">--:--:--</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </header>
-      <div id="map-container">
-        <div id="banner-ubicacion" class="banner-oculto">
-          <div class="banner-principal" id="banner-titulo">Aldea de Owari</div>
-          <div class="banner-secundario" id="banner-subtitulo">Provincia de Owari - 1560</div>
+
+      <div class="sections-container">
+
+        <div id="section-fight" class="section active">
+          <div id="fight-content" class="fight-content"></div>
         </div>
-        <div id="map-grid">        </div>
-        <div id="fog-overlay" class="fog-oculto"></div>
-        <div id="modal-evento" class="modal-hidden">
-          <div class="modal-evento-backdrop"></div>
-          <img id="modal-evento-imagen" class="modal-imagen-hidden" src="" alt="">
-          <div class="modal-evento-inner">
-            <div class="modal-evento-title-bar" id="modal-evento-titulo">Letrero</div>
-            <div class="modal-evento-body">
-              <span id="modal-evento-texto"></span>
+
+        <div id="section-inventory" class="section">
+          <h2 class="section-title">🎒 Inventario</h2>
+          <p class="section-desc">Tus objetos y cosméticos. Toca un objeto libre para equiparlo</p>
+          <div id="inventory-content" class="inventory-content"></div>
+          <div id="equip-modal" class="equip-modal">
+            <div class="equip-modal-backdrop"></div>
+            <div class="equip-modal-content">
+              <div id="equip-modal-body"></div>
             </div>
-            <div class="modal-evento-continuar">Continuar ▼</div>
           </div>
         </div>
-        <div id="anim-recoger" class="anim-oculto">
-          <div class="anim-icono" id="anim-icono"></div>
-          <div class="anim-texto" id="anim-texto">¡Recibido!</div>
+
+        <div id="section-bank" class="section">
+          <h2 class="section-title">🐟 Tu Colección</h2>
+          <p class="section-desc">Toca un pez para ver sus detalles</p>
+          <div id="bank-cards" class="bank-cards"></div>
         </div>
-        <div id="modal-inventario" class="modal-hidden">
-          <div class="inv-content">
-            <div class="inv-header">Zurrón</div>
-            <div class="inv-lista" id="inv-lista">
-              <div class="inv-vacio">Tu zurrón está vacío, busca provisiones.</div>
+
+        <div id="section-shop" class="section">
+          <h2 class="section-title">🛒 Tienda</h2>
+          <div id="shop-content" class="shop-content"></div>
+          <div id="chest-modal" class="chest-modal">
+            <div class="chest-modal-backdrop"></div>
+            <div class="chest-modal-content">
+              <div id="chest-modal-body"></div>
             </div>
-            <div class="inv-cerrar">Cerrar</div>
+          </div>
+          <div id="item-modal" class="item-modal">
+            <div class="item-modal-backdrop"></div>
+            <div class="item-modal-content">
+              <div id="item-modal-body"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="section-muelle" class="section">
+          <h2 class="section-title">🎣 El Muelle de la Suerte</h2>
+          <div id="muelle-content" class="muelle-content"></div>
+          <div id="muelle-bet-modal" class="muelle-bet-modal">
+            <div class="muelle-bet-modal-backdrop"></div>
+            <div class="muelle-bet-modal-content">
+              <div id="muelle-bet-modal-body"></div>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <div class="action-footer">
+        <button id="action-fish-btn" class="action-fish-box"></button>
+        <div class="action-center">
+          <button id="btn-battle" class="btn-battle" disabled>Batalla</button>
+        </div>
+        <div class="mode-selector-wrapper">
+          <button id="btn-mode-selector" class="btn-switch-fish" aria-label="Seleccionar modo">
+            ⚔️
+          </button>
+          <div id="mode-dropdown" class="mode-dropdown" style="display:none">
+            <button class="mode-option mode-option-normal" data-mode="normal">⚔️ Normal</button>
+            <button class="mode-option mode-option-survival" data-mode="survival">🔥 Supervivencia</button>
+            <button class="mode-option mode-option-gold-fever" data-mode="goldFever">🪙 Fiebre del Oro</button>
+            <button class="mode-option mode-option-diamond-fever" data-mode="diamondFever">💎 Mina de Gemas</button>
           </div>
         </div>
       </div>
-      <div id="panel-objetivo">
-        <div class="objetivo-texto" id="objetivo-texto">Observa tu entorno. El camino se revelará.</div>
-      </div>
-      <div id="control-panel">
-        <div id="modal-opciones" class="modal-opciones-oculto"></div>
-        <div id="controls">
-          <div id="dpad">
-            <div class="dpad-center"></div>
-            <button id="btn-up" class="dpad-btn" data-dir="up">▲</button>
-            <button id="btn-left" class="dpad-btn" data-dir="left">◀</button>
-            <button id="btn-right" class="dpad-btn" data-dir="right">▶</button>
-            <button id="btn-down" class="dpad-btn" data-dir="down">▼</button>
-          </div>
-          <div id="action-buttons">
-            <div class="action-row">
-              <button id="btn-bag">◇</button>
-              <button id="btn-action">A</button>
-            </div>
-            <button id="btn-save">Guardar</button>
+
+      <div id="fish-modal" class="fish-modal">
+        <div class="fish-modal-backdrop"></div>
+        <div class="fish-modal-content">
+          <div id="fish-modal-body"></div>
         </div>
       </div>
-    </div>
+
+      <div id="missions-modal" class="missions-modal">
+        <div class="missions-modal-backdrop"></div>
+        <div class="missions-modal-content">
+          <div id="missions-modal-body"></div>
+        </div>
+      </div>
+
+      <div id="battle-pass-modal" class="battle-pass-modal">
+        <div class="battle-pass-modal-backdrop"></div>
+        <div class="battle-pass-modal-content">
+          <div id="battle-pass-modal-body"></div>
+        </div>
+      </div>
+
+      <div id="arena-modal" class="arena-modal">
+        <div class="arena-modal-backdrop"></div>
+        <div class="arena-modal-content">
+          <div id="arena-modal-body"></div>
+        </div>
+      </div>
+
+      <div id="profile-modal" class="profile-modal">
+        <div class="profile-modal-backdrop"></div>
+        <div class="profile-modal-content">
+          <div id="profile-modal-body"></div>
+        </div>
+      </div>
+
+      <div id="settings-modal" class="settings-modal">
+        <div class="settings-modal-backdrop"></div>
+        <div class="settings-modal-content">
+          <div id="settings-modal-body"></div>
+        </div>
+      </div>
+
+      <div id="reset-modal" class="reset-modal">
+        <div class="reset-modal-backdrop"></div>
+        <div class="reset-modal-content">
+          <div class="reset-modal-header">
+            <span class="reset-modal-title">🗑️ Nueva Partida</span>
+            <button class="reset-modal-close" id="reset-modal-close-btn">✕</button>
+          </div>
+          <div class="reset-modal-body">
+            <div class="reset-warning-icon">⚠️</div>
+            <p class="reset-warning-text">
+              ¡Atención! Si inicias una nueva partida perderás todos tus peces, trofeos, oro y gemas de forma permanente. Esta acción es irreversible.
+            </p>
+            <label class="reset-input-label">Escribe <strong>REINICIAR</strong> para confirmar:</label>
+            <input type="text" id="reset-confirm-input" class="reset-confirm-input" placeholder="REINICIAR" autocomplete="off">
+            <button class="btn-reset-confirm" id="btn-reset-confirm" disabled>Confirmar Borrado</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="update-modal" class="update-modal">
+        <div class="update-modal-backdrop"></div>
+        <div class="update-modal-content">
+          <div class="update-modal-header">
+            <span class="update-modal-title">🚀 ¡NUEVA ACTUALIZACIÓN v1.3! 🚀</span>
+          </div>
+          <div class="update-modal-body">
+            <section class="update-news-list" aria-label="Novedades del juego">
+              <article class="update-news-item">
+                <div class="update-news-head">
+                  <h3 class="update-news-title">🌋 ¡ARENA 6: FOSAS HIDROTERMALES! 🌋</h3>
+                  <span class="update-news-time">28/06/2026</span>
+                </div>
+                <p class="update-news-desc">El abismo tiene sus propios volcanes. Bienvenido a las Fosas Hidrotermales, la arena más profunda y peligrosa jamás descubierta. Aquí habitan criaturas adaptadas a la presión extrema y al agua hirviendo: cangrejos yeti, gusanos tubo gigantes y el temible pez linterna negro. Solo los maestros con más de 1800 copas podrán acceder a este infierno submarino. ¡Prepárate para el desafío definitivo!</p>
+              </article>
+              <article class="update-news-item">
+                <div class="update-news-head">
+                  <h3 class="update-news-title">❄️ ¡DESCUBRE LA ARENA 5: AGUAS HELADAS! ❄️</h3>
+                  <span class="update-news-time">27/06/2026</span>
+                </div>
+                <p class="update-news-desc">¡El mapa se expande! Si lograste sobrevivir a la oscuridad de Las Profundidades, prepárate para el viaje más extremo de tu vida. Ya está disponible la Arena 5: Aguas Heladas. Olvídate del fondo del mar tropical; nos movemos a un bioma polar extremo rodeado de glaciares y bloques de hielo. En esta arena los combates suben de nivel (¡encontrarás enemigos entre el nivel 12 y 15!) y el frío congelará a los débiles.</p>
+              </article>
+              <article class="update-news-item">
+                <div class="update-news-head">
+                  <h3 class="update-news-title">🦈 ¡Llega el nuevo MODO SUPERVIVENCIA! 🦈</h3>
+                  <span class="update-news-time">27/06/2026</span>
+                </div>
+                <p class="update-news-desc">¡Prepara a tus mejores peces porque se viene el mayor reto hasta la fecha! Ya puedes activar el nuevo Modo Supervivencia pulsando el botón de las espadas al lado de "Batalla". Enfréntate a 20 oleadas de enemigos seguidas que subirán de nivel combate a combate. Si logras llegar a la última oleada, te estará esperando un Jefe Final con el doble de vida. ¿Lo mejor? ¡Las recompensas de Oro y Gemas son una auténtica locura! Solo tienes 1 intento al día, así que piénsalo bien antes de saltar al agua.</p>
+              </article>
+              <article class="update-news-item">
+                <div class="update-news-head">
+                  <h3 class="update-news-title">¡Estadísticas disponibles!</h3>
+                  <span class="update-news-time">27/06/2026</span>
+                </div>
+                <p class="update-news-desc">Ya puedes consultar todas tus estadísticas detalladas dentro del apartado de tu perfil de usuario. ¡Sigue de cerca tu progreso en las arenas!</p>
+              </article>
+
+              <article class="update-news-item">
+                <div class="update-news-head">
+                  <h3 class="update-news-title">¡Llega la Tienda Rotativa de Objetos!</h3>
+                  <span class="update-news-time">26/06/2026</span>
+                </div>
+                <p class="update-news-desc">Cada día aparecerán nuevas opciones para que la tienda se sienta viva y cambiante.</p>
+              </article>
+
+              <article class="update-news-item">
+                <div class="update-news-head">
+                  <h3 class="update-news-title">¡Menús unificados para moverte más rápido!</h3>
+                  <span class="update-news-time">26/06/2026</span>
+                </div>
+                <p class="update-news-desc">Tus controles y tu economía quedan mejor organizados para encontrarlo todo de un vistazo.</p>
+              </article>
+
+              <article class="update-news-item">
+                <div class="update-news-head">
+                  <h3 class="update-news-title">¡Espectacular rediseño de la interfaz de combate!</h3>
+                  <span class="update-news-time">26/06/2026</span>
+                </div>
+                <p class="update-news-desc">La pantalla de lucha ahora se ve más limpia, amplia y centrada en la acción.</p>
+              </article>
+            </section>
+          </div>
+          <div class="update-modal-footer">
+            <button id="update-modal-close-btn" class="btn-primary update-modal-button">CERRAR</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="friends-modal" class="friends-modal">
+        <div class="friends-modal-backdrop"></div>
+        <div class="friends-modal-content">
+          <div id="friends-modal-body"></div>
+        </div>
+      </div>
+
+      <nav id="bottom-nav">
+        <button class="nav-tab" data-tab="shop">
+          <span class="nav-icon">🛒<span class="notification-dot" id="dot-daily-gift"></span></span>
+          <span class="nav-label">Tienda</span>
+        </button>
+        <button class="nav-tab" data-tab="inventory">
+          <span class="nav-icon">🎒</span>
+          <span class="nav-label">Objetos</span>
+        </button>
+        <button class="nav-tab active" data-tab="fight">
+          <span class="nav-icon">⚔️</span>
+          <span class="nav-label">Luchar</span>
+        </button>
+        <button class="nav-tab" data-tab="bank">
+          <span class="nav-icon">🐟</span>
+          <span class="nav-label">Banco</span>
+        </button>
+        <button class="nav-tab" data-tab="muelle">
+          <span class="nav-icon">🎣</span>
+          <span class="nav-label">Muelle</span>
+        </button>
+      </nav>
     </div>
 
-    <div id="fade-overlay"></div>
+    <div id="screen-combat" class="screen">
+      <div class="combat-arena">
 
-    <div id="screen-narrativa" class="modal-hidden">
-      <div class="narrativa-contenido">
-        <div class="narrativa-texto" id="narrativa-texto"></div>
-        <div class="narrativa-pista">Presiona A o Enter para continuar</div>
+        <div id="enemy-area" class="fighter-area enemy-area">
+          <div class="fighter-info">
+            <span id="enemy-name" class="fighter-name"></span>
+            <span id="enemy-status" class="status-tag"></span>
+            <span id="enemy-hp-text" class="fighter-hp-text"></span>
+          </div>
+          <div class="hp-bar"><div id="enemy-hp-fill" class="hp-fill"></div></div>
+          <div id="enemy-emoji" class="fighter-img-wrap"></div>
+          <div class="fighter-subinfo"><span id="enemy-spd" class="fighter-stat">SPD: --</span></div>
+        </div>
+
+        <div id="wave-indicator" class="wave-indicator" style="display:none"></div>
+        <div class="battle-log"><p id="log-message">Prepara tu ataque...</p></div>
+
+        <div id="player-area" class="fighter-area player-area">
+          <div id="player-emoji" class="fighter-img-wrap"></div>
+          <div class="hp-bar"><div id="player-hp-fill" class="hp-fill"></div></div>
+          <div class="fighter-info">
+            <span id="player-name" class="fighter-name"></span>
+            <span id="player-status" class="status-tag"></span>
+            <span id="player-hp-text" class="fighter-hp-text"></span>
+          </div>
+          <div class="fighter-subinfo"><span id="player-spd" class="fighter-stat">SPD: --</span></div>
+        </div>
+
+      </div>
+      <div id="attack-menu" class="attack-menu"></div>
+    </div>
+
+    <div id="screen-result" class="screen">
+      <div class="result-content">
+        <h2 id="result-title" class="result-title"></h2>
+        <div id="result-emoji" class="result-emoji"></div>
+        <p id="result-cups" class="result-cups"></p>
+        <p id="result-sub" class="result-sub"></p>
+        <button id="btn-restart" class="btn-primary">Volver al Mazo</button>
+      </div>
+    </div>
+
+    <div id="auth-modal" class="auth-modal">
+      <div class="auth-modal-backdrop"></div>
+      <div class="auth-modal-content">
+        <div id="auth-modal-body"></div>
+      </div>
+    </div>
+
+    <div id="username-modal" class="username-modal">
+      <div class="username-modal-backdrop"></div>
+      <div class="username-modal-content">
+        <div id="username-modal-body"></div>
       </div>
     </div>
 
   </div>
-
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    window.__FIREBASE_CONFIG__ = window.__FIREBASE_CONFIG__ || null;
+  </script>
   <script src="game.js"></script>
 </body>
 </html>
