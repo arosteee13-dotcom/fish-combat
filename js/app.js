@@ -1169,6 +1169,7 @@ window.SaveSystem = {
         leagueRunnerUp: state.leagueRunnerUp,
         lastFinalStandings: state.lastFinalStandings,
         myPalmares: state.myPalmares,
+        trophyHistory: state.trophyHistory,
       }
       if (idx >= 0) saves[idx] = data; else saves.unshift(data)
       var saveOk = setSaves(saves)
@@ -6855,6 +6856,7 @@ function loadGame(id) {
   state.leagueRunnerUp = data.leagueRunnerUp || null
   state.lastFinalStandings = data.lastFinalStandings || null
   state.myPalmares = data.myPalmares || null
+  state.trophyHistory = data.trophyHistory || null
   loadCountryData(state.countryId, function() {
     normalizarPlantillas()
     startGame()
@@ -6903,11 +6905,6 @@ function generarMockHistorial() {
     var idx = sy - startYear
     var pos = idx % 5 === 0 ? 1 : (idx % 5 === 1 ? 4 : (idx % 5 === 2 ? 5 : (idx % 5 === 3 ? 6 : 8)))
     state.trophyHistory.seasons.push({ season: seasonLabel, division: divisionName, position: pos })
-  }
-  if (state.trophyHistory.leagueTitles.length === 0) {
-    var th = state.trophyHistory
-    var champSeason = th.seasons.find(function(s) { return s.position === 1 })
-    if (champSeason) th.leagueTitles.push({ season: champSeason.season, competition: divisionName })
   }
 }
 
