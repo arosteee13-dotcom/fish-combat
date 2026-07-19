@@ -608,7 +608,7 @@ function ensureCountryLeagues(countryId) {
 function loadCountryData(countryId, callback) {
   if (window.DB[countryId]) { callback(window.DB[countryId]); return }
   const script = document.createElement('script')
-  script.src = `js/data/${countryId}.js`
+  script.src = `js/data/${countryId}.js?v=1`
   script.onload = () => {
     if (window.DB[countryId]) {
       callback(window.DB[countryId])
