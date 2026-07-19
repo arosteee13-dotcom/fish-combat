@@ -709,6 +709,7 @@ const state = {
   leagueChampion: null,
   leagueRunnerUp: null,
   lastFinalStandings: null,
+  myPalmares: null,
 }
 
 /* ============ HELPERS ============ */
@@ -1167,6 +1168,7 @@ window.SaveSystem = {
         leagueChampion: state.leagueChampion,
         leagueRunnerUp: state.leagueRunnerUp,
         lastFinalStandings: state.lastFinalStandings,
+        myPalmares: state.myPalmares,
       }
       if (idx >= 0) saves[idx] = data; else saves.unshift(data)
       var saveOk = setSaves(saves)
@@ -1352,14 +1354,16 @@ function getTeamFormation(id) {
 
 function getTeamObj(id) {
   if (id === state.teamId) {
-    let palmares = null
-    for (const cid in window.DB) {
-      const data = window.DB[cid]; if (!data) continue
-      for (const l of data.country.leagues || []) {
-        const t = l.teams.find(x => x.id === id)
-        if (t) { palmares = t.palmares; break }
+    var palmares = state.myPalmares || null
+    if (!palmares) {
+      for (const cid in window.DB) {
+        const data = window.DB[cid]; if (!data) continue
+        for (const l of data.country.leagues || []) {
+          const t = l.teams.find(x => x.id === id)
+          if (t) { palmares = t.palmares; break }
+        }
+        if (palmares) break
       }
-      if (palmares) break
     }
     return { name: state.team, players: state.players, teamId: state.teamId, staff: state.staff, palmares: palmares }
   }
@@ -6640,6 +6644,7 @@ function newGame(coach) {
   state.team = selectedTeam.name
   state.teamId = selectedTeam.id
   state.teamLogo = selectedTeam.logo || ''
+  state.myPalmares = selectedTeam.palmares || null
   const noface = 'https://cdn.resfu.com/media/img/nofoto_jugador.png?size=120x&lossy=1'
   const countryId = selectedCountry.id
   const natLabel = coachNationality ? (coachNationality.flag + ' ' + coachNationality.name) : (countryData ? (countryData.country.flag + ' ' + countryData.country.name) : '\ud83c\uddf5\ud83c\uddf1 Polonia')
@@ -6849,6 +6854,7 @@ function loadGame(id) {
   state.leagueChampion = data.leagueChampion || null
   state.leagueRunnerUp = data.leagueRunnerUp || null
   state.lastFinalStandings = data.lastFinalStandings || null
+  state.myPalmares = data.myPalmares || null
   loadCountryData(state.countryId, function() {
     normalizarPlantillas()
     startGame()
