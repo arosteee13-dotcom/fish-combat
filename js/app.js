@@ -607,11 +607,24 @@ function ensureCountryLeagues(countryId) {
 
 function loadCountryData(countryId, callback) {
   if (window.DB[countryId]) { callback(window.DB[countryId]); return }
+  const ts = Date.now()
   const script = document.createElement('script')
-  script.src = `js/data/${countryId}.js?v=1`
+  script.src = `js/data/${countryId}.js?v=${ts}`
   script.onload = () => {
     if (window.DB[countryId]) {
-      callback(window.DB[countryId])
+      var d = window.DB[countryId]
+      if (d.country && d.country.id && d.country.id !== countryId) {
+        console.warn('[CACHE] Mismatch: expected', countryId, 'got', d.country.id, '- retrying')
+        delete window.DB[countryId]
+        script.remove()
+        const retry = document.createElement('script')
+        retry.src = `js/data/${countryId}.js?v=${Date.now()}_r`
+        retry.onload = () => { callback(window.DB[countryId] || null) }
+        retry.onerror = () => { callback(null) }
+        document.head.appendChild(retry)
+        return
+      }
+      callback(d)
     } else {
       callback(null)
     }
