@@ -607,35 +607,31 @@ function ensureCountryLeagues(countryId) {
 
 function loadCountryData(countryId, callback) {
   if (window.DB[countryId]) { callback(window.DB[countryId]); return }
-  const ts = Date.now()
-  const script = document.createElement('script')
-  script.src = `js/data/${countryId}.js?v=${ts}`
-  script.onload = () => {
-    if (window.DB[countryId]) {
-      var d = window.DB[countryId]
-      if (d.country && d.country.id && d.country.id !== countryId) {
-        console.warn('[CACHE] Mismatch: expected', countryId, 'got', d.country.id, '- retrying')
-        delete window.DB[countryId]
-        script.remove()
-        const retry = document.createElement('script')
-        retry.src = `js/data/${countryId}.js?v=${Date.now()}_r`
-        retry.onload = () => { callback(window.DB[countryId] || null) }
-        retry.onerror = () => { callback(null) }
-        document.head.appendChild(retry)
-        return
+  function executeAndVerify(code) {
+    try { new Function(code)() } catch(e) { console.error('[CACHE] Execute error:', e); return false }
+    var d = window.DB[countryId]
+    if (!d || !d.country || !d.country.id) { console.warn('[CACHE] No data for', countryId); return false }
+    if (d.country.id !== countryId) {
+      if (d.country.id && window.DB[d.country.id] !== d) {
+        window.DB[d.country.id] = d
       }
-      callback(d)
-    } else {
-      callback(null)
+      console.warn('[CACHE] ID mismatch: expected', countryId, 'got', d.country.id, '- accepting anyway')
     }
+    return true
   }
-  script.onerror = () => {
-    console.error('Error al cargar datos de', countryId)
-    const msg = document.getElementById('ng-error-msg')
-    if (msg) { msg.textContent = 'Error al cargar los datos. Verifica que los archivos de datos existen.'; msg.classList.remove('hidden') }
-    callback(null)
+  function loadWithBust(attempt) {
+    var url = 'js/data/' + countryId + '.js?_=' + Date.now() + (attempt ? '_r' + attempt : '')
+    fetch(url, { cache: 'no-store' }).then(function(r) { return r.text() }).then(function(code) {
+      if (executeAndVerify(code)) { callback(window.DB[countryId]); return }
+      if (attempt < 2) { loadWithBust(attempt + 1); return }
+      callback(null)
+    }).catch(function() {
+      var msg = document.getElementById('ng-error-msg')
+      if (msg) { msg.textContent = 'Error al cargar los datos.'; msg.classList.remove('hidden') }
+      callback(null)
+    })
   }
-  document.head.appendChild(script)
+  loadWithBust(0)
 }
 
 /* ============ ENGINE ============ */
@@ -3984,7 +3980,7 @@ function showSeasonProgressionModal(result, msg, skipStandings, nuevosTrofeos, l
     state.leagueTeams = allTeams.filter(function(t) { return t.id !== state.teamId }).map(function(t) {
       var existing = state.leagueTeams.find(function(x) { return x.teamId === t.id })
       return {
-        teamId: t.id, name: t.name,
+        teamId: t.id, name: t.name, palmares: t.palmares || null,
         players: existing ? existing.players.map(function(p) { return Object.assign({}, p, { energy: 100, injury: null, goals: 0, matches: 0 }) })
           : (getRealSquad(t.id) || []).map(function(p) { return Object.assign({}, p, { value: calcValue(p.skill, p.age, p.position), enPista: false, minutosEnPista: 0, convocado: false, titular: false, injury: null, energy: 100, goals: 0, matches: 0 }) }),
         staff: t.staff || existing && existing.staff || [],
@@ -4390,7 +4386,7 @@ function procesarFinTemporada(skipAging, skipStandings) {
   state.leagueTeams = allTeams.filter(t => t.id !== state.teamId).map(t => {
     const existing = state.leagueTeams.find(x => x.teamId === t.id)
     return {
-      teamId: t.id, name: t.name,
+      teamId: t.id, name: t.name, palmares: t.palmares || null,
       players: existing ? existing.players.map(p => ({ ...p, energy: 100, injury: null, goals: 0, matches: 0 }))
         : (getRealSquad(t.id) || []).map(p => ({ ...p, value: calcValue(p.skill, p.age, p.position), enPista: false, minutosEnPista: 0, convocado: false, titular: false, injury: null, energy: 100, goals: 0, matches: 0 })),
       staff: t.staff || existing?.staff || [],
@@ -6681,6 +6677,7 @@ function newGame(coach) {
   state.finances = { balance: startingBudget, history: [] }
   state.inbox = []
   state.captainId = null
+  state.trophyHistory = { seasons: [], leagueTitles: [], cupWins: [], supercopaWins: [] }
 
   /* Assign user squad based on selected team */
   const userSquad = getRealSquad(state.teamId) || generateCpuSquad(state.teamId, state.countryId, selectedTeam.rating)
